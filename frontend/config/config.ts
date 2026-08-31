@@ -46,6 +46,8 @@ export default defineConfig({
 
   publicPath: PUBLIC_PATH,
 
+  favicons: ['/favicon.ico?v=ro-icon-1'],
+
   /**
    * @name 兼容性设置
    * @description 设置 ie11 不一定完美兼容，需要检查自己使用的所有依赖
@@ -114,7 +116,7 @@ export default defineConfig({
    * @name layout 插件
    * @doc https://umijs.org/docs/max/layout-menu
    */
-  title: 'HappyRO GM',
+  title: 'HappyRO',
   layout: {
     locale: true,
     ...defaultSettings,

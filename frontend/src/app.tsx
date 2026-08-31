@@ -14,12 +14,11 @@ import {
   AvatarDropdown,
   DocLink,
   ErrorBoundary,
-  Footer,
   LangDropdown,
   OfflineBanner,
   VersionDropdown,
 } from '@/components';
-import { currentUser as queryCurrentUser } from '@/services/ant-design-pro/api';
+import { currentUser as queryCurrentUser } from '@/services/auth/index';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './requestErrorConfig';
 
@@ -101,7 +100,7 @@ export const layout: RunTimeLayoutConfig = ({
     },
     avatarProps: {
       src: initialState?.currentUser?.avatar,
-      title: 'ProUser',
+      title: initialState?.currentUser?.name ?? initialState?.currentUser?.userid,
       render: (_, avatarChildren) => (
         <AvatarDropdown>{avatarChildren}</AvatarDropdown>
       ),
@@ -109,7 +108,7 @@ export const layout: RunTimeLayoutConfig = ({
     // waterMarkProps: {
     //   content: initialState?.currentUser?.name,
     // },
-    footerRender: () => <Footer />,
+    footerRender: false,
     onPageChange: () => {
       const { location } = history;
       // 如果没有登录，重定向到 login
@@ -191,6 +190,7 @@ export const layout: RunTimeLayoutConfig = ({
  */
 export const request: RequestConfig = {
   baseURL: '',
+  withCredentials: true,
   ...errorConfig,
 };
 

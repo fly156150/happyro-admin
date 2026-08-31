@@ -1,92 +1,74 @@
-﻿// @ts-ignore
-import { startMock } from '@@/requestRecordMock';
 import { TestBrowser } from '@@/testBrowser';
-import { fireEvent, render } from '@testing-library/react';
-import React, { act } from 'react';
+import { fireEvent, render, waitFor } from '@testing-library/react';
+import React from 'react';
+import { login } from '@/services/auth/index';
 
-let server: {
-  close: () => void;
-};
+vi.mock('@/services/auth/index', () => ({
+  login: vi.fn(),
+  currentUser: vi.fn(),
+  logout: vi.fn(),
+}));
+
+const mockedLogin = vi.mocked(login);
 
 describe('Login Page', () => {
-  beforeAll(async () => {
-    server = await startMock({
-      port: 8000,
-      scene: 'login',
-    });
+  beforeEach(() => {
+    mockedLogin.mockReset();
   });
 
-  afterAll(() => {
-    server?.close();
-  });
-
-  it('should show login form', async () => {
-    const historyRef = React.createRef<any>();
+  it('shows only the internal username and password form', async () => {
     const rootContainer = render(
-      <TestBrowser
-        historyRef={historyRef}
-        location={{
-          pathname: '/user/login',
-        }}
-      />,
+      <TestBrowser location={{ pathname: '/user/login' }} />,
     );
 
-    await rootContainer.findAllByText('Ant Design');
-
-    act(() => {
-      historyRef.current?.push('/user/login');
-    });
-
+    expect(await rootContainer.findByText('HappyRO')).toBeInTheDocument();
     expect(
-      rootContainer.baseElement?.querySelector('.ant-pro-form-login-desc')
-        ?.textContent,
-    ).toBe(
-      'Ant Design is the most influential web design specification in Xihu district',
+      rootContainer.getByText('《仙境传说 Online》管理后台'),
+    ).toBeInTheDocument();
+    expect(rootContainer.getByAltText('HappyRO')).toHaveAttribute(
+      'src',
+      '/images/ro-poring-1.webp',
     );
-
-    expect(rootContainer.asFragment()).toMatchSnapshot();
-
-    rootContainer.unmount();
+    expect(rootContainer.getByPlaceholderText('用户名')).toBeInTheDocument();
+    expect(rootContainer.getByPlaceholderText('密码')).toBeInTheDocument();
+    expect(rootContainer.getByText('保持登录')).toBeInTheDocument();
+    expect(rootContainer.queryByText('手机号登录')).not.toBeInTheDocument();
+    expect(rootContainer.queryByText('忘记密码')).not.toBeInTheDocument();
+    expect(rootContainer.queryByText(/Ant Design Pro ©/)).not.toBeInTheDocument();
   });
 
-  it('should login success', async () => {
-    const historyRef = React.createRef<any>();
+  it('keeps the form content responsive on narrow screens', async () => {
     const rootContainer = render(
-      <TestBrowser
-        historyRef={historyRef}
-        location={{
-          pathname: '/user/login',
-        }}
-      />,
+      <TestBrowser location={{ pathname: '/user/login' }} />,
     );
 
-    await rootContainer.findAllByText('Ant Design');
+    const form = await rootContainer.findByRole('form');
+    expect(form).toHaveStyle({ minWidth: 280, maxWidth: '75vw' });
+  });
 
-    const userNameInput = await rootContainer.findByPlaceholderText(
-      'Username: admin or user',
+  it('submits credentials to the authentication service and shows API errors', async () => {
+    mockedLogin.mockRejectedValue({
+      response: { data: { message: '用户名或密码错误。' } },
+    });
+    const rootContainer = render(
+      <TestBrowser location={{ pathname: '/user/login' }} />,
     );
 
-    act(() => {
-      fireEvent.change(userNameInput, { target: { value: 'admin' } });
+    fireEvent.change(await rootContainer.findByPlaceholderText('用户名'), {
+      target: { value: 'admin' },
     });
-
-    const passwordInput = await rootContainer.findByPlaceholderText(
-      'Password: ant.design',
-    );
-
-    act(() => {
-      fireEvent.change(passwordInput, { target: { value: 'ant.design' } });
+    fireEvent.change(rootContainer.getByPlaceholderText('密码'), {
+      target: { value: 'wrong-password' },
     });
+    fireEvent.click(rootContainer.getByRole('button', { name: '登录' }));
 
-    await (await rootContainer.findByText('Login')).click();
-
-    // Wait for login to succeed and navigate to home page
-    await rootContainer.findByText(/Ant Design Pro/, undefined, {
-      timeout: 10000,
+    await waitFor(() => {
+      expect(mockedLogin).toHaveBeenCalledWith({
+        username: 'admin',
+        password: 'wrong-password',
+        remember: true,
+      });
     });
-
-    expect(rootContainer.asFragment()).toMatchSnapshot();
-
-    rootContainer.unmount();
+    expect(await rootContainer.findByText('用户名或密码错误。')).toBeInTheDocument();
   });
 });

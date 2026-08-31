@@ -12,8 +12,25 @@ HappyRO 的游戏管理后台。仓库采用单仓库双应用结构：
 - Laravel：http://10.24.1.1:18081
 - Laravel 健康检查：http://10.24.1.1:18081/api/health
 
-当前前端保留 Ant Design Pro 的本地 mock 登录，仅用于初始界面验证。默认账号为
-`admin`，密码为 `ant.design`。正式接入前不得将它视为真实 GM 身份认证。
+后台使用 Laravel Session 与 Sanctum 的 Cookie 认证，前端不保留登录 Mock。管理账号、
+角色、权限和审计记录分别存放在 `happyro_admin` 库的 `users`、`roles`、
+`permissions`、`audit_logs` 等无业务前缀表中，与玩家账号和游戏数据隔离。
+
+创建管理账号：
+
+```bash
+cd backend
+php artisan gm:user:create admin \
+  --name="Administrator" \
+  --role=super_admin
+```
+
+省略 `--password` 时命令会交互式读取密码。直接运行 `php artisan gm:user:create`
+只显示带颜色的帮助和常用示例；日志或管道环境可使用 `--no-color`。
+
+认证代码按接口与实现分离：控制器只处理 HTTP，认证、限流、权限、审计和账号创建
+通过 Laravel 容器注入。测试可以直接 Mock `app/Contracts` 下的接口，无需访问数据库
+或真实认证驱动。
 
 ## 常用命令
 

@@ -18,7 +18,7 @@ vi.mock('@umijs/max', () => ({
   Link: ({ children }: any) => children,
 }));
 
-vi.mock('@/services/ant-design-pro/api', () => ({
+vi.mock('@/services/auth/index', () => ({
   currentUser: mockQueryCurrentUser,
 }));
 
@@ -26,7 +26,6 @@ vi.mock('@/components', () => ({
   AvatarDropdown: () => null,
   DocLink: () => null,
   ErrorBoundary: ({ children }: any) => children,
-  Footer: () => null,
   LangDropdown: () => null,
   OfflineBanner: () => null,
   VersionDropdown: () => null,
