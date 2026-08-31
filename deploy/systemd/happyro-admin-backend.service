@@ -1,0 +1,15 @@
+[Unit]
+Description=HappyRO GM Laravel backend
+After=network.target
+
+[Service]
+Type=simple
+User=happyro-admin
+Group=happyro-admin
+WorkingDirectory=/vol2/1000/kugarocks/happyro/repos/happyro-admin/backend
+ExecStart=/usr/bin/php artisan serve --host=0.0.0.0 --port=18081
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
