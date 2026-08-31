@@ -83,6 +83,16 @@ return [
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
+        'game' => [
+            'driver' => 'mariadb', 'host' => env('GAME_DB_HOST', '127.0.0.1'), 'port' => env('GAME_DB_PORT', '3306'),
+            'database' => env('GAME_DB_DATABASE', ''), 'username' => env('GAME_DB_USERNAME', ''), 'password' => env('GAME_DB_PASSWORD', ''),
+            'charset' => 'utf8mb4', 'collation' => 'utf8mb4_unicode_ci', 'prefix' => '', 'strict' => true,
+        ],
+        'game_log' => [
+            'driver' => 'mariadb', 'host' => env('GAME_DB_HOST', '127.0.0.1'), 'port' => env('GAME_DB_PORT', '3306'),
+            'database' => env('GAME_LOG_DB_DATABASE', ''), 'username' => env('GAME_DB_USERNAME', ''), 'password' => env('GAME_DB_PASSWORD', ''),
+            'charset' => 'utf8mb4', 'collation' => 'utf8mb4_unicode_ci', 'prefix' => '', 'strict' => true,
+        ],
 
         'pgsql' => [
             'driver' => 'pgsql',

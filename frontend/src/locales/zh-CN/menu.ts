@@ -1,4 +1,5 @@
 export default {
+  'menu.players': '用户管理', 'menu.players.account': '用户账号', 'menu.players.character': '游戏角色', 'menu.players.loginLog': '登录日志',
   'menu.welcome': '欢迎',
   'menu.more-blocks': '更多区块',
   'menu.home': '首页',

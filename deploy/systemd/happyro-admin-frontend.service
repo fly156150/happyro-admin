@@ -1,15 +1,17 @@
 [Unit]
-Description=HappyRO GM Ant Design Pro frontend
+Description=HappyRO Admin Ant Design Pro frontend
 After=network.target happyro-admin-backend.service
 
 [Service]
 Type=simple
 User=happyro-admin
 Group=happyro-admin
+PermissionsStartOnly=true
 WorkingDirectory=/vol2/1000/kugarocks/happyro/repos/happyro-admin/frontend
 Environment=NODE_ENV=development
 Environment=PATH=/opt/node-v22.22.2-linux-x64/bin:/usr/bin:/bin
 ExecStart=/opt/node-v22.22.2-linux-x64/bin/npm run dev -- --host 0.0.0.0 --port 8000
+ExecStartPre=/usr/bin/install -d -o happyro-admin -g happyro-admin -m 0750 /vol2/1000/kugarocks/happyro/repos/happyro-admin/frontend/node_modules/umi_open_api
 Restart=always
 RestartSec=3
 

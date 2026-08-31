@@ -1,4 +1,5 @@
 export default {
+  'menu.players': 'User management', 'menu.players.account': 'User accounts', 'menu.players.character': 'Game characters', 'menu.players.loginLog': 'Login logs',
   'menu.welcome': 'Welcome',
   'menu.more-blocks': 'More Blocks',
   'menu.home': 'Home',

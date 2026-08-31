@@ -3,13 +3,13 @@ import { PageContainer } from '@ant-design/pro-components';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Avatar,
+  App,
   Button,
   Card,
   Col,
   Dropdown,
   Input,
   List,
-  Modal,
   Progress,
   Row,
   Segmented,
@@ -72,6 +72,7 @@ const ListContent = ({
   );
 };
 const BasicList: FC = () => {
+  const { modal } = App.useApp();
   const { styles } = useStyles();
   const [done, setDone] = useState<boolean>(false);
   const [open, setVisible] = useState<boolean>(false);
@@ -125,7 +126,7 @@ const BasicList: FC = () => {
   ) => {
     if (key === 'edit') showEditModal(currentItem);
     else if (key === 'delete') {
-      Modal.confirm({
+      modal.confirm({
         title: '删除任务',
         content: '确定删除该任务吗？',
         okText: '确认',

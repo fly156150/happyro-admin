@@ -9,7 +9,7 @@ import {
   ProFormTextArea,
 } from '@ant-design/pro-components';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Input, message, Upload } from 'antd';
+import { App, Button, Input, Upload } from 'antd';
 import React from 'react';
 import { getCityOptions, provinceOptions } from '@/utils/chinaDivision';
 import type { GeographicItemType } from '../data';
@@ -48,11 +48,8 @@ const toSelectOptions = (items: GeographicItemType[]) =>
     })
     .filter((item): item is { label: string; value: string } => Boolean(item));
 
-const handleFinish = async () => {
-  message.success('更新基本信息成功');
-};
-
 const BaseView: React.FC = () => {
+  const { message } = App.useApp();
   const { styles } = useStyles();
   const formRef = React.useRef<ProFormInstance>(undefined);
 
@@ -60,6 +57,10 @@ const BaseView: React.FC = () => {
     if ('province' in changedValues) {
       formRef.current?.setFieldValue('city', undefined);
     }
+  };
+
+  const handleFinish = async () => {
+    message.success('更新基本信息成功');
   };
 
   const { data: currentUser, isLoading: loading } = useQuery({

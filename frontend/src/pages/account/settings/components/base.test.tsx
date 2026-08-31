@@ -55,6 +55,7 @@ vi.mock('@ant-design/pro-components', async () => {
 });
 
 vi.mock('antd', () => ({
+  App: { useApp: () => ({ message: { success: vi.fn() } }) },
   Button: ({ children }: any) => <button type="button">{children}</button>,
   Input: (props: any) => <input {...props} />,
   Upload: ({ children }: any) => <div>{children}</div>,

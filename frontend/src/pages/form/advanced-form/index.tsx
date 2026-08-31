@@ -10,7 +10,7 @@ import {
   ProFormText,
   ProFormTimePicker,
 } from '@ant-design/pro-components';
-import { Button, Card, Col, message, Popover, Row } from 'antd';
+import { App, Button, Card, Col, Popover, Row } from 'antd';
 import type { FC } from 'react';
 import { useRef, useState } from 'react';
 import { fakeSubmitForm } from './service';
@@ -64,6 +64,7 @@ interface ErrorField {
   errors: string[];
 }
 const AdvancedForm: FC<Record<string, any>> = () => {
+  const { message } = App.useApp();
   const { styles } = useStyles();
   const [error, setError] = useState<ErrorField[]>([]);
   const keyCounter = useRef(0);

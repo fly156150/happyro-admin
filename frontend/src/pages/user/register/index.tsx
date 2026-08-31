@@ -2,10 +2,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { history, Link } from '@umijs/max';
 import {
   Button,
+  App,
   Col,
   Form,
   Input,
-  message,
   Popover,
   Progress,
   Row,
@@ -59,6 +59,7 @@ const PasswordProgress: React.FC<{
 };
 
 const Register: FC = () => {
+  const { message } = App.useApp();
   const { styles } = useStyles();
   const [count, setCount]: [number, any] = useState(0);
   const [open, setVisible]: [boolean, any] = useState(false);

@@ -10,12 +10,13 @@ import {
   ProFormTextArea,
 } from '@ant-design/pro-components';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, message } from 'antd';
+import { App, Card } from 'antd';
 import type { FC } from 'react';
 import { fakeSubmitForm } from './service';
 import useStyles from './style.style';
 
 const BasicForm: FC<Record<string, any>> = () => {
+  const { message } = App.useApp();
   const { styles } = useStyles();
   const queryClient = useQueryClient();
   const { mutate: run } = useMutation({
