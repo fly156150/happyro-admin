@@ -4,6 +4,8 @@ use App\Http\Controllers\Auth\SessionController;
 use App\Http\Controllers\Players\LoginLogController;
 use App\Http\Controllers\Players\PlayerAccountController;
 use App\Http\Controllers\Players\PlayerCharacterController;
+use App\Http\Controllers\Resources\ItemController;
+use App\Http\Controllers\Resources\ItemGrantController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -28,4 +30,12 @@ Route::prefix('api/players')->middleware(['auth:sanctum', 'permission:players.vi
     Route::post('/accounts/{accountId}/password', [PlayerAccountController::class, 'password'])->middleware('permission:players.edit');
     Route::post('/accounts/batch', [PlayerAccountController::class, 'batch'])->middleware('permission:players.edit');
     Route::delete('/accounts/{accountId}', [PlayerAccountController::class, 'destroy'])->middleware('permission:players.edit');
+});
+
+Route::prefix('api/resources')->middleware(['auth:sanctum', 'permission:players.view'])->group(function () {
+    Route::get('/items', [ItemController::class, 'index']);
+    Route::get('/items/{id}', [ItemController::class, 'show']);
+    Route::get('/items/{id}/icon', [ItemController::class, 'icon']);
+    Route::get('/items/{id}/illustration', [ItemController::class, 'illustration']);
+    Route::post('/item-grants/mail', [ItemGrantController::class, 'store'])->middleware('permission:players.edit');
 });

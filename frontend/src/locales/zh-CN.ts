@@ -7,6 +7,10 @@ import settingDrawer from './zh-CN/settingDrawer';
 import settings from './zh-CN/settings';
 
 export default {
+  'resources.item.icon': '图标',
+  'resources.item.script': '服务器脚本',
+  'resources.grants.title': '发放物品', 'resources.grants.success': '邮件已发送', 'resources.grants.charId': '角色 ID', 'resources.grants.amount': '数量', 'resources.grants.titleField': '邮件标题', 'resources.grants.defaultTitle': '物品发放', 'resources.grants.message': '邮件内容', 'resources.grants.defaultMessage': '管理员向你发放了物品。',
+  'resources.items.title': '物品图鉴', 'resources.item.id': '物品 ID', 'resources.item.name': '名称', 'resources.item.aegisName': 'AegisName', 'resources.item.type': '类型', 'resources.item.usable': '消耗品', 'resources.item.armor': '防具', 'resources.item.weapon': '武器', 'resources.item.card': '卡片', 'resources.item.etc': '其他', 'resources.item.weight': '重量', 'resources.item.detail': '物品详情', 'resources.item.buy': '买入价', 'resources.item.sell': '卖出价', 'resources.item.description': '说明', 'resources.item.noDescription': '暂无说明',
   'common.search': '查询', 'common.reset': '重置',
   'players.account.actions': '操作', 'players.account.delete': '删除', 'players.account.kick': '踢下线',
   'common.delete': '删除', 'common.confirm': '确认', 'common.cancel': '取消', 'players.account.confirmTitle': '请确认操作', 'players.account.confirm.delete': '确认删除选中的账号？', 'players.account.confirm.ban': '确认封禁选中的账号？', 'players.account.confirm.unban': '确认解禁选中的账号？', 'players.account.confirm.kick': '确认踢出选中账号的在线角色？', 'players.account.success.delete': '账号已删除', 'players.account.success.ban': '账号已封禁', 'players.account.success.unban': '账号已解禁', 'players.account.success.kick': '已踢出在线角色',

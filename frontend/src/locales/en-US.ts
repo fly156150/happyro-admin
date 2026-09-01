@@ -7,6 +7,10 @@ import settingDrawer from './en-US/settingDrawer';
 import settings from './en-US/settings';
 
 export default {
+  'resources.item.icon': 'Icon',
+  'resources.item.script': 'Server script',
+  'resources.grants.title': 'Grant items', 'resources.grants.success': 'Mail sent', 'resources.grants.charId': 'Character ID', 'resources.grants.amount': 'Amount', 'resources.grants.titleField': 'Mail title', 'resources.grants.defaultTitle': 'Item grant', 'resources.grants.message': 'Mail message', 'resources.grants.defaultMessage': 'An administrator sent you an item.',
+  'resources.items.title': 'Item catalog', 'resources.item.id': 'Item ID', 'resources.item.name': 'Name', 'resources.item.aegisName': 'AegisName', 'resources.item.type': 'Type', 'resources.item.usable': 'Usable', 'resources.item.armor': 'Armor', 'resources.item.weapon': 'Weapon', 'resources.item.card': 'Card', 'resources.item.etc': 'Other', 'resources.item.weight': 'Weight', 'resources.item.detail': 'Item details', 'resources.item.buy': 'Buy price', 'resources.item.sell': 'Sell price', 'resources.item.description': 'Description', 'resources.item.noDescription': 'No description',
   'common.search': 'Search', 'common.reset': 'Reset',
   'players.account.actions': 'Actions', 'players.account.delete': 'Delete', 'players.account.kick': 'Kick offline',
   'common.delete': 'Delete', 'common.confirm': 'Confirm', 'common.cancel': 'Cancel', 'players.account.confirmTitle': 'Confirm action', 'players.account.confirm.delete': 'Delete the selected accounts?', 'players.account.confirm.ban': 'Ban the selected accounts?', 'players.account.confirm.unban': 'Unban the selected accounts?', 'players.account.confirm.kick': 'Kick online characters for the selected accounts?', 'players.account.success.delete': 'Account deleted', 'players.account.success.ban': 'Accounts banned', 'players.account.success.unban': 'Accounts unbanned', 'players.account.success.kick': 'Online characters kicked',

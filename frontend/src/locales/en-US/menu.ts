@@ -1,4 +1,5 @@
 export default {
+  'menu.resources': 'Game resources', 'menu.resources.items': 'Item catalog', 'menu.resources.grants': 'Grant items',
   'menu.players': 'User management', 'menu.players.account': 'User accounts', 'menu.players.character': 'Game characters', 'menu.players.loginLog': 'Login logs',
   'menu.welcome': 'Welcome',
   'menu.more-blocks': 'More Blocks',

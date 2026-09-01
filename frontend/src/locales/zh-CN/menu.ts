@@ -1,4 +1,5 @@
 export default {
+  'menu.resources': '游戏资源', 'menu.resources.items': '物品图鉴', 'menu.resources.grants': '发放物品',
   'menu.players': '用户管理', 'menu.players.account': '用户账号', 'menu.players.character': '游戏角色', 'menu.players.loginLog': '登录日志',
   'menu.welcome': '欢迎',
   'menu.more-blocks': '更多区块',

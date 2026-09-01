@@ -1,5 +1,14 @@
 export default [
   {
+    path: '/resources',
+    name: 'resources',
+    icon: 'database',
+    routes: [
+      { path: '/resources/items', name: 'items', component: './resources/items' },
+      { path: '/resources/grants', name: 'grants', component: './resources/grants' },
+    ],
+  },
+  {
     path: '/players',
     name: 'players',
     icon: 'team',
