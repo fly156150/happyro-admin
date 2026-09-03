@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Operations\DatabaseItemGrantTargetRepository;
 use App\Services\Players\DatabaseLoginLogRepository;
 use App\Services\Players\DatabasePlayerAccountRepository;
 use App\Services\Players\DatabasePlayerCharacterRepository;
@@ -56,6 +57,34 @@ final class PlayerRepositoriesTest extends TestCase
         $this->getJson('/api/players/accounts?username=ali&email=example.com&state=0&perPage=1')->assertOk()->assertJsonPath('total', 1)->assertJsonPath('pageSize', 1);
         $this->getJson('/api/players/characters?username=ali')->assertOk()->assertJsonPath('total', 1)->assertJsonPath('data.0.username', 'alice');
         $this->getJson('/api/players/login-logs?username=ali')->assertOk()->assertJsonPath('total', 1)->assertJsonPath('data.0.username', 'alice');
+    }
+
+    public function test_item_grant_targets_can_be_found_by_character_id_name_or_username(): void
+    {
+        DB::connection('game')->table('login')->insert(['account_id' => 1, 'userid' => 'alice', 'email' => 'alice@example.com', 'sex' => 'F', 'group_id' => 0, 'state' => 0]);
+        DB::connection('game')->table('char')->insert(['char_id' => 10, 'account_id' => 1, 'name' => 'Poring', 'class' => 0, 'base_level' => 1, 'job_level' => 1, 'online' => 0]);
+        $repository = new DatabaseItemGrantTargetRepository;
+
+        foreach (['10', 'Pori', 'alic'] as $target) {
+            $this->assertSame(10, $repository->search($target, 20)[0]['char_id']);
+        }
+
+        $this->actingAs($this->superAdmin())
+            ->getJson('/api/operations/item-grant-targets?target=alic')
+            ->assertOk()
+            ->assertJsonPath('data.0.char_id', 10)
+            ->assertJsonPath('data.0.name', 'Poring')
+            ->assertJsonPath('data.0.username', 'alice');
+    }
+
+    public function test_item_grant_searches_require_authentication_and_a_target(): void
+    {
+        $this->getJson('/api/operations/item-grant-items?target=Apple')->assertUnauthorized();
+        $this->getJson('/api/operations/item-grant-targets?target=alice')->assertUnauthorized();
+        $this->actingAs($this->superAdmin());
+        $this->getJson('/api/operations/item-grant-items')->assertUnprocessable();
+        $this->getJson('/api/operations/item-grant-targets')->assertUnprocessable();
+        $this->getJson('/api/operations/item-grant-items?target=Apple')->assertOk();
     }
 
     public function test_player_queries_require_authentication(): void

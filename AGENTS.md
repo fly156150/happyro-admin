@@ -46,6 +46,14 @@
 - 外部 HappyRO 项目的映射在 `happyro-admin` 中必须保留一份冗余副本；副本需要记录来源文件，更新时同步核对来源并在 changelog 中说明变更。
 - 映射数据必须放在独立的数据目录中，与页面、控制器和业务逻辑分离；当前前端映射统一放在 `frontend/src/data/game/`，多语言名称放在国际化资源中，映射表只保存稳定的 ID、代码和翻译键。
 
+## 本机前端部署与验收
+
+- 本机 `8000` 端口的前端必须由 `happyro-admin-frontend.service` 唯一管理，禁止使用 `root`、`nohup` 或其他手工后台进程长期运行 Umi；手工进程可能在退出终端后继续占用端口，使 systemd 新进程无法接管并持续提供旧 bundle。
+- 前端改动未生效时，先使用 `ss -ltnp 'sport = :8000'` 核对监听进程，再使用 `systemctl status happyro-admin-frontend.service` 核对该进程是否属于服务的 cgroup；不得只根据 Umi 的 `Compiled` 日志判断部署成功。
+- 发现孤立 Umi 进程时，只终止已核实的进程或进程组，然后执行 `systemctl restart happyro-admin-frontend.service`；禁止使用可能误伤其他 Node.js 服务的宽泛 `pkill node`。
+- 前端构建、检查和代码生成命令应使用 `happyro-admin` 服务用户执行，避免 `root` 生成该用户不可写的文件。服务出现 `EACCES` 时，重点检查 `.git/config` 的组读取权限，以及 `frontend/src/.umi/`、`frontend/node_modules/.cache/`、`frontend/node_modules/umi_open_api/` 等生成目录的属主和写权限；只修复已确认异常的文件或生成目录，不得无差别修改整个仓库权限。
+- 恢复服务后，必须同时确认服务状态为 `active`、`8000` 已由服务进程监听、`journalctl -u happyro-admin-frontend.service` 没有新的启动错误，并通过真实浏览器验证目标文案、布局和交互。浏览器仍显示旧内容时，再检查 Service Worker 和缓存，并执行强制刷新；不得用强制刷新掩盖端口被旧进程占用的问题。
+
 ## Changelog
 
 - 项目变更必须在本仓库的 `changelog/` 目录记录，并与实际变更保持一致。

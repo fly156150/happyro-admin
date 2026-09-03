@@ -1,11 +1,34 @@
 export default [
   {
-    path: '/resources',
-    name: 'resources',
+    path: '/game-data',
+    name: 'gameData',
     icon: 'database',
     routes: [
-      { path: '/resources/items', name: 'items', component: './resources/items' },
-      { path: '/resources/grants', name: 'grants', component: './resources/grants' },
+      {
+        path: '/game-data/items',
+        name: 'items',
+        component: './game-data/items',
+      },
+      {
+        path: '/game-data/monsters',
+        name: 'monsters',
+        component: './game-data/monsters',
+      },
+      { path: '/game-data/npcs', name: 'npcs', component: './game-data/npcs' },
+      { path: '/game-data/maps', name: 'maps', component: './game-data/maps' },
+    ],
+  },
+  {
+    path: '/operations',
+    name: 'operations',
+    icon: 'tool',
+    routes: [
+      {
+        path: '/operations/item-grants',
+        name: 'itemGrants',
+        access: 'canGrantItems',
+        component: './operations/item-grants',
+      },
     ],
   },
   {
@@ -13,9 +36,39 @@ export default [
     name: 'players',
     icon: 'team',
     routes: [
-      { path: '/players/accounts', name: 'account', component: './players/accounts' },
-      { path: '/players/characters', name: 'character', component: './players/characters' },
-      { path: '/players/login-logs', name: 'loginLog', component: './players/login-logs' },
+      {
+        path: '/players/accounts',
+        name: 'account',
+        component: './players/accounts',
+      },
+      {
+        path: '/players/characters',
+        name: 'character',
+        component: './players/characters',
+      },
+      {
+        path: '/players/login-logs',
+        name: 'loginLog',
+        component: './players/login-logs',
+      },
+    ],
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    icon: 'setting',
+    access: 'canManageSettings',
+    routes: [
+      {
+        path: '/settings/game-data',
+        name: 'gameData',
+        component: './settings/game-data',
+      },
+      {
+        path: '/settings/game-rules',
+        name: 'gameRules',
+        component: './settings/game-rules',
+      },
     ],
   },
   {

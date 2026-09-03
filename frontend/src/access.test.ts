@@ -9,12 +9,14 @@ describe('access', () => {
         name: 'Admin User',
         avatar: 'https://example.com/avatar.png',
         access: 'admin',
+        permissions: ['*'],
       },
     };
 
     const result = access(initialState);
 
     expect(result.canAdmin).toBe(true);
+    expect(result.canGrantItems).toBe(true);
   });
 
   it('should return canAdmin false when user has non-admin access', () => {
@@ -60,5 +62,18 @@ describe('access', () => {
     const result = access(undefined);
 
     expect(result.canAdmin).toBeFalsy();
+  });
+
+  it('allows item grants through the explicit permission', () => {
+    const result = access({
+      currentUser: {
+        userid: '4',
+        access: 'user',
+        permissions: ['operations.item-grant'],
+      },
+    });
+
+    expect(result.canGrantItems).toBe(true);
+    expect(result.canAdmin).toBe(false);
   });
 });

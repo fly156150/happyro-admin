@@ -21,4 +21,17 @@ final class PlayerCharacterController
 
         return response()->json(['data' => $page->items(), 'total' => $page->total(), 'current' => $page->currentPage(), 'pageSize' => $page->perPage()]);
     }
+
+    public function show(int $charId): JsonResponse
+    {
+        try {
+            $character = $this->characters->find($charId);
+        } catch (QueryException) {
+            return response()->json(['message' => __('messages.player_database_unconfigured')], 503);
+        }
+
+        return $character
+            ? response()->json(['data' => $character])
+            : response()->json(['message' => 'Character not found'], 404);
+    }
 }

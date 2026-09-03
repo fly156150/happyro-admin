@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+final class GameServerSettingRevision extends Model
+{
+    protected $fillable = [
+        'server_key',
+        'revision',
+        'changes',
+        'status',
+        'reason',
+        'requested_by',
+        'applied_at',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'changes' => 'array',
+            'applied_at' => 'datetime',
+        ];
+    }
+}
