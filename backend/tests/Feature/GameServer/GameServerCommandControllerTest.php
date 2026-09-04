@@ -36,6 +36,31 @@ final class GameServerCommandControllerTest extends TestCase
         ]);
     }
 
+    public function test_command_can_require_an_explicit_empty_payload(): void
+    {
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('execute')
+            ->once()
+            ->andReturn(new GameServerCommandResult(['char_id' => 42]));
+        $this->app->instance(GameServerGateway::class, $gateway);
+
+        $this->actingAs($this->superAdmin())->postJson('/api/operations/game-control/commands', [
+            'idempotency_key' => 'character-vitals-1',
+            'type' => 'character.vitals.restore',
+            'target' => ['type' => 'character', 'id' => '42'],
+            'payload' => [],
+        ])->assertStatus(202);
+    }
+
+    public function test_command_payload_must_be_present(): void
+    {
+        $this->actingAs($this->superAdmin())->postJson('/api/operations/game-control/commands', [
+            'idempotency_key' => 'character-vitals-2',
+            'type' => 'character.vitals.restore',
+            'target' => ['type' => 'character', 'id' => '42'],
+        ])->assertUnprocessable()->assertJsonValidationErrors('payload');
+    }
+
     public function test_battle_config_command_is_rejected_by_operations_endpoint(): void
     {
         $this->actingAs($this->superAdmin())->postJson('/api/operations/game-control/commands', [

@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Operations;
 
 use App\Data\Auth\ClientContext;
 use App\Exceptions\CharacterNotFoundException;
+use App\Exceptions\ItemGrantConflictException;
 use App\Exceptions\ItemNotFoundException;
+use App\Models\ItemGrantRecord;
 use App\Services\Operations\ItemGrantService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +18,7 @@ final class ItemGrantController
 
     public function store(Request $request): JsonResponse
     {
-        $data = $request->validate(['item_id' => ['required', 'integer', 'min:1'], 'char_id' => ['required', 'integer', 'min:1'], 'amount' => ['required', 'integer', 'min:1', 'max:30000'], 'title' => ['required', 'string', 'max:45'], 'message' => ['required', 'string', 'max:500'], 'bound' => ['nullable', 'boolean']]);
+        $data = $request->validate(['item_id' => ['required', 'integer', 'min:1'], 'char_id' => ['required', 'integer', 'min:1'], 'amount' => ['required', 'integer', 'min:1', 'max:30000'], 'title' => ['required', 'string', 'max:45'], 'message' => ['required', 'string', 'max:500'], 'bound' => ['nullable', 'boolean'], 'idempotency_key' => ['required', 'string', 'max:64']]);
         try {
             $mailId = $this->grants->mail($data, $request->user(), new ClientContext($request->ip(), (string) $request->userAgent()));
         } catch (ItemNotFoundException) {
@@ -25,8 +27,17 @@ final class ItemGrantController
             return response()->json(['message' => __('messages.character_not_found')], 404);
         } catch (QueryException) {
             return response()->json(['message' => __('messages.player_database_unconfigured')], 503);
+        } catch (ItemGrantConflictException $exception) {
+            return response()->json(['message' => __("messages.{$exception->reason}")], 409);
         }
 
         return response()->json(['data' => ['mail_id' => $mailId], 'success' => true], 201);
+    }
+
+    public function index(Request $request): JsonResponse
+    {
+        $records = ItemGrantRecord::query()->with('requester:id,name,username')->latest()->paginate(min(max((int) $request->integer('per_page', 20), 1), 100));
+
+        return response()->json(['data' => $records->items(), 'meta' => ['current_page' => $records->currentPage(), 'last_page' => $records->lastPage(), 'total' => $records->total()], 'success' => true]);
     }
 }

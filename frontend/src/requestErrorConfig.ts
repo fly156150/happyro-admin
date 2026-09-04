@@ -20,6 +20,36 @@ interface ResponseStructure {
   showType?: ErrorShowType;
 }
 
+const csrfProtectedMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+let csrfRefreshPromise: Promise<void> | undefined;
+
+function refreshCsrfCookie() {
+  csrfRefreshPromise ??= fetch('/sanctum/csrf-cookie', {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`Unable to refresh CSRF cookie (${response.status})`);
+      }
+    })
+    .finally(() => {
+      csrfRefreshPromise = undefined;
+    });
+
+  return csrfRefreshPromise;
+}
+
+function currentXsrfToken() {
+  const cookie = document.cookie
+    .split('; ')
+    .find((entry) => entry.startsWith('XSRF-TOKEN='));
+
+  return cookie ? decodeURIComponent(cookie.slice('XSRF-TOKEN='.length)) : null;
+}
+
 /**
  * @name 错误处理
  * pro 自带的错误处理， 可以在这里做自己的改动
@@ -93,12 +123,20 @@ export const errorConfig: RequestConfig = {
   // 请求拦截器
   requestInterceptors: [
     (config: RequestOptions) => {
-      // 拦截请求配置，进行个性化处理。
-      // 示例：为请求附加 token（按需启用）
-      // const token = localStorage.getItem('token');
-      // if (token) {
-      //   config.headers = { ...config.headers, Authorization: `Bearer ${token}` };
-      // }
+      if (csrfProtectedMethods.has((config.method ?? 'GET').toUpperCase())) {
+        return refreshCsrfCookie().then(() => {
+          const token = currentXsrfToken();
+          if (!token) {
+            throw new Error('CSRF cookie was not issued');
+          }
+
+          return {
+            ...config,
+            headers: { ...config.headers, 'X-XSRF-TOKEN': token },
+          };
+        });
+      }
+
       return config;
     },
   ],

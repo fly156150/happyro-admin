@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Contracts\GameServer\GameServerGateway;
+use App\Exceptions\GameServerGatewayException;
 use App\Http\Requests\Settings\ApplyGameServerSettingsRequest;
+use App\Models\GameServerSettingRevision;
 use App\Services\GameServer\ApplyGameServerSettingsService;
 use App\Services\GameServer\GameServerSettingRegistry;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 final readonly class GameServerSettingController
 {
@@ -29,13 +32,15 @@ final readonly class GameServerSettingController
             ];
         }
 
-        return response()->json([
-            'data' => [
-                'values' => $this->gateway->battleConfig(),
-                'definitions' => $definitions,
-            ],
-            'success' => true,
-        ]);
+        try {
+            $values = $this->gateway->battleConfig();
+        } catch (GameServerGatewayException $exception) {
+            $status = in_array($exception->errorCode, ['unavailable', 'map_server_unavailable'], true) ? 503 : 502;
+
+            return response()->json(['message' => __('messages.game_server_unavailable')], $status);
+        }
+
+        return response()->json(['data' => ['values' => $values, 'definitions' => $definitions], 'success' => true]);
     }
 
     public function update(ApplyGameServerSettingsRequest $request): JsonResponse
@@ -51,5 +56,12 @@ final readonly class GameServerSettingController
             'data' => $revision,
             'success' => true,
         ]);
+    }
+
+    public function history(Request $request): JsonResponse
+    {
+        $revisions = GameServerSettingRevision::query()->with('requester:id,name,username')->latest()->paginate(min(max((int) $request->integer('per_page', 20), 1), 100));
+
+        return response()->json(['data' => $revisions->items(), 'meta' => ['current_page' => $revisions->currentPage(), 'last_page' => $revisions->lastPage(), 'total' => $revisions->total()], 'success' => true]);
     }
 }

@@ -26,6 +26,7 @@ describe('requestErrorConfig', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('errorThrower', () => {
@@ -242,7 +243,9 @@ describe('requestErrorConfig', () => {
     const interceptor = errorConfig.requestInterceptors?.[0] as (config: {
       url?: string;
       method?: string;
-    }) => { url?: string };
+    }) =>
+      | { url?: string; headers?: Record<string, string> }
+      | Promise<{ url?: string; headers?: Record<string, string> }>;
 
     it('should pass through config without modification', () => {
       const config = {
@@ -250,19 +253,59 @@ describe('requestErrorConfig', () => {
         method: 'GET',
       };
 
-      const result = interceptor(config);
+      const result = interceptor(config) as { url?: string };
 
-      // Token attachment is intentionally commented out in the source;
-      // interceptor currently returns config as-is
       expect(result.url).toBe('https://api.example.com/users');
     });
 
     it('should handle URL without config', () => {
       const config = {};
 
-      const result = interceptor(config);
+      const result = interceptor(config) as { url?: string };
 
       expect(result.url).toBeUndefined();
+    });
+
+    it.each(['POST', 'put', 'PATCH', 'DELETE'])(
+      'should refresh the CSRF cookie before %s requests',
+      async (method) => {
+        const fetchMock = vi
+          .spyOn(globalThis, 'fetch')
+          .mockResolvedValue({ ok: true } as Response);
+        vi.spyOn(document, 'cookie', 'get').mockReturnValue(
+          'theme=dark; XSRF-TOKEN=refreshed%3Dtoken',
+        );
+        const config = { url: '/api/resource', method };
+
+        const result = await interceptor(config);
+
+        expect(fetchMock).toHaveBeenCalledWith('/sanctum/csrf-cookie', {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { Accept: 'application/json' },
+        });
+        expect(result.headers).toEqual({ 'X-XSRF-TOKEN': 'refreshed=token' });
+      },
+    );
+
+    it('should share one CSRF refresh across concurrent mutations', async () => {
+      let resolveRefresh: ((response: Response) => void) | undefined;
+      const fetchMock = vi.spyOn(globalThis, 'fetch').mockReturnValue(
+        new Promise((resolve) => {
+          resolveRefresh = resolve;
+        }),
+      );
+      vi.spyOn(document, 'cookie', 'get').mockReturnValue(
+        'XSRF-TOKEN=shared-token',
+      );
+
+      const first = interceptor({ url: '/api/first', method: 'POST' });
+      const second = interceptor({ url: '/api/second', method: 'PATCH' });
+      resolveRefresh?.({ ok: true } as Response);
+      await Promise.all([first, second]);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
   });
 });

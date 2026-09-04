@@ -1,6 +1,7 @@
 import { request } from '@umijs/max';
 
 export type ItemGrant = {
+  idempotency_key: string;
   item_id: number;
   char_id: number;
   amount: number;
@@ -8,6 +9,10 @@ export type ItemGrant = {
   message: string;
   bound?: boolean;
 };
+
+export async function listItemGrants(page = 1) {
+  return request<{ data: Array<Record<string, unknown>>; meta: { current_page: number; last_page: number; total: number }; success: boolean }>(`/api/operations/item-grants?page=${page}`);
+}
 
 export type ItemGrantTarget = {
   char_id: number;

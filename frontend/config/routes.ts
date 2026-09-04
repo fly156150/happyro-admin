@@ -29,6 +29,12 @@ export default [
         access: 'canGrantItems',
         component: './operations/item-grants',
       },
+      {
+        path: '/operations/item-grant-records',
+        name: 'itemGrantRecords',
+        access: 'canGrantItems',
+        component: './operations/item-grant-records',
+      },
     ],
   },
   {
@@ -68,6 +74,11 @@ export default [
         path: '/settings/game-rules',
         name: 'gameRules',
         component: './settings/game-rules',
+      },
+      {
+        path: '/settings/game-rule-history',
+        name: 'gameRuleHistory',
+        component: './settings/game-rule-history',
       },
     ],
   },

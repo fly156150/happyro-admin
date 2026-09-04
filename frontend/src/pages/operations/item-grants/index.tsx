@@ -1,9 +1,10 @@
 import { PageContainer, ProForm } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
 import { App, Image, theme } from 'antd';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import ItemGrantFormFields from '@/components/ItemGrantFormFields';
 import { mailItem } from '@/services/operations/item-grants';
+import { createIdempotencyKey } from '@/utils/idempotency';
 
 type ItemImageSource = 'illustration' | 'icon' | 'missing';
 
@@ -11,6 +12,7 @@ export default function ItemGrants() {
   const [selectedItemId, setSelectedItemId] = useState<number>();
   const [itemImageSource, setItemImageSource] =
     useState<ItemImageSource>('illustration');
+  const idempotencyKey = useRef(createIdempotencyKey());
   const intl = useIntl();
   const { message } = App.useApp();
   const { token } = theme.useToken();
@@ -28,8 +30,10 @@ export default function ItemGrants() {
             title: String(values.title),
             message: String(values.message),
             bound: Boolean(values.bound),
+            idempotency_key: idempotencyKey.current,
           });
           message.success(t('operations.itemGrants.success', '邮件已发送'));
+          idempotencyKey.current = createIdempotencyKey();
           return true;
         }}
       >

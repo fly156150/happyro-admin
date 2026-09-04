@@ -19,7 +19,7 @@ final class SubmitGameServerCommandRequest extends FormRequest
             'target' => ['required', 'array'],
             'target.type' => ['required', 'string', 'in:character'],
             'target.id' => ['required', 'string', 'max:64'],
-            'payload' => ['required', 'array'],
+            'payload' => ['present', 'array'],
         ];
     }
 }

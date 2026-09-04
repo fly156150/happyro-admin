@@ -11,11 +11,6 @@ export type LoginResult = {
 };
 
 export async function login(credentials: LoginCredentials) {
-  await request('/sanctum/csrf-cookie', {
-    method: 'GET',
-    skipErrorHandler: true,
-  });
-
   return request<LoginResult>('/api/auth/login', {
     method: 'POST',
     data: credentials,

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class GameServerSettingRevision extends Model
 {
@@ -22,5 +23,10 @@ final class GameServerSettingRevision extends Model
             'changes' => 'array',
             'applied_at' => 'datetime',
         ];
+    }
+
+    public function requester(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'requested_by');
     }
 }

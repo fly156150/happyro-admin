@@ -57,14 +57,17 @@ Route::prefix('api/game-data')->middleware(['auth:sanctum', 'permission:game-dat
 Route::prefix('api/settings')->middleware(['auth:sanctum', 'permission:settings.manage'])->group(function () {
     Route::get('/game-data', [GameDataSettingController::class, 'show']);
     Route::put('/game-data', [GameDataSettingController::class, 'update']);
+    Route::get('/game-data/history', [GameDataSettingController::class, 'history']);
     Route::get('/game-rules', [GameServerSettingController::class, 'show']);
     Route::put('/game-rules', [GameServerSettingController::class, 'update']);
+    Route::get('/game-rules/history', [GameServerSettingController::class, 'history']);
 });
 
 Route::prefix('api/operations')->middleware(['auth:sanctum', 'permission:operations.item-grant'])->group(function () {
     Route::get('/item-grant-items', [ItemGrantItemController::class, 'index']);
     Route::get('/item-grant-targets', [ItemGrantTargetController::class, 'index']);
     Route::post('/item-grants/mail', [ItemGrantController::class, 'store']);
+    Route::get('/item-grants', [ItemGrantController::class, 'index']);
 });
 
 Route::prefix('api/operations/game-control')->middleware(['auth:sanctum', 'permission:operations.game-control'])->group(function () {

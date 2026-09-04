@@ -28,6 +28,9 @@ final class UpdateGameDataSettingTest extends TestCase
             'id' => 1, 'client_version' => 'client2', 'server_version' => 'server2',
         ]);
         $this->assertDatabaseHas('audit_logs', ['event' => 'settings.game_data_updated']);
+        $this->getJson('/api/settings/game-data/history')->assertOk()
+            ->assertJsonPath('data.0.metadata.after.clientVersion', 'client2')
+            ->assertJsonPath('meta.total', 1);
     }
 
     public function test_update_rejects_server_version_missing_from_monster_catalog(): void
