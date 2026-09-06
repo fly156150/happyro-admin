@@ -4,12 +4,12 @@ namespace Tests\Feature\GameData;
 
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 final class WorldDataControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     public function test_authenticated_operator_can_load_real_map_image(): void
     {

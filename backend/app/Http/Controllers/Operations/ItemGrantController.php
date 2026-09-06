@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Operations;
 
+use App\Contracts\Operations\ItemGrantRecordRepository;
 use App\Data\Auth\ClientContext;
 use App\Exceptions\CharacterNotFoundException;
 use App\Exceptions\ItemGrantConflictException;
 use App\Exceptions\ItemNotFoundException;
-use App\Models\ItemGrantRecord;
 use App\Services\Operations\ItemGrantService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -14,7 +14,10 @@ use Illuminate\Http\Request;
 
 final class ItemGrantController
 {
-    public function __construct(private readonly ItemGrantService $grants) {}
+    public function __construct(
+        private readonly ItemGrantService $grants,
+        private readonly ItemGrantRecordRepository $records,
+    ) {}
 
     public function store(Request $request): JsonResponse
     {
@@ -36,7 +39,7 @@ final class ItemGrantController
 
     public function index(Request $request): JsonResponse
     {
-        $records = ItemGrantRecord::query()->with('requester:id,name,username')->latest()->paginate(min(max((int) $request->integer('per_page', 20), 1), 100));
+        $records = $this->records->paginate(min(max($request->integer('per_page', 20), 1), 100));
 
         return response()->json(['data' => $records->items(), 'meta' => ['current_page' => $records->currentPage(), 'last_page' => $records->lastPage(), 'total' => $records->total()], 'success' => true]);
     }

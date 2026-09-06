@@ -94,10 +94,11 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
         >
           <Select
             allowClear
-            showSearch
-            filterOption={false}
+            showSearch={{
+              filterOption: false,
+              onSearch: itemOptions.search,
+            }}
             loading={itemOptions.loading}
-            onSearch={itemOptions.search}
             onChange={onItemChange}
             options={itemOptions.options}
             placeholder={t(
@@ -123,10 +124,11 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
       >
         <Select
           allowClear
-          showSearch
-          filterOption={false}
+          showSearch={{
+            filterOption: false,
+            onSearch: characterOptions.search,
+          }}
           loading={characterOptions.loading}
-          onSearch={characterOptions.search}
           options={characterOptions.options}
           placeholder={t(
             'operations.itemGrants.targetPlaceholder',

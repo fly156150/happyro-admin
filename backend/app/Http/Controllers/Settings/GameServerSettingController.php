@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Contracts\GameServer\GameServerGateway;
+use App\Contracts\GameServer\GameServerSettingRevisionRepository;
 use App\Exceptions\GameServerGatewayException;
 use App\Http\Requests\Settings\ApplyGameServerSettingsRequest;
-use App\Models\GameServerSettingRevision;
 use App\Services\GameServer\ApplyGameServerSettingsService;
 use App\Services\GameServer\GameServerSettingRegistry;
 use Illuminate\Http\JsonResponse;
@@ -15,6 +15,7 @@ final readonly class GameServerSettingController
 {
     public function __construct(
         private GameServerGateway $gateway,
+        private GameServerSettingRevisionRepository $revisions,
         private GameServerSettingRegistry $registry,
         private ApplyGameServerSettingsService $applySettings,
     ) {}
@@ -60,7 +61,7 @@ final readonly class GameServerSettingController
 
     public function history(Request $request): JsonResponse
     {
-        $revisions = GameServerSettingRevision::query()->with('requester:id,name,username')->latest()->paginate(min(max((int) $request->integer('per_page', 20), 1), 100));
+        $revisions = $this->revisions->paginate(min(max($request->integer('per_page', 20), 1), 100));
 
         return response()->json(['data' => $revisions->items(), 'meta' => ['current_page' => $revisions->currentPage(), 'last_page' => $revisions->lastPage(), 'total' => $revisions->total()], 'success' => true]);
     }

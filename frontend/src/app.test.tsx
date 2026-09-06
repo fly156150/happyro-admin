@@ -39,8 +39,18 @@ vi.mock('@ant-design/icons', () => ({
   LinkOutlined: () => null,
 }));
 
+vi.mock('antd', () => ({
+  App: Object.assign(({ children }: any) => children, {
+    useApp: () => ({
+      message: { warning: vi.fn(), error: vi.fn() },
+      notification: { open: vi.fn() },
+    }),
+  }),
+}));
+
 vi.mock('./requestErrorConfig', () => ({
   errorConfig: {},
+  setRequestFeedback: vi.fn(),
 }));
 
 vi.mock('../config/defaultSettings', () => ({

@@ -8,12 +8,12 @@ use App\Models\GameDataSetting;
 use App\Models\GameMonster;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 final class ListMonstersTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     public function test_monster_api_searches_and_filters_catalog(): void
     {

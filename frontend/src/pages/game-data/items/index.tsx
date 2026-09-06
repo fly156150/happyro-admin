@@ -7,6 +7,7 @@ import {
 } from '@ant-design/pro-components';
 import { useAccess, useIntl } from '@umijs/max';
 import { Button, Descriptions, Drawer, Tag } from 'antd';
+import type { RefObject } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import ItemGrantModal from '@/components/ItemGrantModal';
 import { ITEM_TYPE_CODES, WEAPON_SUBTYPE_CODES } from '@/data/game/item-types';
@@ -19,6 +20,15 @@ import {
 } from '@/services/game-data/items';
 
 type Translate = (id: string, fallback: string) => string;
+
+type ItemColumnsOptions = {
+  canGrantItems: boolean;
+  formRef: RefObject<ProFormInstance | undefined>;
+  locale: string;
+  selectedItemType?: string;
+  setDetail: (item: GameDataItem) => void;
+  t: Translate;
+};
 
 function itemTypeLabel(type: string | undefined, t: Translate): string {
   return type ? t(`gameData.item.type.${type.toLowerCase()}`, type) : '-';
@@ -40,17 +50,15 @@ function sourceLabel(source: GameDataItem['source'], t: Translate): string {
   return t(`gameData.item.source.${source}`, source);
 }
 
-export default function Items() {
-  const intl = useIntl();
-  const access = useAccess();
-  const formRef = useRef<ProFormInstance | undefined>(undefined);
-  const [detail, setDetail] = useState<GameDataItem>();
-  const [selectedItemType, setSelectedItemType] = useState<string>();
-  const t = (id: string, fallback: string) =>
-    intl.formatMessage({ id, defaultMessage: fallback });
-  const locale = intl.locale;
-
-  const columns = useMemo<ProColumns<GameDataItem>[]>(
+function useItemColumns({
+  canGrantItems,
+  formRef,
+  locale,
+  selectedItemType,
+  setDetail,
+  t,
+}: ItemColumnsOptions) {
+  return useMemo<ProColumns<GameDataItem>[]>(
     () => [
       {
         title: t('gameData.item.icon', '图标'),
@@ -139,7 +147,7 @@ export default function Items() {
         valueType: 'option',
         render: (_, row) => (
           <>
-            {access.canGrantItems && (
+            {canGrantItems && (
               <ItemGrantModal
                 itemId={row.Id}
                 itemName={itemName(row, locale)}
@@ -159,8 +167,28 @@ export default function Items() {
         ),
       },
     ],
-    [access.canGrantItems, intl.locale, selectedItemType],
+    [canGrantItems, locale, selectedItemType],
   );
+}
+
+export default function Items() {
+  const intl = useIntl();
+  const access = useAccess();
+  const formRef = useRef<ProFormInstance | undefined>(undefined);
+  const [detail, setDetail] = useState<GameDataItem>();
+  const [selectedItemType, setSelectedItemType] = useState<string>();
+  const t = (id: string, fallback: string) =>
+    intl.formatMessage({ id, defaultMessage: fallback });
+  const locale = intl.locale;
+
+  const columns = useItemColumns({
+    canGrantItems: access.canGrantItems,
+    formRef,
+    locale,
+    selectedItemType,
+    setDetail,
+    t,
+  });
 
   return (
     <PageContainer title={t('gameData.items.title', '物品图鉴')}>

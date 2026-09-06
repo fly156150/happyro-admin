@@ -1,3 +1,5 @@
+// Source: happyro-server/src/map/map.hpp (e_race/e_element) and
+// happyro-server/src/map/mob.hpp (e_size). Values follow the server YAML names.
 export const MONSTER_RACES = [
   'Formless',
   'Undead',

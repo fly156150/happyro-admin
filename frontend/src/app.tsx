@@ -3,9 +3,10 @@ import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
+import { App as AntdApp } from 'antd';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 // Initialize dayjs plugins globally
 dayjs.extend(relativeTime);
@@ -20,7 +21,7 @@ import {
 } from '@/components';
 import { currentUser as queryCurrentUser } from '@/services/auth/index';
 import defaultSettings from '../config/defaultSettings';
-import { errorConfig } from './requestErrorConfig';
+import { errorConfig, setRequestFeedback } from './requestErrorConfig';
 
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
@@ -175,11 +176,28 @@ export const request: RequestConfig = {
   ...errorConfig,
 };
 
+function RequestFeedbackBridge() {
+  const { message, notification } = AntdApp.useApp();
+
+  useEffect(() => {
+    setRequestFeedback({
+      warning: message.warning,
+      error: message.error,
+      notify: notification.open,
+    });
+
+    return () => setRequestFeedback();
+  }, [message, notification]);
+
+  return null;
+}
+
 export function rootContainer(container: React.ReactNode) {
   return (
-    <>
+    <AntdApp>
+      <RequestFeedbackBridge />
       <OfflineBanner />
       <ErrorBoundary>{container}</ErrorBoundary>
-    </>
+    </AntdApp>
   );
 }

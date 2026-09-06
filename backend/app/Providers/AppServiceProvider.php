@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Contracts\Audit\AuditLogRepository;
 use App\Contracts\Audit\AuditWriter;
 use App\Contracts\Auth\AuthenticationService;
 use App\Contracts\Auth\LoginThrottle;
@@ -10,10 +11,12 @@ use App\Contracts\Auth\UserProvisioner;
 use App\Contracts\Auth\UserRepository;
 use App\Contracts\GameData\GameDataSettingRepository;
 use App\Contracts\GameData\ItemAssetRepository;
+use App\Contracts\GameData\ItemCatalogRepository;
 use App\Contracts\GameData\ItemRepository;
 use App\Contracts\GameData\ItemSnapshotReader;
 use App\Contracts\GameData\ItemViewBuilder;
 use App\Contracts\GameData\MonsterAssetRepository;
+use App\Contracts\GameData\MonsterCatalogRepository;
 use App\Contracts\GameData\MonsterRepository;
 use App\Contracts\GameData\MonsterSnapshotReader;
 use App\Contracts\GameServer\GameServerCommandRepository;
@@ -21,6 +24,7 @@ use App\Contracts\GameServer\GameServerConfigWriter;
 use App\Contracts\GameServer\GameServerGateway;
 use App\Contracts\GameServer\GameServerSettingRepository;
 use App\Contracts\GameServer\GameServerSettingRevisionRepository;
+use App\Contracts\Operations\ItemGrantRecordRepository;
 use App\Contracts\Operations\ItemGrantRepository;
 use App\Contracts\Operations\ItemGrantTargetRepository;
 use App\Contracts\Players\LoginLogRepository;
@@ -28,9 +32,13 @@ use App\Contracts\Players\PlayerAccountRepository;
 use App\Contracts\Players\PlayerCharacterRepository;
 use App\Infrastructure\GameServer\FileGameServerConfigWriter;
 use App\Infrastructure\GameServer\HttpGameServerGateway;
+use App\Infrastructure\Persistence\Audit\EloquentAuditLogRepository;
+use App\Infrastructure\Persistence\GameData\DatabaseItemCatalogRepository;
+use App\Infrastructure\Persistence\GameData\DatabaseMonsterCatalogRepository;
 use App\Infrastructure\Persistence\GameServer\DatabaseGameServerCommandRepository;
 use App\Infrastructure\Persistence\GameServer\DatabaseGameServerSettingRepository;
 use App\Infrastructure\Persistence\GameServer\DatabaseGameServerSettingRevisionRepository;
+use App\Infrastructure\Persistence\Operations\EloquentItemGrantRecordRepository;
 use App\Services\Audit\EloquentAuditWriter;
 use App\Services\Auth\EloquentPermissionChecker;
 use App\Services\Auth\EloquentUserProvisioner;
@@ -66,10 +74,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(UserProvisioner::class, EloquentUserProvisioner::class);
         $this->app->bind(LoginThrottle::class, RateLimiterLoginThrottle::class);
         $this->app->bind(AuditWriter::class, EloquentAuditWriter::class);
+        $this->app->bind(AuditLogRepository::class, EloquentAuditLogRepository::class);
         $this->app->bind(PermissionChecker::class, EloquentPermissionChecker::class);
         $this->app->bind(PlayerAccountRepository::class, DatabasePlayerAccountRepository::class);
         $this->app->bind(PlayerCharacterRepository::class, DatabasePlayerCharacterRepository::class);
         $this->app->bind(ItemRepository::class, DatabaseItemRepository::class);
+        $this->app->bind(ItemCatalogRepository::class, DatabaseItemCatalogRepository::class);
         $this->app->bind(GameDataSettingRepository::class, DatabaseGameDataSettingRepository::class);
         $this->app->bind(ItemSnapshotReader::class, JsonItemSnapshotReader::class);
         $this->app->bind(ItemViewBuilder::class, DatabaseItemViewBuilder::class);
@@ -80,7 +90,9 @@ class AppServiceProvider extends ServiceProvider
             );
         });
         $this->app->bind(ItemGrantRepository::class, DatabaseItemGrantRepository::class);
+        $this->app->bind(ItemGrantRecordRepository::class, EloquentItemGrantRecordRepository::class);
         $this->app->bind(MonsterRepository::class, DatabaseMonsterRepository::class);
+        $this->app->bind(MonsterCatalogRepository::class, DatabaseMonsterCatalogRepository::class);
         $this->app->bind(MonsterSnapshotReader::class, JsonMonsterSnapshotReader::class);
         $this->app->bind(MonsterAssetRepository::class, fn () => new LocalMonsterAssetRepository(
             config('happyro.game_data.monster_image_root'),

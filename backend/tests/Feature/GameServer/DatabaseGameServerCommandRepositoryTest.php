@@ -9,12 +9,12 @@ use App\Data\GameServer\GameServerCommandType;
 use App\Exceptions\GameServerCommandStateException;
 use App\Exceptions\IdempotencyConflictException;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 final class DatabaseGameServerCommandRepositoryTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     public function test_identical_submission_reuses_command(): void
     {

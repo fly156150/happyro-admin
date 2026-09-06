@@ -4,6 +4,7 @@ namespace App\Infrastructure\Persistence\GameServer;
 
 use App\Contracts\GameServer\GameServerSettingRevisionRepository;
 use App\Models\GameServerSettingRevision;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 final class DatabaseGameServerSettingRevisionRepository implements GameServerSettingRevisionRepository
@@ -43,6 +44,14 @@ final class DatabaseGameServerSettingRevisionRepository implements GameServerSet
     public function markFailed(int $id): GameServerSettingRevision
     {
         return $this->transition($id, 'failed');
+    }
+
+    public function paginate(int $perPage): LengthAwarePaginator
+    {
+        return GameServerSettingRevision::query()
+            ->with('requester:id,name,username')
+            ->latest()
+            ->paginate($perPage);
     }
 
     /** @param array<string, mixed> $attributes */

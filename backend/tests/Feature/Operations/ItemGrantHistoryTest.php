@@ -5,12 +5,12 @@ namespace Tests\Feature\Operations;
 use App\Models\ItemGrantRecord;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 final class ItemGrantHistoryTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     public function test_authorized_admin_can_query_item_grant_records(): void
     {

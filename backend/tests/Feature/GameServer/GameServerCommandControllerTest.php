@@ -6,13 +6,13 @@ use App\Contracts\GameServer\GameServerGateway;
 use App\Data\GameServer\GameServerCommandResult;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Mockery;
 use Tests\TestCase;
 
 final class GameServerCommandControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     public function test_authenticated_operator_can_submit_a_command(): void
     {

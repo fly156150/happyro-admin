@@ -5,12 +5,12 @@ namespace Tests\Feature\Settings;
 use App\Models\GameDataCatalog;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 final class UpdateGameDataSettingTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     public function test_super_admin_can_read_and_update_global_versions(): void
     {

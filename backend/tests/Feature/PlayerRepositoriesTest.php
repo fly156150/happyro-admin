@@ -9,14 +9,14 @@ use App\Services\Players\DatabaseLoginLogRepository;
 use App\Services\Players\DatabasePlayerAccountRepository;
 use App\Services\Players\DatabasePlayerCharacterRepository;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 final class PlayerRepositoriesTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     protected function setUp(): void
     {

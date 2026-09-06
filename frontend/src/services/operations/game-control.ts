@@ -7,9 +7,16 @@ export type GameControlCommand = {
   payload: Record<string, number>;
 };
 
+export type GameControlCommandResponse = {
+  data: { result?: Record<string, number> };
+};
+
 export async function executeGameControlCommand(data: GameControlCommand) {
-  return request('/api/operations/game-control/commands', {
-    method: 'POST',
-    data,
-  });
+  return request<GameControlCommandResponse>(
+    '/api/operations/game-control/commands',
+    {
+      method: 'POST',
+      data,
+    },
+  );
 }

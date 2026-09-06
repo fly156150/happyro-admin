@@ -3,6 +3,7 @@
 namespace App\Services\Players;
 
 use App\Contracts\Players\PlayerAccountRepository;
+use App\Exceptions\PlayerAccountNotFoundException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -49,7 +50,7 @@ final class DatabasePlayerAccountRepository implements PlayerAccountRepository
     {
         $updated = $this->query()->where('account_id', $accountId)->update($attributes);
         if ($updated === 0 && $this->find($accountId) === null) {
-            throw new \App\Exceptions\PlayerAccountNotFoundException($accountId);
+            throw new PlayerAccountNotFoundException($accountId);
         }
 
         return $this->find($accountId);
@@ -59,7 +60,7 @@ final class DatabasePlayerAccountRepository implements PlayerAccountRepository
     {
         $deleted = $this->query()->where('account_id', $accountId)->delete();
         if ($deleted === 0) {
-            throw new \App\Exceptions\PlayerAccountNotFoundException($accountId);
+            throw new PlayerAccountNotFoundException($accountId);
         }
         DB::connection('game')->table(config('happyro.players.character_table', 'char'))
             ->where('account_id', $accountId)->delete();

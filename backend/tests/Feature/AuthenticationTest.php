@@ -5,12 +5,12 @@ namespace Tests\Feature;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     public function test_an_active_user_can_log_in_and_read_their_identity(): void
     {

@@ -2,16 +2,31 @@
 
 namespace Tests\Feature\GameData;
 
+use App\Contracts\GameData\MonsterCatalogRepository;
 use App\Contracts\GameData\MonsterSnapshotReader;
 use App\Data\GameData\MonsterCatalogSnapshot;
 use App\Services\GameData\ImportMonstersService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Mockery;
 use Tests\TestCase;
 
 final class ImportMonstersTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
+
+    public function test_command_without_source_only_displays_usage(): void
+    {
+        $reader = Mockery::mock(MonsterSnapshotReader::class);
+        $reader->expects('read')->never();
+        $this->app->instance(MonsterSnapshotReader::class, $reader);
+
+        $this->artisan('game-data:import-monsters', ['--no-color' => true])
+            ->expectsOutputToContain('HappyRO 魔物资料导入')
+            ->expectsOutputToContain('php artisan game-data:import-monsters --renewal')
+            ->assertSuccessful();
+
+        $this->assertDatabaseCount('game_data_catalogs', 0);
+    }
 
     public function test_reimport_is_idempotent_and_removes_stale_monsters(): void
     {
@@ -20,7 +35,7 @@ final class ImportMonstersTest extends TestCase
             $this->snapshot([1001 => $this->monster('蝎子'), 1002 => $this->monster('波利')]),
             $this->snapshot([1002 => $this->monster('波利（新）')], 'hash2'),
         );
-        $service = new ImportMonstersService($reader, app('db'));
+        $service = new ImportMonstersService($reader, app(MonsterCatalogRepository::class));
         $service->import('monsters.json');
         $result = $service->import('monsters.json');
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Settings;
 
+use App\Data\GameServer\GameServerSettingDefinition;
 use App\Services\GameServer\GameServerSettingRegistry;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -9,6 +10,9 @@ use Illuminate\Validation\Validator;
 
 final class ApplyGameServerSettingsRequest extends FormRequest
 {
+    /** @var array<string, GameServerSettingDefinition> */
+    private array $definitions = [];
+
     public function authorize(): bool
     {
         return true;
@@ -17,8 +21,10 @@ final class ApplyGameServerSettingsRequest extends FormRequest
     /**
      * @return array<string, ValidationRule|array<mixed>|string>
      */
-    public function rules(): array
+    public function rules(GameServerSettingRegistry $registry): array
     {
+        $this->definitions = $registry->definitions();
+
         return [
             'changes' => ['required', 'array', 'min:1'],
             'changes.*' => ['required', 'integer', 'min:0'],
@@ -29,19 +35,18 @@ final class ApplyGameServerSettingsRequest extends FormRequest
     protected function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
-            $definitions = app(GameServerSettingRegistry::class)->definitions();
             foreach (array_keys($this->input('changes', [])) as $key) {
-                if (! isset($definitions[$key])) {
+                if (! isset($this->definitions[$key])) {
                     $validator->errors()->add("changes.$key", 'Unknown game server setting.');
 
                     continue;
                 }
 
                 $value = $this->input("changes.$key");
-                if (is_numeric($value) && (int) $value < $definitions[$key]->minimum) {
+                if (is_numeric($value) && (int) $value < $this->definitions[$key]->minimum) {
                     $validator->errors()->add("changes.$key", 'Game server setting value is outside the allowed range.');
                 }
-                if (is_numeric($value) && (int) $value > $definitions[$key]->maximum) {
+                if (is_numeric($value) && (int) $value > $this->definitions[$key]->maximum) {
                     $validator->errors()->add("changes.$key", 'Game server setting value is outside the allowed range.');
                 }
             }

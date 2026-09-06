@@ -3,6 +3,7 @@
 namespace App\Contracts\GameServer;
 
 use App\Models\GameServerSettingRevision;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface GameServerSettingRevisionRepository
 {
@@ -14,4 +15,7 @@ interface GameServerSettingRevisionRepository
     public function markApplied(int $id): GameServerSettingRevision;
 
     public function markFailed(int $id): GameServerSettingRevision;
+
+    /** @return LengthAwarePaginator<int, GameServerSettingRevision> */
+    public function paginate(int $perPage): LengthAwarePaginator;
 }

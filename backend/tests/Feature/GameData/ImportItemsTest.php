@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\GameData;
 
+use App\Contracts\GameData\ItemCatalogRepository;
 use App\Contracts\GameData\ItemSnapshotReader;
 use App\Contracts\GameData\ItemViewBuilder;
 use App\Data\GameData\ItemCatalogSnapshot;
@@ -24,7 +25,7 @@ final class ImportItemsTest extends TestCase
         );
         $views = Mockery::mock(ItemViewBuilder::class);
         $views->expects('rebuildAll')->twice()->andReturn(['combinations' => 0, 'records' => 0]);
-        $service = new ImportItemsService($reader, $views, app('db'));
+        $service = new ImportItemsService($reader, $views, app(ItemCatalogRepository::class));
 
         $first = $service->import('snapshot.json');
         $second = $service->import('snapshot.json');
@@ -56,7 +57,7 @@ final class ImportItemsTest extends TestCase
         $views->expects('rebuildAll')->never();
 
         $this->expectException(RuntimeException::class);
-        (new ImportItemsService($reader, $views, app('db')))->import('snapshot.json');
+        (new ImportItemsService($reader, $views, app(ItemCatalogRepository::class)))->import('snapshot.json');
     }
 
     public function test_import_rebuilds_merged_query_views(): void
@@ -74,7 +75,7 @@ final class ImportItemsTest extends TestCase
                 ],
             ]),
         );
-        $service = new ImportItemsService($reader, app(ItemViewBuilder::class), app('db'));
+        $service = new ImportItemsService($reader, app(ItemViewBuilder::class), app(ItemCatalogRepository::class));
 
         $results = $service->importMany(['client.json', 'server.json']);
         $result = $results[1];

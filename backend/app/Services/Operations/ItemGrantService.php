@@ -4,6 +4,7 @@ namespace App\Services\Operations;
 
 use App\Contracts\Audit\AuditWriter;
 use App\Contracts\GameData\ItemRepository;
+use App\Contracts\Operations\ItemGrantRecordRepository;
 use App\Contracts\Operations\ItemGrantRepository;
 use App\Data\Auth\ClientContext;
 use App\Exceptions\ItemGrantConflictException;
@@ -13,7 +14,12 @@ use App\Models\User;
 
 final class ItemGrantService
 {
-    public function __construct(private readonly ItemRepository $items, private readonly ItemGrantRepository $grants, private readonly AuditWriter $audit) {}
+    public function __construct(
+        private readonly ItemRepository $items,
+        private readonly ItemGrantRepository $grants,
+        private readonly ItemGrantRecordRepository $records,
+        private readonly AuditWriter $audit,
+    ) {}
 
     /** @param array<string, mixed> $data */
     public function mail(array $data, User $operator, ClientContext $context): int
@@ -22,7 +28,7 @@ final class ItemGrantService
             'item_id' => (int) $data['item_id'], 'char_id' => (int) $data['char_id'], 'amount' => (int) $data['amount'],
             'title' => (string) $data['title'], 'message' => (string) $data['message'], 'bound' => (bool) ($data['bound'] ?? false),
         ], JSON_THROW_ON_ERROR));
-        $existing = ItemGrantRecord::query()->where('idempotency_key', $data['idempotency_key'])->first();
+        $existing = $this->records->findByIdempotencyKey($data['idempotency_key']);
         if ($existing) {
             return $this->replay($existing, $requestHash);
         }
@@ -32,8 +38,8 @@ final class ItemGrantService
         )) {
             throw new ItemNotFoundException((int) $data['item_id']);
         }
-        $record = ItemGrantRecord::query()->firstOrCreate(
-            ['idempotency_key' => $data['idempotency_key']],
+        $record = $this->records->createPending(
+            $data['idempotency_key'],
             ['request_hash' => $requestHash, 'item_id' => $data['item_id'], 'char_id' => $data['char_id'], 'amount' => $data['amount'], 'title' => $data['title'], 'status' => 'pending', 'requested_by' => $operator->getKey()],
         );
         if (! $record->wasRecentlyCreated) {
@@ -41,9 +47,9 @@ final class ItemGrantService
         }
         try {
             $mailId = $this->grants->mail($data + ['send_name' => $operator->username ?? $operator->name ?? 'admin']);
-            $record->update(['status' => 'sent', 'mail_id' => $mailId]);
+            $this->records->markSent($record, $mailId);
         } catch (\Throwable $exception) {
-            $record->update(['status' => 'failed', 'error' => 'item_grant_failed']);
+            $this->records->markFailed($record, 'item_grant_failed');
             throw $exception;
         }
         $this->audit->write('operations.item_mailed', $context, $operator, metadata: ['mail_id' => $mailId, 'item_id' => $data['item_id'], 'char_id' => $data['char_id'], 'amount' => $data['amount']]);

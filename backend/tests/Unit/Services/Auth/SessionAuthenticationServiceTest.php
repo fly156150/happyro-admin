@@ -50,7 +50,7 @@ class SessionAuthenticationServiceTest extends TestCase
         );
     }
 
-    public function test_it_authenticates_an_active_user_and_records_the_login(): void
+    public function test_active_user_is_authenticated_and_login_is_recorded(): void
     {
         [$data, $context] = $this->loginInput();
         $user = new User(['username' => 'admin', 'name' => 'Admin', 'is_active' => true]);
@@ -76,7 +76,7 @@ class SessionAuthenticationServiceTest extends TestCase
         $this->assertSame($user, $result->user);
     }
 
-    public function test_it_rejects_a_disabled_user_without_checking_the_password(): void
+    public function test_disabled_user_is_rejected_without_checking_the_password(): void
     {
         [$data, $context] = $this->loginInput();
         $user = new User(['username' => 'admin', 'name' => 'Admin', 'is_active' => false]);
@@ -97,7 +97,7 @@ class SessionAuthenticationServiceTest extends TestCase
         $this->assertSame(LoginStatus::InvalidCredentials, $result->status);
     }
 
-    public function test_it_stops_before_loading_a_user_when_rate_limited(): void
+    public function test_rate_limit_stops_authentication_before_loading_a_user(): void
     {
         [$data, $context] = $this->loginInput();
         $this->throttle->expects('isLocked')->with($data, $context)->andReturnTrue();
@@ -111,7 +111,7 @@ class SessionAuthenticationServiceTest extends TestCase
         $this->assertSame(42, $result->retryAfter);
     }
 
-    public function test_it_audits_before_logging_out(): void
+    public function test_logout_is_audited_before_the_session_is_invalidated(): void
     {
         $context = new ClientContext('127.0.0.1', 'PHPUnit');
         $user = new User(['username' => 'admin', 'name' => 'Admin']);

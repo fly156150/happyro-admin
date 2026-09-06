@@ -8,57 +8,42 @@ import {
   UserAddOutlined,
 } from '@ant-design/icons';
 import {
-  PageContainer,
-  ProTable,
   type ActionType,
+  PageContainer,
   type ProColumns,
+  ProTable,
 } from '@ant-design/pro-components';
-import { App, Button, Dropdown, Form, Input, Modal, Space, Tag } from 'antd';
-import type { MenuProps } from 'antd';
 import { useIntl } from '@umijs/max';
+import { App, Button, Dropdown, Form, Input, Modal, Space, Tag } from 'antd';
+import type { Key, RefObject } from 'react';
 import { useRef, useState } from 'react';
-import type { Key } from 'react';
 import {
   batchAccounts,
   deleteAccount,
   listAccounts,
+  type PlayerAccount,
   registerAccount,
   resetPassword,
   updateAccount,
-  type PlayerAccount,
 } from '@/services/players';
 
-export default function Accounts() {
-  const intl = useIntl();
-  const { message, modal } = App.useApp();
-  const actionRef = useRef<ActionType>(null);
-  const [selected, setSelected] = useState<Key[]>([]);
-  const [passwordId, setPasswordId] = useState<number>();
-  const [registerOpen, setRegisterOpen] = useState(false);
-  const [form] = Form.useForm();
-  const [registerForm] = Form.useForm();
-  const t = (id: string, fallback: string) =>
-    intl.formatMessage({ id, defaultMessage: fallback });
-  const confirmAction = (
-    action: 'delete' | 'ban' | 'unban' | 'kick',
-    ids: number[],
-  ) =>
-    modal.confirm({
-      title: t('players.account.confirmTitle', '请确认操作'),
-      content: t(`players.account.confirm.${action}`, '确认执行此操作？'),
-      okText: t('common.confirm', '确认'),
-      cancelText: t('common.cancel', '取消'),
-      okButtonProps: { danger: action === 'delete' },
-      onOk: async () => {
-        if (action === 'delete' && ids.length === 1)
-          await deleteAccount(ids[0]);
-        else await batchAccounts(action, ids);
-        message.success(t(`players.account.success.${action}`, '操作成功'));
-        setSelected([]);
-        actionRef.current?.reload();
-      },
-    });
-  const columns: ProColumns<PlayerAccount>[] = [
+type AccountAction = 'delete' | 'ban' | 'unban' | 'kick';
+type Translate = (id: string, fallback: string) => string;
+
+type AccountColumnsOptions = {
+  onDelete: (accountId: number) => void;
+  onPasswordReset: (accountId: number) => void;
+  onToggleState: (account: PlayerAccount, reload?: () => void) => Promise<void>;
+  t: Translate;
+};
+
+function accountColumns({
+  onDelete,
+  onPasswordReset,
+  onToggleState,
+  t,
+}: AccountColumnsOptions): ProColumns<PlayerAccount>[] {
+  return [
     {
       title: t('players.account.id', '账号 ID'),
       dataIndex: 'account_id',
@@ -100,15 +85,7 @@ export default function Accounts() {
             type="link"
             size="small"
             icon={row.state ? <CheckCircleOutlined /> : <StopOutlined />}
-            onClick={async () => {
-              await updateAccount(row.account_id, { state: row.state ? 0 : 1 });
-              message.success(
-                row.state
-                  ? t('players.account.unbanned', '已解禁')
-                  : t('players.account.bannedSuccess', '已封禁'),
-              );
-              action?.reload();
-            }}
+            onClick={() => onToggleState(row, action?.reload)}
           >
             {row.state
               ? t('players.account.unban', '解禁')
@@ -118,10 +95,7 @@ export default function Accounts() {
             type="link"
             size="small"
             icon={<LockOutlined />}
-            onClick={() => {
-              setPasswordId(row.account_id);
-              form.resetFields();
-            }}
+            onClick={() => onPasswordReset(row.account_id)}
           >
             {t('players.account.resetPassword', '重置密码')}
           </Button>
@@ -130,7 +104,7 @@ export default function Accounts() {
             size="small"
             icon={<DeleteOutlined />}
             danger
-            onClick={() => confirmAction('delete', [row.account_id])}
+            onClick={() => onDelete(row.account_id)}
           >
             {t('common.delete', '删除')}
           </Button>
@@ -138,7 +112,22 @@ export default function Accounts() {
       ),
     },
   ];
-  const batchMenu: MenuProps = {
+}
+
+type AccountToolbarProps = {
+  selected: Key[];
+  t: Translate;
+  onAction: (action: AccountAction, ids: number[]) => void;
+  onRegister: () => void;
+};
+
+function AccountToolbar({
+  selected,
+  t,
+  onAction,
+  onRegister,
+}: AccountToolbarProps) {
+  const menu = {
     items: [
       {
         key: 'delete',
@@ -162,62 +151,60 @@ export default function Accounts() {
         icon: <DisconnectOutlined />,
       },
     ],
-    onClick: ({ key }) =>
-      confirmAction(
-        key as 'delete' | 'ban' | 'unban' | 'kick',
-        selected.map(Number),
-      ),
+    onClick: ({ key }: { key: string }) =>
+      onAction(key as AccountAction, selected.map(Number)),
   };
-  const toolbar = (
-    <Dropdown menu={batchMenu} disabled={!selected.length}>
-      <Button icon={<DownOutlined />}>
-        {t('players.account.actions', '操作')}
-      </Button>
-    </Dropdown>
-  );
-  const panelActions = (
+
+  return (
     <Space>
-      <Button
-        type="primary"
-        icon={<UserAddOutlined />}
-        onClick={() => {
-          registerForm.resetFields();
-          setRegisterOpen(true);
-        }}
-      >
+      <Button type="primary" icon={<UserAddOutlined />} onClick={onRegister}>
         {t('players.account.register', '注册账号')}
       </Button>
-      {toolbar}
+      <Dropdown menu={menu} disabled={!selected.length}>
+        <Button icon={<DownOutlined />}>
+          {t('players.account.actions', '操作')}
+        </Button>
+      </Dropdown>
     </Space>
   );
+}
+
+type AccountDialogsProps = {
+  passwordId?: number;
+  registerOpen: boolean;
+  t: Translate;
+  onClosePassword: () => void;
+  onCloseRegister: () => void;
+  onPasswordReset: (accountId: number, password: string) => Promise<void>;
+  onRegister: (values: Parameters<typeof registerAccount>[0]) => Promise<void>;
+};
+
+function AccountDialogs({
+  passwordId,
+  registerOpen,
+  t,
+  onClosePassword,
+  onCloseRegister,
+  onPasswordReset,
+  onRegister,
+}: AccountDialogsProps) {
+  const [passwordForm] = Form.useForm();
+  const [registerForm] = Form.useForm();
+
   return (
-    <PageContainer title={t('players.accounts.title', '用户账号')}>
-      <ProTable<PlayerAccount>
-        headerTitle={panelActions}
-        actionRef={actionRef}
-        rowKey="account_id"
-        rowSelection={{ selectedRowKeys: selected, onChange: setSelected }}
-        columns={columns}
-        request={async (params) => {
-          const result = await listAccounts(params);
-          return { data: result.data, total: result.total, success: true };
-        }}
-        toolBarRender={() => []}
-      />
+    <>
       <Modal
         title={t('players.account.resetPassword', '重置密码')}
-        open={!!passwordId}
-        onCancel={() => setPasswordId(undefined)}
-        onOk={() => form.submit()}
+        open={Boolean(passwordId)}
+        onCancel={onClosePassword}
+        onOk={() => passwordForm.submit()}
+        afterClose={() => passwordForm.resetFields()}
       >
         <Form
-          form={form}
-          onFinish={async ({ password }) => {
-            if (!passwordId) return;
-            await resetPassword(passwordId, password);
-            message.success(t('players.account.passwordReset', '密码已重置'));
-            setPasswordId(undefined);
-          }}
+          form={passwordForm}
+          onFinish={({ password }) =>
+            passwordId && onPasswordReset(passwordId, password)
+          }
         >
           <Form.Item
             name="password"
@@ -231,18 +218,11 @@ export default function Accounts() {
       <Modal
         title={t('players.account.register', '注册账号')}
         open={registerOpen}
-        onCancel={() => setRegisterOpen(false)}
+        onCancel={onCloseRegister}
         onOk={() => registerForm.submit()}
+        afterClose={() => registerForm.resetFields()}
       >
-        <Form
-          form={registerForm}
-          onFinish={async (values) => {
-            await registerAccount(values);
-            message.success(t('players.account.registered', '账号已注册'));
-            setRegisterOpen(false);
-            actionRef.current?.reload();
-          }}
-        >
+        <Form form={registerForm} onFinish={onRegister}>
           <Form.Item
             name="userid"
             label={t('players.account.username', '用户名')}
@@ -273,6 +253,95 @@ export default function Accounts() {
           </Form.Item>
         </Form>
       </Modal>
+    </>
+  );
+}
+
+function reload(ref: RefObject<ActionType | null>) {
+  ref.current?.reload();
+}
+
+export default function Accounts() {
+  const intl = useIntl();
+  const { message, modal } = App.useApp();
+  const actionRef = useRef<ActionType>(null);
+  const [selected, setSelected] = useState<Key[]>([]);
+  const [passwordId, setPasswordId] = useState<number>();
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const t = (id: string, fallback: string) =>
+    intl.formatMessage({ id, defaultMessage: fallback });
+  const confirmAction = (action: AccountAction, ids: number[]) =>
+    modal.confirm({
+      title: t('players.account.confirmTitle', '请确认操作'),
+      content: t(`players.account.confirm.${action}`, '确认执行此操作？'),
+      okText: t('common.confirm', '确认'),
+      cancelText: t('common.cancel', '取消'),
+      okButtonProps: { danger: action === 'delete' },
+      onOk: async () => {
+        if (action === 'delete' && ids.length === 1) {
+          await deleteAccount(ids[0]);
+        } else {
+          await batchAccounts(action, ids);
+        }
+        message.success(t(`players.account.success.${action}`, '操作成功'));
+        setSelected([]);
+        reload(actionRef);
+      },
+    });
+  const columns = accountColumns({
+    t,
+    onDelete: (accountId) => confirmAction('delete', [accountId]),
+    onPasswordReset: setPasswordId,
+    onToggleState: async (account, reloadTable) => {
+      await updateAccount(account.account_id, { state: account.state ? 0 : 1 });
+      message.success(
+        account.state
+          ? t('players.account.unbanned', '已解禁')
+          : t('players.account.bannedSuccess', '已封禁'),
+      );
+      reloadTable?.();
+    },
+  });
+
+  return (
+    <PageContainer title={t('players.accounts.title', '用户账号')}>
+      <ProTable<PlayerAccount>
+        headerTitle={
+          <AccountToolbar
+            selected={selected}
+            t={t}
+            onAction={confirmAction}
+            onRegister={() => setRegisterOpen(true)}
+          />
+        }
+        actionRef={actionRef}
+        rowKey="account_id"
+        rowSelection={{ selectedRowKeys: selected, onChange: setSelected }}
+        columns={columns}
+        request={async (params) => {
+          const result = await listAccounts(params);
+          return { data: result.data, total: result.total, success: true };
+        }}
+        toolBarRender={() => []}
+      />
+      <AccountDialogs
+        passwordId={passwordId}
+        registerOpen={registerOpen}
+        t={t}
+        onClosePassword={() => setPasswordId(undefined)}
+        onCloseRegister={() => setRegisterOpen(false)}
+        onPasswordReset={async (accountId, password) => {
+          await resetPassword(accountId, password);
+          message.success(t('players.account.passwordReset', '密码已重置'));
+          setPasswordId(undefined);
+        }}
+        onRegister={async (values) => {
+          await registerAccount(values);
+          message.success(t('players.account.registered', '账号已注册'));
+          setRegisterOpen(false);
+          reload(actionRef);
+        }}
+      />
     </PageContainer>
   );
 }

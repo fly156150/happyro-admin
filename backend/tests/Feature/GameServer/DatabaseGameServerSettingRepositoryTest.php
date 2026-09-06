@@ -3,12 +3,12 @@
 namespace Tests\Feature\GameServer;
 
 use App\Contracts\GameServer\GameServerSettingRepository;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
 final class DatabaseGameServerSettingRepositoryTest extends TestCase
 {
-    use RefreshDatabase;
+    use LazilyRefreshDatabase;
 
     public function test_sync_applied_is_idempotent_per_server_and_key(): void
     {

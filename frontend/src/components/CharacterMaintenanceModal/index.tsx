@@ -4,12 +4,19 @@ import { useIntl } from '@umijs/max';
 import { App, Button, Form, Modal, Space } from 'antd';
 import { useState } from 'react';
 import { executeGameControlCommand } from '@/services/operations/game-control';
+import { getCharacter } from '@/services/players/queries';
 import { createIdempotencyKey } from '@/utils/idempotency';
+import {
+  actionFields,
+  characterFormValues,
+  maxMaintainedStat,
+  mergeCharacterResult,
+  type MaintenanceAction,
+} from './form-values';
 
 type Props = { charId: number; characterName: string };
-type Action = 'progression' | 'stats' | 'statsReset' | 'skills' | 'vitals';
 
-const commandTypes: Record<Action, string> = {
+const commandTypes: Record<MaintenanceAction, string> = {
   progression: 'character.progression.update',
   stats: 'character.stats.update',
   statsReset: 'character.stats.reset',
@@ -17,13 +24,7 @@ const commandTypes: Record<Action, string> = {
   vitals: 'character.vitals.restore',
 };
 
-const actionFields: Record<Action, string[]> = {
-  progression: ['base_level', 'job_level', 'job_id'],
-  stats: ['str', 'agi', 'vit', 'int', 'dex', 'luk'],
-  statsReset: [],
-  skills: [],
-  vitals: [],
-};
+type CharacterSnapshot = Record<string, unknown>;
 
 export default function CharacterMaintenanceModal({
   charId,
@@ -32,7 +33,9 @@ export default function CharacterMaintenanceModal({
   const intl = useIntl();
   const { message } = App.useApp();
   const [open, setOpen] = useState(false);
-  const [action, setAction] = useState<Action>('progression');
+  const [loading, setLoading] = useState(false);
+  const [action, setAction] = useState<MaintenanceAction>('progression');
+  const [character, setCharacter] = useState<CharacterSnapshot>();
   const [form] = Form.useForm<Record<string, number>>();
   const t = (id: string, fallback: string) =>
     intl.formatMessage({ id, defaultMessage: fallback });
@@ -41,6 +44,23 @@ export default function CharacterMaintenanceModal({
     setOpen(false);
     form.resetFields();
   };
+  const openMaintenance = async () => {
+    setOpen(true);
+    if (character) {
+      form.setFieldsValue(characterFormValues(action, character));
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await getCharacter(charId);
+      setCharacter(response.data);
+      form.setFieldsValue(characterFormValues(action, response.data));
+    } catch (_error) {
+      setOpen(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -48,7 +68,7 @@ export default function CharacterMaintenanceModal({
         type="link"
         size="small"
         icon={<EditOutlined />}
-        onClick={() => setOpen(true)}
+        onClick={() => void openMaintenance()}
       >
         {t('players.character.maintain', '维护')}
       </Button>
@@ -59,13 +79,14 @@ export default function CharacterMaintenanceModal({
         okText={t('common.confirm', '确认')}
         cancelText={t('common.cancel', '取消')}
         onOk={() => form.submit()}
+        okButtonProps={{ disabled: loading }}
         destroyOnHidden
       >
         <Form
           form={form}
           layout="vertical"
           onFinish={async (values) => {
-            await executeGameControlCommand({
+            const response = await executeGameControlCommand({
               idempotency_key: createIdempotencyKey(),
               type: commandTypes[action],
               target: { type: 'character', id: String(charId) },
@@ -73,6 +94,9 @@ export default function CharacterMaintenanceModal({
               // Game Control still requires an explicit object payload.
               payload: fields.length === 0 ? {} : values,
             });
+            setCharacter((current) =>
+              mergeCharacterResult(current, response.data.result),
+            );
             message.success(
               t('players.character.maintainSuccess', '操作已提交'),
             );
@@ -90,9 +114,16 @@ export default function CharacterMaintenanceModal({
             }}
             fieldProps={{
               value: action,
+              disabled: loading,
               onChange: (value) => {
-                setAction(value as Action);
+                const nextAction = value as MaintenanceAction;
+                setAction(nextAction);
                 form.resetFields();
+                if (character) {
+                  form.setFieldsValue(
+                    characterFormValues(nextAction, character),
+                  );
+                }
               },
             }}
           />
@@ -102,8 +133,23 @@ export default function CharacterMaintenanceModal({
               name={field}
               label={t(`players.character.field.${field}`, field)}
               min={1}
+              max={action === 'stats' ? maxMaintainedStat : undefined}
               width="md"
-              rules={[{ required: true }]}
+              rules={[
+                { required: true },
+                ...(action === 'stats'
+                  ? [
+                      {
+                        type: 'number' as const,
+                        max: maxMaintainedStat,
+                        message: t(
+                          'players.character.statsRange',
+                          `请输入 1 到 ${maxMaintainedStat} 之间的数值`,
+                        ),
+                      },
+                    ]
+                  : []),
+              ]}
             />
           ))}
           {action === 'skills' && (

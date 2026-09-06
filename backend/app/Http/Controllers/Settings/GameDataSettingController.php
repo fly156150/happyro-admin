@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Contracts\Audit\AuditLogRepository;
 use App\Contracts\GameData\GameDataSettingRepository;
 use App\Data\Auth\ClientContext;
 use App\Http\Requests\Settings\UpdateGameDataSettingRequest;
-use App\Models\AuditLog;
 use App\Services\GameData\UpdateGameDataSettingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +15,7 @@ final readonly class GameDataSettingController
     public function __construct(
         private GameDataSettingRepository $settings,
         private UpdateGameDataSettingService $updateSettings,
+        private AuditLogRepository $auditLogs,
     ) {}
 
     public function show(): JsonResponse
@@ -38,7 +39,10 @@ final readonly class GameDataSettingController
 
     public function history(Request $request): JsonResponse
     {
-        $records = AuditLog::query()->with('user:id,name,username')->where('event', 'settings.game_data_updated')->latest()->paginate(min(max((int) $request->integer('per_page', 20), 1), 100));
+        $records = $this->auditLogs->paginateEvent(
+            'settings.game_data_updated',
+            min(max($request->integer('per_page', 20), 1), 100),
+        );
 
         return response()->json(['data' => $records->items(), 'meta' => ['current_page' => $records->currentPage(), 'last_page' => $records->lastPage(), 'total' => $records->total()], 'success' => true]);
     }

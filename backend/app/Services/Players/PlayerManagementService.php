@@ -5,6 +5,7 @@ namespace App\Services\Players;
 use App\Contracts\Audit\AuditWriter;
 use App\Contracts\Players\PlayerAccountRepository;
 use App\Data\Auth\ClientContext;
+use App\Exceptions\PlayerAccountNotFoundException;
 use App\Models\User;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -69,7 +70,7 @@ final class PlayerManagementService
         foreach (array_values(array_unique($ids)) as $id) {
             try {
                 $count += $this->accounts->delete($id);
-            } catch (\App\Exceptions\PlayerAccountNotFoundException) {
+            } catch (PlayerAccountNotFoundException) {
                 continue;
             }
         }
