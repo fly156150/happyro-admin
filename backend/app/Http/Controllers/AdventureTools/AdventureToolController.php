@@ -8,7 +8,7 @@ use App\Data\GameServer\GameServerCommandRequest;
 use App\Data\GameServer\GameServerCommandType;
 use App\Exceptions\GameServerGatewayException;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\AdventureTools\ApplyGameRulesRequest;
+use App\Http\Requests\AdventureTools\ApplyGameSettingsRequest;
 use App\Http\Requests\AdventureTools\RunCharacterMaintenanceRequest;
 use App\Services\AdventureTools\AdventureToolAccessService;
 use App\Services\GameServer\ApplyGameServerSettingsService;
@@ -81,7 +81,7 @@ final class AdventureToolController extends Controller
         }
     }
 
-    public function gameRules(Request $request): JsonResponse
+    public function gameSettings(Request $request): JsonResponse
     {
         $principal = $this->principal($request);
         try {
@@ -107,7 +107,7 @@ final class AdventureToolController extends Controller
         ]]);
     }
 
-    public function applyGameRules(ApplyGameRulesRequest $request): JsonResponse
+    public function applyGameSettings(ApplyGameSettingsRequest $request): JsonResponse
     {
         $principal = $this->principal($request);
         try {

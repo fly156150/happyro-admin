@@ -9,7 +9,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 interface GameServerSettingRevisionRepository
 {
     /** @param array<string, mixed> $changes */
-    public function create(string $serverKey, array $changes, string $reason, OperationActor $actor): GameServerSettingRevision;
+    public function create(string $serverKey, array $changes, ?string $remark, OperationActor $actor): GameServerSettingRevision;
 
     public function find(string $serverKey, int $revision): ?GameServerSettingRevision;
 

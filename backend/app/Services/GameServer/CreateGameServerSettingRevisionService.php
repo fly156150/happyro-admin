@@ -11,8 +11,8 @@ final readonly class CreateGameServerSettingRevisionService
     public function __construct(private GameServerSettingRevisionRepository $revisions) {}
 
     /** @param array<string, mixed> $changes */
-    public function create(string $serverKey, array $changes, string $reason, User $operator): GameServerSettingRevision
+    public function create(string $serverKey, array $changes, ?string $remark, User $operator): GameServerSettingRevision
     {
-        return $this->revisions->create($serverKey, $changes, $reason, $operator->getKey());
+        return $this->revisions->create($serverKey, $changes, $remark, $operator->getKey());
     }
 }

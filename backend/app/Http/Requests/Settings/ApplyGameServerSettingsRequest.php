@@ -28,7 +28,7 @@ final class ApplyGameServerSettingsRequest extends FormRequest
         return [
             'changes' => ['required', 'array', 'min:1'],
             'changes.*' => ['required', 'integer', 'min:0'],
-            'reason' => ['required', 'string', 'max:255'],
+            'remark' => ['nullable', 'string', 'max:255'],
         ];
     }
 

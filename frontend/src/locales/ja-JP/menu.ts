@@ -1,5 +1,5 @@
 export default {
-  'menu.settings.gameRules': 'Game rules',
+  'menu.settings.gameSettings': 'Game settings',
   'menu.welcome': 'ようこそ',
   'menu.more-blocks': 'その他のブロック',
   'menu.home': 'ホーム',

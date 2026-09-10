@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\DB;
 
 final class DatabaseGameServerSettingRevisionRepository implements GameServerSettingRevisionRepository
 {
-    public function create(string $serverKey, array $changes, string $reason, OperationActor $actor): GameServerSettingRevision
+    public function create(string $serverKey, array $changes, ?string $remark, OperationActor $actor): GameServerSettingRevision
     {
-        return DB::transaction(function () use ($serverKey, $changes, $reason, $actor): GameServerSettingRevision {
+        return DB::transaction(function () use ($serverKey, $changes, $remark, $actor): GameServerSettingRevision {
             $revision = (int) GameServerSettingRevision::query()
                 ->where('server_key', $serverKey)
                 ->lockForUpdate()
@@ -23,7 +23,7 @@ final class DatabaseGameServerSettingRevisionRepository implements GameServerSet
                 'revision' => $revision,
                 'changes' => $changes,
                 'status' => 'draft',
-                'reason' => $reason,
+                'remark' => $remark,
                 'requested_by' => $actor->adminUserId,
                 'requested_game_account_id' => $actor->gameAccountId,
             ]);

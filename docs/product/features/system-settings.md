@@ -17,7 +17,7 @@
 - 掉落倍率：普通物品、恢复品、消耗品、装备、卡片、MVP 和宝箱。
 - 常用战斗参数：后续仅从 HappyRO Server 已核验的配置白名单中逐项开放。
 
-界面使用 `1.00x` 等倍率表达，应用层统一转换为 rAthena 的整数比例，其中 `100` 表示 `1.00x`。参数名称、默认值、范围、单位、来源配置和生效方式必须在代码中的配置注册表明确声明，不能由前端传入任意配置键。
+界面使用正数倍率（支持小数，例如 `1`、`1.5`），应用层统一转换为 rAthena 的整数比例，其中 `100` 表示 `1` 倍。参数名称、默认值、范围、单位、来源配置和生效方式必须在代码中的配置注册表明确声明，不能由前端传入任意配置键。
 
 ## 应用流程
 
@@ -35,7 +35,7 @@
 ## 数据设计
 
 - `game_server_settings`：服务器、配置键、期望值、实际值和应用状态。
-- `game_server_setting_revisions`：不可变的配置版本、修改原因、操作者和应用结果。
+- `game_server_setting_revisions`：不可变的配置版本、修改备注、操作者和应用结果。
 - `game_server_commands`：已实现，保存角色维护、世界操作和配置应用的命令、幂等键、状态与结果。
 - 现有 `audit_logs`：记录管理员行为摘要和关联的命令或配置版本。
 
@@ -50,7 +50,7 @@
 - 配置来源以 HappyRO Server 的 `conf/battle/exp.conf`、`conf/battle/drops.conf` 和 `conf/import/battle_conf.txt` 为准，后台保留参数注册表副本并记录来源。
 - 第一阶段只开放经验和常用掉率，不建立任意配置文件编辑器。
 
-计划权限拆分为 `settings.game-data.manage`、`settings.game-rules.view` 和 `settings.game-rules.manage`，不继续使用一个覆盖全部设置的宽泛权限。
+计划权限拆分为 `settings.game-data.manage`、`settings.game-settings.view` 和 `settings.game-settings.manage`，不继续使用一个覆盖全部设置的宽泛权限。
 
 ## 实现记录
 
@@ -69,15 +69,15 @@
 - 已增加受保护的 battle_config.read 回读接口，用于确认 map-server 实际运行值。
 - Laravel Gateway 已提供 battleConfig() 和 /api/operations/game-control/battle-config，配置页面可读取实际值。
 - 命令执行已区分明确失败与结果不确定：网络超时或服务端 5xx 进入 `indeterminate`，不得自动重试产生副作用；使用原命令 ID 和幂等键确认或重试。
-- 已增加 `GET/PUT /api/settings/game-rules`，返回服务端实际值、注册表定义并应用倍率变更。
-- 已增加 `/settings/game-rules` 页面，参数字段由 API 注册表动态生成，提交时必须填写修改原因。
+- 已增加 `GET/PUT /api/settings/game-settings`，返回服务端实际值、注册表定义并应用倍率变更。
+- 已增加 `/settings/game-settings` 页面，参数字段由 API 注册表动态生成，提交时可填写修改备注。
 - 配置应用成功必须通过 map-server 回读校验；失败会恢复配置快照并将版本标记为 failed。
 - 配置 API 的 FormRequest 会先按同一注册表校验未知键和取值范围，输入错误返回 422，Service 层仍保留二次校验。
-- 已增加游戏规则 API 的读取、权限和非法参数 Feature 测试。
-- 已增加配置修改记录页面：游戏规则版本展示倍率修改值、原因、操作者及应用状态，游戏资料记录展示客户端与服务端版本变更前后值。
+- 已增加游戏设置 API 的读取、权限和非法参数 Feature 测试。
+- 已增加配置修改记录页面：游戏设置版本展示倍率修改值、备注、操作者及应用状态，游戏资料记录展示客户端与服务端版本变更前后值。
 
 ## 待办
 
 - 建立生产密钥生成、注入、轮换和安全传输方案。
 - 增加配置版本显式回滚入口。
-- 将 `settings.manage` 进一步拆分为游戏资料和游戏规则的查看、管理权限。
+- 将 `settings.manage` 进一步拆分为游戏资料和游戏设置的查看、管理权限。

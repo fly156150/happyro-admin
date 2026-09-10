@@ -108,23 +108,23 @@ final class AdventureToolControllerTest extends TestCase
         );
         $this->app->instance(GameServerGateway::class, $gateway);
 
-        $this->withHeaders($this->headers())->getJson('/api/adventure-tools/game-rules')
+        $this->withHeaders($this->headers())->getJson('/api/adventure-tools/game-settings')
             ->assertOk()
             ->assertJsonMissingPath('data.values.game_tools_game_settings_policy')
             ->assertJsonMissingPath('data.definitions.game_tools_character_maintenance_policy');
 
-        $this->withHeaders($this->headers())->getJson('/api/adventure-tools/game-rules')->assertForbidden();
+        $this->withHeaders($this->headers())->getJson('/api/adventure-tools/game-settings')->assertForbidden();
     }
 
     public function test_rejects_governance_settings_from_the_game_client(): void
     {
         $this->createSession(groupId: 0);
 
-        $this->withHeaders($this->headers())->putJson('/api/adventure-tools/game-rules', [
+        $this->withHeaders($this->headers())->putJson('/api/adventure-tools/game-settings', [
             'changes' => ['game_tools_game_settings_policy' => 1],
         ])->assertUnprocessable()
             ->assertJsonValidationErrors('changes')
-            ->assertJsonMissingValidationErrors('reason');
+            ->assertJsonMissingValidationErrors('remark');
     }
 
     public function test_accepts_skill_points_above_the_current_job_level(): void

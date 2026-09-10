@@ -24,7 +24,7 @@ final class GameServerSettingControllerTest extends TestCase
         $this->app->instance(GameServerGateway::class, $gateway);
 
         $this->actingAs($this->superAdmin())
-            ->getJson('/api/settings/game-rules')
+            ->getJson('/api/settings/game-settings')
             ->assertOk()
             ->assertJsonPath('data.values.base_exp_rate', 100)
             ->assertJsonPath('data.definitions.base_exp_rate.source', 'conf/battle/exp.conf')
@@ -35,29 +35,29 @@ final class GameServerSettingControllerTest extends TestCase
     public function test_invalid_changes_are_rejected_before_service_execution(): void
     {
         $this->actingAs($this->superAdmin())
-            ->putJson('/api/settings/game-rules', [
+            ->putJson('/api/settings/game-settings', [
                 'changes' => ['unknown_rate' => 100],
-                'reason' => 'test',
+                'remark' => 'test',
             ])
             ->assertUnprocessable();
     }
 
-    public function test_game_rules_return_service_unavailable_when_map_server_is_unreachable(): void
+    public function test_game_settings_return_service_unavailable_when_map_server_is_unreachable(): void
     {
         $gateway = Mockery::mock(GameServerGateway::class);
         $gateway->expects('battleConfig')->once()->andThrow(new GameServerGatewayException('map_server_unavailable', 'Map server is unavailable.'));
         $this->app->instance(GameServerGateway::class, $gateway);
 
-        $this->actingAs($this->superAdmin())->getJson('/api/settings/game-rules')
+        $this->actingAs($this->superAdmin())->getJson('/api/settings/game-settings')
             ->assertServiceUnavailable()->assertJsonPath('message', '游戏服务暂时不可用');
     }
 
     public function test_navigation_teleport_policy_rejects_values_outside_registered_range(): void
     {
         $this->actingAs($this->superAdmin())
-            ->putJson('/api/settings/game-rules', [
+            ->putJson('/api/settings/game-settings', [
                 'changes' => ['navigation_teleport_policy' => 3],
-                'reason' => 'invalid policy',
+                'remark' => 'invalid policy',
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('changes.navigation_teleport_policy');
@@ -78,28 +78,28 @@ final class GameServerSettingControllerTest extends TestCase
         $this->app->instance(GameServerGateway::class, $gateway);
 
         $this->actingAs($this->superAdmin())
-            ->putJson('/api/settings/game-rules', [
+            ->putJson('/api/settings/game-settings', [
                 'changes' => ['base_exp_rate' => 1000001],
-                'reason' => 'verify registered limit',
+                'remark' => 'verify registered limit',
             ])
             ->assertOk()
             ->assertJsonPath('data.status', 'applied');
     }
 
-    public function test_game_rules_require_settings_permission(): void
+    public function test_game_settings_require_settings_permission(): void
     {
         $role = Role::query()->create(['name' => 'viewer', 'label' => '查看者']);
         $user = User::factory()->create();
         $user->roles()->attach($role);
 
-        $this->actingAs($user)->getJson('/api/settings/game-rules')->assertForbidden();
+        $this->actingAs($user)->getJson('/api/settings/game-settings')->assertForbidden();
     }
 
-    public function test_super_admin_can_query_game_rule_history(): void
+    public function test_super_admin_can_query_game_setting_history(): void
     {
         $user = $this->superAdmin();
-        GameServerSettingRevision::query()->create(['server_key' => 'primary', 'revision' => 1, 'changes' => ['base_exp_rate' => 200], 'status' => 'applied', 'reason' => 'event', 'requested_by' => $user->id, 'applied_at' => now()]);
-        $this->actingAs($user)->getJson('/api/settings/game-rules/history')->assertOk()->assertJsonPath('data.0.revision', 1)->assertJsonPath('data.0.changes.base_exp_rate', 200)->assertJsonPath('data.0.requester.id', $user->id)->assertJsonPath('meta.total', 1);
+        GameServerSettingRevision::query()->create(['server_key' => 'primary', 'revision' => 1, 'changes' => ['base_exp_rate' => 200], 'status' => 'applied', 'remark' => 'event', 'requested_by' => $user->id, 'applied_at' => now()]);
+        $this->actingAs($user)->getJson('/api/settings/game-settings/history')->assertOk()->assertJsonPath('data.0.revision', 1)->assertJsonPath('data.0.changes.base_exp_rate', 200)->assertJsonPath('data.0.requester.id', $user->id)->assertJsonPath('meta.total', 1);
     }
 
     private function superAdmin(): User

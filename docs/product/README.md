@@ -47,4 +47,4 @@ frontend/src/pages/
 └── settings/
 ```
 
-角色维护收敛在 `players/characters` 的详情页面中，不为等级、属性和技能分别创建侧栏菜单。魔物召唤放在 `operations/monster-spawns`，游戏参数放在 `settings/game-rules`。
+角色维护收敛在 `players/characters` 的详情页面中，不为等级、属性和技能分别创建侧栏菜单。魔物召唤放在 `operations/monster-spawns`，游戏参数放在 `settings/game-settings`。

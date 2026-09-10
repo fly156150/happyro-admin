@@ -1,5 +1,5 @@
 export default {
-  'menu.settings.gameRules': 'Game rules',
+  'menu.settings.gameSettings': 'Game settings',
   'menu.welcome': 'خوش آمدید',
   'menu.more-blocks': 'بلوک های بیشتر',
   'menu.home': 'خانه',

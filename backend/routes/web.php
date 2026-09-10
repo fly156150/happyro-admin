@@ -58,9 +58,9 @@ Route::prefix('api/settings')->middleware(['auth:sanctum', 'permission:settings.
     Route::get('/game-data', [GameDataSettingController::class, 'show']);
     Route::put('/game-data', [GameDataSettingController::class, 'update']);
     Route::get('/game-data/history', [GameDataSettingController::class, 'history']);
-    Route::get('/game-rules', [GameServerSettingController::class, 'show']);
-    Route::put('/game-rules', [GameServerSettingController::class, 'update']);
-    Route::get('/game-rules/history', [GameServerSettingController::class, 'history']);
+    Route::get('/game-settings', [GameServerSettingController::class, 'show']);
+    Route::put('/game-settings', [GameServerSettingController::class, 'update']);
+    Route::get('/game-settings/history', [GameServerSettingController::class, 'history']);
 });
 
 Route::prefix('api/operations')->middleware(['auth:sanctum', 'permission:operations.item-grant'])->group(function () {

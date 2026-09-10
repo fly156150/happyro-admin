@@ -74,7 +74,7 @@ rAthena 进程会将工作目录切换到可执行文件所在目录，因此物
 - `GET /game-control/v1/capabilities` 返回 `200`，包含角色维护、技能重置、状态恢复、魔物召唤和倍率修改命令。
 - `GET /game-control/v1/battle-config` 返回 `200`，成功回读 8 个白名单倍率的当前值（初始均为 `100`）。
 - 使用数据库中离线角色 `char_id=150000` 提交等级修改命令，返回 `409 character_offline`，没有执行离线修改。
-- 通过真实浏览器登录后台，在“游戏规则”页面提交不变倍率并填写修改原因，后台 API、web-server、map-server 和实际值回读均返回成功，页面显示保存成功。
+- 通过真实浏览器登录后台，在“游戏设置”页面提交不变倍率，后台 API、web-server、map-server 和实际值回读均返回成功，页面显示保存成功。
 
 在线角色操作已使用 Robrowser 测试账号 `autotest` 实际验证。角色 `150001` 连接到当前 map-server 后，等级更新、属性更新、技能重置、生命值恢复和角色附近魔物召唤均返回成功；召唤响应包含实体 ID、地图和实际坐标。另以离线角色验证了上述命令会返回 `character_offline`，不会修改离线数据库记录。启动日志另有若干中文名称超过 rAthena 字段长度的告警，服务会截断名称；这属于资料长度问题，不影响本次 Game Control 通道启动。
 
@@ -218,7 +218,7 @@ pending -> running -> succeeded
 - `POST /commands`：校验、幂等提交并执行结构化命令。
 - `GET /commands/{commandId}`：读取命令状态、结果或不确定执行状态。
 
-战斗倍率不接受通用运营命令入口提交，只能通过受 `settings.manage` 保护的 `PUT /api/settings/game-rules` 应用。
+战斗倍率不接受通用运营命令入口提交，只能通过受 `settings.manage` 保护的 `PUT /api/settings/game-settings` 应用。
 
 控制器只负责请求转换和响应，命令构造、持久化、网关通信和状态流转分别由 FormRequest、DTO、Repository、Gateway 和 Service 完成。HTTP、CLI 或后台任务接入新入口时必须复用同一组 Service，不能在控制器中复制游戏业务逻辑。
 

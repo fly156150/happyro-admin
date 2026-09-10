@@ -1,5 +1,5 @@
 export default {
-  'menu.settings.gameRules': 'Game rules',
+  'menu.settings.gameSettings': 'Game settings',
   'menu.welcome': 'Selamat Datang',
   'menu.more-blocks': 'Blocks Lainnya',
   'menu.home': 'Halaman Awal',

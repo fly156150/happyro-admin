@@ -5,7 +5,7 @@ import { Flex, Tabs, Tag, Typography } from 'antd';
 type Revision = {
   id: number;
   revision: number;
-  reason: string;
+  remark: string | null;
   status: string;
   changes: Record<string, number>;
   requester?: { username?: string; name?: string };
@@ -22,11 +22,11 @@ type GameDataChange = {
   created_at: string;
 };
 
-function formatRate(value: number): string {
-  return `${(value / 100).toFixed(2)}x`;
+function formatChange(key: string, value: number): string {
+  return key.includes('_rate') ? (value / 100).toFixed(2) : String(value);
 }
 
-export default function GameRuleHistory() {
+export default function GameSettingHistory() {
   const intl = useIntl();
   const t = (id: string, fallback: string) =>
     intl.formatMessage({ id, defaultMessage: fallback });
@@ -37,8 +37,8 @@ export default function GameRuleHistory() {
       <Tabs
         items={[
           {
-            key: 'rules',
-            label: t('settings.configurationHistory.rules', '游戏倍率'),
+            key: 'settings',
+            label: t('settings.configurationHistory.settings', '游戏设置'),
             children: (
               <ProTable<Revision>
                 rowKey="id"
@@ -48,7 +48,7 @@ export default function GameRuleHistory() {
                   const response = await request<{
                     data: Revision[];
                     meta: { total: number };
-                  }>(`/api/settings/game-rules/history?page=${current ?? 1}`);
+                  }>(`/api/settings/game-settings/history?page=${current ?? 1}`);
                   return {
                     data: response.data,
                     total: response.meta.total,
@@ -57,11 +57,11 @@ export default function GameRuleHistory() {
                 }}
                 columns={[
                   {
-                    title: t('settings.gameRuleHistory.revision', '版本'),
+                    title: t('settings.gameSettingHistory.revision', '版本'),
                     dataIndex: 'revision',
                   },
                   {
-                    title: t('settings.gameRuleHistory.changes', '修改内容'),
+                    title: t('settings.gameSettingHistory.changes', '修改内容'),
                     dataIndex: 'changes',
                     width: 520,
                     render: (_, record) => (
@@ -72,10 +72,10 @@ export default function GameRuleHistory() {
                             style={{ marginInlineEnd: 0, padding: '3px 8px' }}
                           >
                             <Typography.Text type="secondary">
-                              {t(`settings.gameRules.key.${key}`, key)}
+                              {t(`settings.gameSettings.key.${key}`, key)}
                             </Typography.Text>{' '}
                             <Typography.Text strong>
-                              {formatRate(value)}
+                              {formatChange(key, value)}
                             </Typography.Text>
                           </Tag>
                         ))}
@@ -83,11 +83,12 @@ export default function GameRuleHistory() {
                     ),
                   },
                   {
-                    title: t('settings.gameRules.reason', '修改原因'),
-                    dataIndex: 'reason',
+                    title: t('settings.gameSettings.remark', '修改备注'),
+                    dataIndex: 'remark',
+                    render: (_, record) => record.remark || '-',
                   },
                   {
-                    title: t('settings.gameRuleHistory.operator', '操作人'),
+                    title: t('settings.gameSettingHistory.operator', '操作人'),
                     render: (_, record) =>
                       record.requester?.username ??
                       record.requester?.name ??
@@ -152,7 +153,7 @@ export default function GameRuleHistory() {
                       `${record.metadata.after.clientVersion} / ${record.metadata.after.serverVersion}`,
                   },
                   {
-                    title: t('settings.gameRuleHistory.operator', '操作人'),
+                    title: t('settings.gameSettingHistory.operator', '操作人'),
                     render: (_, record) =>
                       record.user?.username ?? record.user?.name ?? '-',
                   },

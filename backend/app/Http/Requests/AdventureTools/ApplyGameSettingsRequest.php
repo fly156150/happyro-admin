@@ -6,7 +6,7 @@ use App\Services\GameServer\GameServerSettingRegistry;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-final class ApplyGameRulesRequest extends FormRequest
+final class ApplyGameSettingsRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

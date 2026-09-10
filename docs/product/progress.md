@@ -14,7 +14,7 @@
 | 运营管理 | 邮件发放和限时魔物召唤已完成 | [运营管理](features/operations-management.md) |
 | 系统设置 | 资料版本及经验、掉落倍率设置已完成 | [系统设置](features/system-settings.md) |
 | Game Control 基础协议 | 测试环境真实通道和 Robrowser 在线角色操作已验证 | [Game Control](features/game-control.md) |
-| 游戏规则配置 API | 应用、回读和失败回滚已完成 | [系统设置](features/system-settings.md) |
+| 游戏设置配置 API | 应用、回读和失败回滚已完成 | [系统设置](features/system-settings.md) |
 
 ## 实施顺序
 

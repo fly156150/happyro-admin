@@ -15,7 +15,7 @@ Route::prefix('adventure-tools')->middleware('game.session')->group(function ():
     Route::middleware('throttle:adventure-tools-read')->group(function (): void {
         Route::get('/bootstrap', [AdventureToolController::class, 'bootstrap']);
         Route::get('/character', [AdventureToolController::class, 'character']);
-        Route::get('/game-rules', [AdventureToolController::class, 'gameRules']);
+        Route::get('/game-settings', [AdventureToolController::class, 'gameSettings']);
         Route::get('/items', [AdventureItemController::class, 'index']);
         Route::get('/items/{itemId}', [AdventureItemController::class, 'show'])->whereNumber('itemId');
     });
@@ -25,7 +25,7 @@ Route::prefix('adventure-tools')->middleware('game.session')->group(function ():
     });
     Route::middleware('throttle:adventure-tools-action')->group(function (): void {
         Route::post('/character/commands', [AdventureToolController::class, 'maintain']);
-        Route::put('/game-rules', [AdventureToolController::class, 'applyGameRules']);
+        Route::put('/game-settings', [AdventureToolController::class, 'applyGameSettings']);
         Route::post('/items/grants', [AdventureItemController::class, 'grant']);
         Route::post('/currency/zeny/grants', [AdventureItemController::class, 'grantZeny']);
     });
