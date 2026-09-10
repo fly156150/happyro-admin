@@ -33,14 +33,15 @@ final readonly class GameServerCommandRequest
     }
 
     /** @throws JsonException */
-    public function fingerprint(?int $requestedBy): string
+    public function fingerprint(OperationActor $actor): string
     {
         $data = self::normalize([
             'type' => $this->type->value,
             'target_type' => $this->targetType,
             'target_id' => $this->targetId,
             'payload' => $this->payload,
-            'requested_by' => $requestedBy,
+            'requested_by' => $actor->adminUserId,
+            'requested_game_account_id' => $actor->gameAccountId,
         ]);
 
         return hash('sha256', json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));

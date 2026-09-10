@@ -16,13 +16,29 @@ import {
 
 type Translate = (id: string, fallback: string) => string;
 
+const normalDropRateKeys = [
+  'item_rate_common',
+  'item_rate_heal',
+  'item_rate_use',
+  'item_rate_equip',
+  'item_rate_card',
+] as const;
+const mvpDropRateKeys = [
+  'item_rate_common_mvp',
+  'item_rate_heal_mvp',
+  'item_rate_use_mvp',
+  'item_rate_equip_mvp',
+  'item_rate_card_mvp',
+] as const;
+const experienceRateKeys = ['base_exp_rate', 'job_exp_rate'] as const;
+
 function ruleLabel(key: string, t: Translate): string {
   return t(`settings.gameRules.key.${key}`, key);
 }
 
 function ruleExtra(
   definition: GameRuleSettings['definitions'][string],
-  t: Translate,
+  t: Translate
 ) {
   return (
     <Flex gap={8} wrap>
@@ -48,8 +64,8 @@ export default function GameRulesSettingPage() {
       .then(({ data }) => setSettings(data))
       .catch(() =>
         message.error(
-          t('settings.gameRules.loadFailed', '游戏规则设置加载失败'),
-        ),
+          t('settings.gameRules.loadFailed', '游戏规则设置加载失败')
+        )
       );
   }, []);
 
@@ -67,10 +83,9 @@ export default function GameRulesSettingPage() {
             }}
             onFinish={async (values) => {
               const changes = Object.fromEntries(
-                Object.keys(settings.definitions).map((key) => [
-                  key,
-                  Number(values[key]),
-                ]),
+                Object.keys(settings.definitions)
+                  .filter((key) => values[key] !== undefined)
+                  .map((key) => [key, Number(values[key])])
               );
               await updateGameRuleSettings({
                 changes,
@@ -79,21 +94,21 @@ export default function GameRulesSettingPage() {
               const { data } = await getGameRuleSettings();
               setSettings(data);
               message.success(
-                t('settings.gameRules.saved', '游戏规则设置已保存'),
+                t('settings.gameRules.saved', '游戏规则设置已保存')
               );
               return true;
             }}
           >
             <Typography.Title level={5}>
-              {t('settings.gameRules.section.rates', '经验与掉落倍率')}
+              {t('settings.gameRules.section.experienceRates', '经验倍率')}
             </Typography.Title>
-            {Object.values(settings.definitions)
-              .filter((definition) => definition.unit === 'percent')
-              .map((definition) => (
+            {experienceRateKeys.map((key) => {
+              const definition = settings.definitions[key];
+              return (
                 <ProFormDigit
-                  key={definition.key}
-                  name={definition.key}
-                  label={ruleLabel(definition.key, t)}
+                  key={key}
+                  name={key}
+                  label={ruleLabel(key, t)}
                   min={definition.minimum}
                   max={definition.maximum}
                   fieldProps={{ precision: 0 }}
@@ -102,7 +117,53 @@ export default function GameRulesSettingPage() {
                   width="md"
                   rules={[{ required: true }]}
                 />
+              );
+            })}
+            <Typography.Title level={5}>
+              {t(
+                'settings.gameRules.section.dropRates',
+                '掉落倍率（普通魔物 & MVP）'
+              )}
+            </Typography.Title>
+            <div
+              style={{
+                display: 'grid',
+                gap: 32,
+                gridTemplateColumns: 'repeat(2, minmax(280px, 1fr))',
+                overflowX: 'auto',
+              }}
+            >
+              {[
+                {
+                  key: 'normal',
+                  keys: normalDropRateKeys,
+                },
+                {
+                  key: 'mvp',
+                  keys: mvpDropRateKeys,
+                },
+              ].map((group) => (
+                <div key={group.key}>
+                  {group.keys.map((key) => {
+                    const definition = settings.definitions[key];
+                    return (
+                      <ProFormDigit
+                        key={key}
+                        name={key}
+                        label={ruleLabel(key, t)}
+                        min={definition.minimum}
+                        max={definition.maximum}
+                        fieldProps={{ precision: 0 }}
+                        addonAfter={t('settings.gameRules.unit.percent', '%')}
+                        extra={ruleExtra(definition, t)}
+                        width="md"
+                        rules={[{ required: true }]}
+                      />
+                    );
+                  })}
+                </div>
               ))}
+            </div>
             <Typography.Title level={5}>
               {t('settings.gameRules.section.navigation', '网页地图传送')}
             </Typography.Title>
@@ -145,7 +206,7 @@ export default function GameRulesSettingPage() {
               addonAfter={t('settings.gameRules.unit.seconds', '秒')}
               extra={ruleExtra(
                 settings.definitions.navigation_teleport_cooldown,
-                t,
+                t
               )}
               width="md"
               rules={[{ required: true }]}
@@ -160,7 +221,7 @@ export default function GameRulesSettingPage() {
               ]}
               extra={ruleExtra(
                 settings.definitions.navigation_map_channels_enabled,
-                t,
+                t
               )}
               rules={[{ required: true }]}
             />
@@ -190,13 +251,17 @@ export default function GameRulesSettingPage() {
             <ProFormDigit
               name="game_tools_monster_spawn_cooldown"
               label={ruleLabel('game_tools_monster_spawn_cooldown', t)}
-              min={settings.definitions.game_tools_monster_spawn_cooldown.minimum}
-              max={settings.definitions.game_tools_monster_spawn_cooldown.maximum}
+              min={
+                settings.definitions.game_tools_monster_spawn_cooldown.minimum
+              }
+              max={
+                settings.definitions.game_tools_monster_spawn_cooldown.maximum
+              }
               fieldProps={{ precision: 0 }}
               addonAfter={t('settings.gameRules.unit.seconds', '秒')}
               extra={ruleExtra(
                 settings.definitions.game_tools_monster_spawn_cooldown,
-                t,
+                t
               )}
               width="md"
               rules={[{ required: true }]}
@@ -204,13 +269,17 @@ export default function GameRulesSettingPage() {
             <ProFormDigit
               name="game_tools_monster_spawn_duration"
               label={ruleLabel('game_tools_monster_spawn_duration', t)}
-              min={settings.definitions.game_tools_monster_spawn_duration.minimum}
-              max={settings.definitions.game_tools_monster_spawn_duration.maximum}
+              min={
+                settings.definitions.game_tools_monster_spawn_duration.minimum
+              }
+              max={
+                settings.definitions.game_tools_monster_spawn_duration.maximum
+              }
               fieldProps={{ precision: 0 }}
               addonAfter={t('settings.gameRules.unit.seconds', '秒')}
               extra={ruleExtra(
                 settings.definitions.game_tools_monster_spawn_duration,
-                t,
+                t
               )}
               width="md"
               rules={[{ required: true }]}
@@ -225,6 +294,32 @@ export default function GameRulesSettingPage() {
               ]}
               rules={[{ required: true }]}
             />
+            <Typography.Title level={5}>
+              {t('settings.gameRules.section.adventureTools', '冒险工具管理')}
+            </Typography.Title>
+            {[
+              'game_tools_character_maintenance_policy',
+              'game_tools_game_settings_policy',
+              'game_tools_item_grant_policy',
+            ].map((key) => (
+              <ProFormRadio.Group
+                key={key}
+                name={key}
+                label={ruleLabel(key, t)}
+                radioType="button"
+                options={[
+                  {
+                    label: t('settings.gameRules.policy.admin', '仅管理员'),
+                    value: 1,
+                  },
+                  {
+                    label: t('settings.gameRules.policy.everyone', '所有玩家'),
+                    value: 2,
+                  },
+                ]}
+                rules={[{ required: true }]}
+              />
+            ))}
             <ProFormText
               name="reason"
               label={t('settings.gameRules.reason', '修改原因')}

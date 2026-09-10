@@ -5,10 +5,11 @@ namespace App\Contracts\GameServer;
 use App\Data\GameServer\GameServerCommand;
 use App\Data\GameServer\GameServerCommandRequest;
 use App\Data\GameServer\GameServerCommandSubmission;
+use App\Data\GameServer\OperationActor;
 
 interface GameServerCommandRepository
 {
-    public function submit(GameServerCommandRequest $request, ?int $requestedBy): GameServerCommandSubmission;
+    public function submit(GameServerCommandRequest $request, OperationActor $actor): GameServerCommandSubmission;
 
     public function find(string $id): ?GameServerCommand;
 

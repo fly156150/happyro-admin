@@ -7,6 +7,7 @@ use App\Data\GameServer\GameServerCommand;
 use App\Data\GameServer\GameServerCommandRequest;
 use App\Data\GameServer\GameServerCommandStatus;
 use App\Data\GameServer\GameServerCommandSubmission;
+use App\Data\GameServer\OperationActor;
 use App\Exceptions\GameServerCommandNotFoundException;
 use App\Exceptions\GameServerCommandStateException;
 use App\Exceptions\IdempotencyConflictException;
@@ -15,9 +16,9 @@ use Illuminate\Support\Str;
 
 final class DatabaseGameServerCommandRepository implements GameServerCommandRepository
 {
-    public function submit(GameServerCommandRequest $request, ?int $requestedBy): GameServerCommandSubmission
+    public function submit(GameServerCommandRequest $request, OperationActor $actor): GameServerCommandSubmission
     {
-        $requestHash = $request->fingerprint($requestedBy);
+        $requestHash = $request->fingerprint($actor);
         $record = GameServerCommandRecord::query()->firstOrCreate(
             ['idempotency_key' => $request->idempotencyKey],
             [
@@ -28,7 +29,8 @@ final class DatabaseGameServerCommandRepository implements GameServerCommandRepo
                 'target_type' => $request->targetType,
                 'target_id' => $request->targetId,
                 'payload' => $request->payload,
-                'requested_by' => $requestedBy,
+                'requested_by' => $actor->adminUserId,
+                'requested_game_account_id' => $actor->gameAccountId,
             ],
         );
 
@@ -129,6 +131,7 @@ final class DatabaseGameServerCommandRepository implements GameServerCommandRepo
             errorCode: $record->error_code,
             errorMessage: $record->error_message,
             requestedBy: $record->requested_by,
+            requestedGameAccountId: $record->requested_game_account_id,
             startedAt: $record->started_at,
             completedAt: $record->completed_at,
             createdAt: $record->created_at,

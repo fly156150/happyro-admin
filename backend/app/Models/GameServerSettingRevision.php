@@ -14,6 +14,7 @@ final class GameServerSettingRevision extends Model
         'status',
         'reason',
         'requested_by',
+        'requested_game_account_id',
         'applied_at',
     ];
 
@@ -22,6 +23,7 @@ final class GameServerSettingRevision extends Model
         return [
             'changes' => 'array',
             'applied_at' => 'datetime',
+            'requested_game_account_id' => 'integer',
         ];
     }
 

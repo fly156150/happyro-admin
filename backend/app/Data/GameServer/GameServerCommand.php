@@ -26,5 +26,6 @@ final readonly class GameServerCommand
         public ?CarbonImmutable $completedAt,
         public CarbonImmutable $createdAt,
         public CarbonImmutable $updatedAt,
+        public ?int $requestedGameAccountId = null,
     ) {}
 }

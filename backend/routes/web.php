@@ -67,6 +67,7 @@ Route::prefix('api/operations')->middleware(['auth:sanctum', 'permission:operati
     Route::get('/item-grant-items', [ItemGrantItemController::class, 'index']);
     Route::get('/item-grant-targets', [ItemGrantTargetController::class, 'index']);
     Route::post('/item-grants/mail', [ItemGrantController::class, 'store']);
+    Route::post('/zeny-grants', [ItemGrantController::class, 'storeZeny']);
     Route::get('/item-grants', [ItemGrantController::class, 'index']);
 });
 

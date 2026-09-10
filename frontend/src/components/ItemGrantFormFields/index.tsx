@@ -7,10 +7,8 @@ import {
 import { useIntl } from '@umijs/max';
 import { Select } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  searchItemGrantItems,
-  searchItemGrantTargets,
-} from '@/services/operations/item-grants';
+import CharacterGrantTargetField from '@/components/CharacterGrantTargetField';
+import { searchItemGrantItems } from '@/services/operations/item-grants';
 
 type Props = {
   itemId?: number;
@@ -74,15 +72,7 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
     },
     [intl.locale],
   );
-  const loadCharacters = useCallback(async (target: string) => {
-    const response = await searchItemGrantTargets(target);
-    return response.data.map((character) => ({
-      label: `${character.name} · ID ${character.char_id} · ${character.username}`,
-      value: character.char_id,
-    }));
-  }, []);
   const itemOptions = useRemoteOptions(loadItems);
-  const characterOptions = useRemoteOptions(loadCharacters);
 
   return (
     <>
@@ -117,25 +107,7 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
           <input type="hidden" />
         </ProForm.Item>
       )}
-      <ProForm.Item
-        name="char_id"
-        label={t('operations.itemGrants.target', '角色')}
-        rules={[{ required: true }]}
-      >
-        <Select
-          allowClear
-          showSearch={{
-            filterOption: false,
-            onSearch: characterOptions.search,
-          }}
-          loading={characterOptions.loading}
-          options={characterOptions.options}
-          placeholder={t(
-            'operations.itemGrants.targetPlaceholder',
-            '输入角色 ID、角色名或用户名',
-          )}
-        />
-      </ProForm.Item>
+      <CharacterGrantTargetField />
       <ProFormDigit
         name="amount"
         label={t('operations.itemGrants.amount', '数量')}

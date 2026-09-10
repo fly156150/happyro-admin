@@ -20,16 +20,18 @@
 - 客户端 `itemInfo_true.json` 是从 Lua 5.1 字节码离线提取的规范化快照；说明和资源路径通过离线索引写入 `descriptions.json`、`item-assets.json`。
 - 原始 kRO 资源来自 `inputs/runtime/kro-20211105/client/data.grf`，全量解压结果位于被 Git 忽略的 `work/grf-extract/kro-20211105/data/`。
 - 解压清单 `manifest.json` 保存原始路径、规范化路径、文件大小和 SHA-256；提取工具位于 `repos/happyro-gateway/tools/extract-grf.mjs`。
-- 管理后台通过可配置的 `GAME_RESOURCE_ROOT` 读取本地资源，默认指向上述解压目录，不把大体积 GRF 或全量解压文件提交到 Git。
+- 根仓库资源工具根据 `item-assets.json` 将官方 BMP 批量转换为透明 PNG，默认写入被 Git 忽略的 `work/game-data/items/kro-20211105/`；管理后台只读取这批生成结果，不在请求期间读取或转换 BMP。
 - 地图名称和图片来自 HappyRO 客户端资源，NPC 位置来自 HappyRO Server 脚本，NPC 中文名称和形象来自客户端名称表及 SPR。
 - 仓库保留 537 张有效地图图片和 1453 张 NPC 图片；官方纯色占位地图不作为真实图片发布。
+- NPC 图片由客户端构建脚本合成为 WebP 图集，游戏内导航和 NPC 图鉴共享 `npc-assets.json` 与图集；后台继续使用独立 PNG。
+- 地图图片按需加载，选中地图时读取对应 GAT；无真实地图图片时使用 GAT 预览，不在运行时生成地图位图文件。
 
 ## 资源加载
 
-- 列表图标使用 `texture/유저인터페이스/item/<资源名>.bmp`，详情插图使用 `texture/유저인터페이스/collection/<资源名>.bmp`。
-- Laravel 根据物品 ID 和官方资源名映射检查本地文件，并通过受 `auth:sanctum` 与 `game-data.view` 保护的接口返回图片。
+- 列表图标的源文件为 `texture/유저인터페이스/item/<资源名>.bmp`，详情插图的源文件为 `texture/유저인터페이스/collection/<资源名>.bmp`；离线生成器全图清除客户端约定的粉红透明键色，并只对其他颜色清除与边缘连通的背景，保留物品本体。
+- Laravel 根据物品 ID 读取预生成的 `icons/<id>.png` 与 `illustrations/<id>.png`，并通过受权限保护的后台或游戏会话接口返回图片。
 - `/api/game-data/items/{id}/icon` 返回 24×24 游戏图标；`/api/game-data/items/{id}/illustration` 返回通常为 75×100 的详情插图。
-- 图片响应使用 `Cache-Control: public, max-age=86400`；前端列表固定 48×64 容器，详情固定 75×100，缺失插图时回退到图标或本地占位图。
+- 图片响应使用独立的资源请求限流额度和一天浏览器缓存；前端列表固定 48×64 容器，详情固定 75×100，缺失插图时回退到图标或本地占位图。
 - 客户端 BMP 说明中的颜色控制码和空白占位行在 Laravel 服务层清理后再返回，避免把 `^777777` 等内部标记显示给管理员。
 
 ## 版本模型
@@ -106,6 +108,7 @@
 
 - 使用根仓库 `tools/resources/catalog/main.py items server` 生成后台本地服务端物品快照。
 - 使用根仓库 `tools/resources/catalog/main.py items client` 一次生成仅客户端快照、资源路径映射和说明索引。
+- 使用根仓库 `tools/resources/catalog/main.py items images` 根据资源映射一次生成全部透明 PNG；输入仍是只读的 GRF 解压目录，运行时不承担图片转换成本。
 - 产物统一写入 `backend/resources/game-data/items/`，生成完成后再由 Laravel 导入命令同步至 MariaDB。
 - 服务端工具负责读取 rAthena 数据并生成 Renewal 快照；默认使用服务端英文基线 `2fe6ab3dc4d8`，禁止从已翻译的服务端文件猜测英文名称。
 - 仅客户端工具读取 kRO merged 的 `itemInfo_true.json`，用 Renewal 快照中的 `en-US` 名称补齐英文；生成前要求客户端 ID 全部命中服务端快照。
@@ -124,7 +127,7 @@
 
 - GRF 全量提取 `148,805/148,805` 成功，解压后约 `11.4 GiB`。
 - 物品 ID `1101` 的说明可正常返回并清理客户端格式码。
-- 物品 ID `1107` 的详情插图可解析为 `75×100` BMP。
+- 物品 ID `1107` 的详情插图可离线生成并解析为带透明背景的 `75×100` PNG。
 - 物品 ID `1100` 等没有客户端说明的物品明确显示缺省文案，不使用服务器脚本伪造说明。
 - 地图和 NPC 查询已通过登录状态的真实 Chromium 验收；无地图资源时显示居中的“暂无图片”。
 

@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Middleware\AuthenticateGameSession;
 use App\Http\Middleware\RequirePermission;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,7 +18,14 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
         $middleware->redirectGuestsTo(null);
-        $middleware->alias(['permission' => RequirePermission::class]);
+        $middleware->alias([
+            'permission' => RequirePermission::class,
+            'game.session' => AuthenticateGameSession::class,
+        ]);
+        $middleware->prependToPriorityList(
+            ThrottleRequests::class,
+            AuthenticateGameSession::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

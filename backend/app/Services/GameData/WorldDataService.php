@@ -2,17 +2,11 @@
 
 namespace App\Services\GameData;
 
-use FilesystemIterator;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-
 final class WorldDataService
 {
     private const WORLD_ASSET_VERSION = 'kro-20211105-transparent-v2';
 
     private ?array $mapNames = null;
-
-    private ?array $npcNames = null;
 
     /** @return list<array{id:int|null,map:string}> */
     public function maps(): array
@@ -42,37 +36,32 @@ final class WorldDataService
         return $rows;
     }
 
-    /** @return list<array{map:string,x:int,y:int,name:string}> */
+    /** @return list<array<string, mixed>> */
     public function npcs(): array
     {
-        $root = config('happyro.game_data.npc_root');
-        $rows = [];
-        if (! is_string($root) || ! is_dir($root)) {
-            return $rows;
+        $path = config('happyro.game_data.npc_catalog_path');
+        if (! is_string($path) || ! is_readable($path)) {
+            return [];
         }
-        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
-        foreach ($files as $entry) {
-            if (! $entry->isFile() || strtolower($entry->getExtension()) !== 'txt') {
-                continue;
-            }
-            foreach (file($entry->getPathname(), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
-                if (preg_match('/^([a-z0-9_]+),(-?\d+),(-?\d+),\d+\s+(?:script|shop|cashshop|itemshop|pointshop)\s+(.+?)\s+(\d+),?\s*\{/i', trim($line), $match) === 1) {
-                    $spriteId = (int) $match[5];
-                    $name = trim($match[4]);
-                    $lookupName = preg_replace('/#.*$/', '', $name) ?? $name;
-                    $rows[] = [
-                        'map' => $match[1],
-                        'map_name_zh_cn' => $this->mapNames()[$match[1]] ?? null,
-                        'x' => (int) $match[2],
-                        'y' => (int) $match[3],
-                        'name' => $name,
-                        'name_zh_cn' => $this->npcNames()[$lookupName] ?? null,
-                        'sprite_id' => $spriteId,
-                        'image' => is_file(base_path("resources/game-data/world/npcs/{$spriteId}.png")) ? "/api/game-data/npcs/{$spriteId}/image?v=".self::WORLD_ASSET_VERSION : null,
-                    ];
-                }
-            }
+
+        $contents = file_get_contents($path);
+        $catalog = $contents === false ? null : json_decode($contents, true);
+        if (! is_array($catalog) || ($catalog['schema'] ?? null) !== 'happyro-npc-catalog/v1' || ! is_array($catalog['entries'] ?? null)) {
+            return [];
         }
+
+        $rows = array_map(function (array $entry): array {
+            $spriteId = $entry['display_sprite_id'] ?? null;
+
+            return [
+                ...$entry,
+                'name_zh_cn' => $entry['display_name'] !== $entry['source_name'] ? $entry['display_name'] : null,
+                'image' => is_int($spriteId) && is_file(base_path("resources/game-data/world/npcs/{$spriteId}.png"))
+                    ? "/api/game-data/npcs/{$spriteId}/image?v=".self::WORLD_ASSET_VERSION
+                : null,
+            ];
+        }, $catalog['entries']);
+        usort($rows, static fn (array $left, array $right): int => $left['catalog_order'] <=> $right['catalog_order']);
 
         return $rows;
     }
@@ -81,12 +70,6 @@ final class WorldDataService
     private function mapNames(): array
     {
         return $this->mapNames ??= $this->names('map-names.zh-CN.json');
-    }
-
-    /** @return array<string, string> */
-    private function npcNames(): array
-    {
-        return $this->npcNames ??= $this->names('npc-names.zh-CN.json');
     }
 
     /** @return array<string, string> */

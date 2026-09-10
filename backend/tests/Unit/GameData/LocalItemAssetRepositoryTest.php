@@ -12,20 +12,13 @@ final class LocalItemAssetRepositoryTest extends TestCase
     {
         $filesystem = new Filesystem;
         $root = sys_get_temp_dir().'/happyro-item-assets-'.bin2hex(random_bytes(8));
-        $icon = $root.'/texture/item/ketupat.bmp';
-        $illustration = $root.'/texture/collection/ketupat.bmp';
-        $map = $root.'/item-assets.json';
+        $icon = $root.'/icons/552.png';
+        $illustration = $root.'/illustrations/552.png';
         $filesystem->ensureDirectoryExists(dirname($icon));
         $filesystem->ensureDirectoryExists(dirname($illustration));
         $filesystem->put($icon, 'icon');
         $filesystem->put($illustration, 'illustration');
-        $filesystem->put($map, json_encode(['items' => [
-            '552' => [
-                'icon' => 'texture/item/ketupat.bmp',
-                'illustration' => 'texture/collection/ketupat.bmp',
-            ],
-        ]], JSON_THROW_ON_ERROR));
-        $assets = new LocalItemAssetRepository($map, $root);
+        $assets = new LocalItemAssetRepository($root);
 
         try {
             $this->assertSame(realpath($icon), $assets->iconPath(552));

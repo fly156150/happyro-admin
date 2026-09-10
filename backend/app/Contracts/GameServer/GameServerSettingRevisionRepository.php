@@ -2,13 +2,14 @@
 
 namespace App\Contracts\GameServer;
 
+use App\Data\GameServer\OperationActor;
 use App\Models\GameServerSettingRevision;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface GameServerSettingRevisionRepository
 {
     /** @param array<string, mixed> $changes */
-    public function create(string $serverKey, array $changes, string $reason, ?int $requestedBy): GameServerSettingRevision;
+    public function create(string $serverKey, array $changes, string $reason, OperationActor $actor): GameServerSettingRevision;
 
     public function find(string $serverKey, int $revision): ?GameServerSettingRevision;
 

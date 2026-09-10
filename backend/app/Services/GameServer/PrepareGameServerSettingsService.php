@@ -4,8 +4,8 @@ namespace App\Services\GameServer;
 
 use App\Contracts\GameServer\GameServerConfigWriter;
 use App\Contracts\GameServer\GameServerSettingRevisionRepository;
+use App\Data\GameServer\OperationActor;
 use App\Models\GameServerSettingRevision;
-use App\Models\User;
 use InvalidArgumentException;
 use Throwable;
 
@@ -18,7 +18,7 @@ final readonly class PrepareGameServerSettingsService
     ) {}
 
     /** @param array<string, int> $changes */
-    public function prepare(array $changes, string $reason, User $operator): GameServerSettingRevision
+    public function prepare(array $changes, string $reason, OperationActor $actor): GameServerSettingRevision
     {
         if ($changes === []) {
             throw new InvalidArgumentException('At least one setting change is required.');
@@ -31,7 +31,7 @@ final readonly class PrepareGameServerSettingsService
             $this->registry->validate($key, $value);
         }
 
-        $revision = $this->revisions->create('primary', $changes, $reason, $operator->getKey());
+        $revision = $this->revisions->create('primary', $changes, $reason, $actor);
         try {
             $this->writer->write($changes);
         } catch (Throwable $exception) {

@@ -3,15 +3,16 @@
 namespace App\Infrastructure\Persistence\GameServer;
 
 use App\Contracts\GameServer\GameServerSettingRevisionRepository;
+use App\Data\GameServer\OperationActor;
 use App\Models\GameServerSettingRevision;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 final class DatabaseGameServerSettingRevisionRepository implements GameServerSettingRevisionRepository
 {
-    public function create(string $serverKey, array $changes, string $reason, ?int $requestedBy): GameServerSettingRevision
+    public function create(string $serverKey, array $changes, string $reason, OperationActor $actor): GameServerSettingRevision
     {
-        return DB::transaction(function () use ($serverKey, $changes, $reason, $requestedBy): GameServerSettingRevision {
+        return DB::transaction(function () use ($serverKey, $changes, $reason, $actor): GameServerSettingRevision {
             $revision = (int) GameServerSettingRevision::query()
                 ->where('server_key', $serverKey)
                 ->lockForUpdate()
@@ -23,7 +24,8 @@ final class DatabaseGameServerSettingRevisionRepository implements GameServerSet
                 'changes' => $changes,
                 'status' => 'draft',
                 'reason' => $reason,
-                'requested_by' => $requestedBy,
+                'requested_by' => $actor->adminUserId,
+                'requested_game_account_id' => $actor->gameAccountId,
             ]);
         });
     }

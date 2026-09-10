@@ -13,5 +13,8 @@ interface GameServerGateway
     /** @return array<string, int> */
     public function battleConfig(): array;
 
+    /** @return array<string, mixed> */
+    public function characterSnapshot(int $characterId): array;
+
     public function execute(GameServerCommand $command): GameServerCommandResult;
 }

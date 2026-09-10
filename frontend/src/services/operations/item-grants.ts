@@ -11,7 +11,11 @@ export type ItemGrant = {
 };
 
 export async function listItemGrants(page = 1) {
-  return request<{ data: Array<Record<string, unknown>>; meta: { current_page: number; last_page: number; total: number }; success: boolean }>(`/api/operations/item-grants?page=${page}`);
+  return request<{
+    data: Array<Record<string, unknown>>;
+    meta: { current_page: number; last_page: number; total: number };
+    success: boolean;
+  }>(`/api/operations/item-grants?page=${page}`);
 }
 
 export type ItemGrantTarget = {
@@ -42,4 +46,12 @@ export async function searchItemGrantTargets(target: string) {
 
 export async function mailItem(data: ItemGrant) {
   return request('/api/operations/item-grants/mail', { method: 'POST', data });
+}
+
+export async function grantZeny(data: {
+  idempotency_key: string;
+  char_id: number;
+  amount: number;
+}) {
+  return request('/api/operations/zeny-grants', { method: 'POST', data });
 }

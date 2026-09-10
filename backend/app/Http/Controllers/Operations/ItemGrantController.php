@@ -4,9 +4,13 @@ namespace App\Http\Controllers\Operations;
 
 use App\Contracts\Operations\ItemGrantRecordRepository;
 use App\Data\Auth\ClientContext;
+use App\Data\GameServer\OperationActor;
 use App\Exceptions\CharacterNotFoundException;
+use App\Exceptions\GameServerGatewayException;
 use App\Exceptions\ItemGrantConflictException;
 use App\Exceptions\ItemNotFoundException;
+use App\Http\Requests\Operations\GrantCharacterZenyRequest;
+use App\Services\Operations\GrantCharacterZenyService;
 use App\Services\Operations\ItemGrantService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -17,6 +21,7 @@ final class ItemGrantController
     public function __construct(
         private readonly ItemGrantService $grants,
         private readonly ItemGrantRecordRepository $records,
+        private readonly GrantCharacterZenyService $grantZeny,
     ) {}
 
     public function store(Request $request): JsonResponse
@@ -35,6 +40,25 @@ final class ItemGrantController
         }
 
         return response()->json(['data' => ['mail_id' => $mailId], 'success' => true], 201);
+    }
+
+    public function storeZeny(GrantCharacterZenyRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        try {
+            $result = $this->grantZeny->grant(
+                $data['idempotency_key'],
+                $data['char_id'],
+                $data['amount'],
+                OperationActor::admin($request->user()),
+            );
+        } catch (GameServerGatewayException $exception) {
+            $status = in_array($exception->errorCode, ['character_offline', 'zeny_amount_exceeded', 'command_not_replayable'], true) ? 409 : 502;
+
+            return response()->json(['error' => ['code' => $exception->errorCode, 'message' => $exception->getMessage()]], $status);
+        }
+
+        return response()->json(['data' => $result, 'success' => true]);
     }
 
     public function index(Request $request): JsonResponse

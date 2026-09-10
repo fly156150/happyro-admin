@@ -15,7 +15,7 @@ final class SubmitGameServerCommandRequest extends FormRequest
     {
         return [
             'idempotency_key' => ['required', 'string', 'max:64'],
-            'type' => ['required', 'string', 'in:character.progression.update,character.stats.update,character.stats.reset,character.skills.reset,character.vitals.restore,monster.spawn'],
+            'type' => ['required', 'string', 'in:character.progression.update,character.skill_points.update,character.stats.update,character.stats.reset,character.skills.reset,character.vitals.restore,monster.spawn'],
             'target' => ['required', 'array'],
             'target.type' => ['required', 'string', 'in:character'],
             'target.id' => ['required', 'string', 'max:64'],

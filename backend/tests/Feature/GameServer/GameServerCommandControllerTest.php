@@ -52,6 +52,28 @@ final class GameServerCommandControllerTest extends TestCase
         ])->assertStatus(202);
     }
 
+    public function test_authenticated_operator_can_set_skill_points(): void
+    {
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('execute')
+            ->once()
+            ->andReturn(new GameServerCommandResult(['char_id' => 42, 'skill_points' => 1000]));
+        $this->app->instance(GameServerGateway::class, $gateway);
+
+        $this->actingAs($this->superAdmin())->postJson('/api/operations/game-control/commands', [
+            'idempotency_key' => 'character-skill-points-1',
+            'type' => 'character.skill_points.update',
+            'target' => ['type' => 'character', 'id' => '42'],
+            'payload' => ['skill_points' => 1000],
+        ])->assertStatus(202)->assertJsonPath('data.result.skill_points', 1000);
+
+        $this->assertDatabaseHas('game_server_commands', [
+            'idempotency_key' => 'character-skill-points-1',
+            'type' => 'character.skill_points.update',
+            'status' => 'succeeded',
+        ]);
+    }
+
     public function test_command_payload_must_be_present(): void
     {
         $this->actingAs($this->superAdmin())->postJson('/api/operations/game-control/commands', [

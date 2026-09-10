@@ -47,4 +47,14 @@ final class GameServerSettingRegistryTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $registry->validate('game_tools_monster_spawn_duration', 0);
     }
+
+    public function test_registers_item_grant_policy_as_everyone_or_admin(): void
+    {
+        $registry = new GameServerSettingRegistry;
+
+        $this->assertSame('policy', $registry->validate('game_tools_item_grant_policy', 2)->unit);
+
+        $this->expectException(InvalidArgumentException::class);
+        $registry->validate('game_tools_item_grant_policy', 0);
+    }
 }

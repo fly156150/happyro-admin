@@ -5,7 +5,7 @@ export default {
   'menu.gameData.npcs': 'NPC search',
   'menu.gameData.maps': 'Map search',
   'menu.operations': 'Operations',
-  'menu.operations.itemGrants': 'Grant items',
+  'menu.operations.itemGrants': 'Grant items and Zeny',
   'menu.operations.itemGrantRecords': 'Grant history',
   'menu.players': 'User management',
   'menu.players.account': 'User accounts',

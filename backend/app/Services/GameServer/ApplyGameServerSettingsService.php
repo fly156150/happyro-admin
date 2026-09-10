@@ -8,6 +8,7 @@ use App\Contracts\GameServer\GameServerSettingRepository;
 use App\Contracts\GameServer\GameServerSettingRevisionRepository;
 use App\Data\GameServer\GameServerCommandRequest;
 use App\Data\GameServer\GameServerCommandType;
+use App\Data\GameServer\OperationActor;
 use App\Models\GameServerSettingRevision;
 use App\Models\User;
 use Illuminate\Support\Str;
@@ -28,12 +29,24 @@ final readonly class ApplyGameServerSettingsService
     /** @param array<string, int> $changes */
     public function apply(array $changes, string $reason, User $operator): GameServerSettingRevision
     {
+        return $this->applyForActor($changes, $reason, OperationActor::admin($operator));
+    }
+
+    /** @param array<string, int> $changes */
+    public function applyForGameAccount(array $changes, string $reason, int $accountId): GameServerSettingRevision
+    {
+        return $this->applyForActor($changes, $reason, OperationActor::gameAccount($accountId));
+    }
+
+    /** @param array<string, int> $changes */
+    private function applyForActor(array $changes, string $reason, OperationActor $actor): GameServerSettingRevision
+    {
         $snapshot = $this->writer->snapshot();
         $revision = null;
 
         try {
-            $revision = $this->prepare->prepare($changes, $reason, $operator);
-            $command = $this->submit->submit(new GameServerCommandRequest(
+            $revision = $this->prepare->prepare($changes, $reason, $actor);
+            $command = $this->submit->submitForActor(new GameServerCommandRequest(
                 (string) Str::uuid(),
                 GameServerCommandType::BattleConfigApply,
                 'server',
@@ -43,7 +56,7 @@ final readonly class ApplyGameServerSettingsService
                     $changes,
                     array_keys($changes),
                 )],
-            ), $operator);
+            ), $actor);
             $this->execute->execute($command->command->id);
             $actual = $this->gateway->battleConfig();
             foreach ($changes as $key => $value) {

@@ -48,6 +48,22 @@ final class HttpGameServerGatewayTest extends TestCase
         });
     }
 
+    public function test_reads_live_character_snapshot(): void
+    {
+        $http = $this->fakeHttp([
+            'http://127.0.0.1:8889/game-control/v1/commands' => Factory::response([
+                'data' => ['result' => ['char_id' => 150002, 'name' => '测试角色', 'str' => 10]],
+            ]),
+        ]);
+
+        $snapshot = $this->gateway($http)->characterSnapshot(150002);
+
+        $this->assertSame(150002, $snapshot['char_id']);
+        $http->assertSent(fn (Request $request): bool => $request['type'] === 'character.snapshot'
+            && $request['target'] === ['type' => 'character', 'id' => '150002']
+            && (array) $request['payload'] === []);
+    }
+
     public function test_maps_authentication_failure_without_remote_details(): void
     {
         $http = $this->fakeHttp([

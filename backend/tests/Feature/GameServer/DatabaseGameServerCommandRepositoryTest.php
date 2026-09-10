@@ -6,6 +6,7 @@ use App\Contracts\GameServer\GameServerCommandRepository;
 use App\Data\GameServer\GameServerCommandRequest;
 use App\Data\GameServer\GameServerCommandStatus;
 use App\Data\GameServer\GameServerCommandType;
+use App\Data\GameServer\OperationActor;
 use App\Exceptions\GameServerCommandStateException;
 use App\Exceptions\IdempotencyConflictException;
 use App\Models\User;
@@ -22,8 +23,9 @@ final class DatabaseGameServerCommandRepositoryTest extends TestCase
         $request = $this->request(['monster_id' => 1002, 'count' => 1]);
         $repository = $this->app->make(GameServerCommandRepository::class);
 
-        $first = $repository->submit($request, $operator->id);
-        $second = $repository->submit($request, $operator->id);
+        $actor = OperationActor::admin($operator);
+        $first = $repository->submit($request, $actor);
+        $second = $repository->submit($request, $actor);
 
         $this->assertTrue($first->created);
         $this->assertFalse($second->created);
@@ -36,17 +38,18 @@ final class DatabaseGameServerCommandRepositoryTest extends TestCase
     {
         $operator = User::factory()->create();
         $repository = $this->app->make(GameServerCommandRepository::class);
-        $repository->submit($this->request(['monster_id' => 1002]), $operator->id);
+        $actor = OperationActor::admin($operator);
+        $repository->submit($this->request(['monster_id' => 1002]), $actor);
 
         $this->expectException(IdempotencyConflictException::class);
 
-        $repository->submit($this->request(['monster_id' => 1003]), $operator->id);
+        $repository->submit($this->request(['monster_id' => 1003]), $actor);
     }
 
     public function test_command_follows_terminal_success_transition(): void
     {
         $repository = $this->app->make(GameServerCommandRepository::class);
-        $submitted = $repository->submit($this->request(['monster_id' => 1002]), null);
+        $submitted = $repository->submit($this->request(['monster_id' => 1002]), OperationActor::gameAccount(42));
 
         $running = $repository->markRunning($submitted->command->id);
         $succeeded = $repository->markSucceeded($running->id, ['spawned' => 1]);
@@ -64,7 +67,7 @@ final class DatabaseGameServerCommandRepositoryTest extends TestCase
     public function test_running_command_can_finish_with_failure_details(): void
     {
         $repository = $this->app->make(GameServerCommandRepository::class);
-        $submitted = $repository->submit($this->request(['monster_id' => 1002]), null);
+        $submitted = $repository->submit($this->request(['monster_id' => 1002]), OperationActor::gameAccount(42));
         $repository->markRunning($submitted->command->id);
 
         $failed = $repository->markFailed($submitted->command->id, 'target_offline', 'Target character is offline.');
@@ -78,7 +81,7 @@ final class DatabaseGameServerCommandRepositoryTest extends TestCase
     public function test_indeterminate_command_can_be_retried_with_same_identity(): void
     {
         $repository = $this->app->make(GameServerCommandRepository::class);
-        $submitted = $repository->submit($this->request(['monster_id' => 1002]), null);
+        $submitted = $repository->submit($this->request(['monster_id' => 1002]), OperationActor::gameAccount(42));
         $repository->markRunning($submitted->command->id);
 
         $indeterminate = $repository->markIndeterminate($submitted->command->id, 'unavailable', 'Game server is unavailable.');

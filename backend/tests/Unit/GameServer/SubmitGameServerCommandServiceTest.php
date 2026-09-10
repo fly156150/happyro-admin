@@ -8,6 +8,7 @@ use App\Data\GameServer\GameServerCommandRequest;
 use App\Data\GameServer\GameServerCommandStatus;
 use App\Data\GameServer\GameServerCommandSubmission;
 use App\Data\GameServer\GameServerCommandType;
+use App\Data\GameServer\OperationActor;
 use App\Models\User;
 use App\Services\GameServer\SubmitGameServerCommandService;
 use Carbon\CarbonImmutable;
@@ -47,7 +48,9 @@ final class SubmitGameServerCommandServiceTest extends TestCase
         );
         $submission = new GameServerCommandSubmission($command, true);
         $commands = Mockery::mock(GameServerCommandRepository::class);
-        $commands->expects('submit')->with($request, 7)->andReturn($submission);
+        $commands->expects('submit')->with($request, Mockery::on(
+            fn (OperationActor $actor): bool => $actor->adminUserId === 7 && $actor->gameAccountId === null,
+        ))->andReturn($submission);
 
         $result = (new SubmitGameServerCommandService($commands))->submit($request, $operator);
 

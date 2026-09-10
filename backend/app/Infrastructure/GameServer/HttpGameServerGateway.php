@@ -11,6 +11,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Str;
 
 final class HttpGameServerGateway implements GameServerGateway
 {
@@ -87,6 +88,28 @@ final class HttpGameServerGateway implements GameServerGateway
         }
 
         return $values;
+    }
+
+    public function characterSnapshot(int $characterId): array
+    {
+        try {
+            $response = $this->request()->post('/game-control/v1/commands', [
+                'id' => (string) Str::uuid(),
+                'type' => 'character.snapshot',
+                'target' => ['type' => 'character', 'id' => (string) $characterId],
+                'payload' => (object) [],
+            ]);
+        } catch (ConnectionException $exception) {
+            throw new GameServerGatewayException('unavailable', 'Game server is unavailable.', previous: $exception);
+        }
+
+        $this->ensureSuccessful($response);
+        $snapshot = $response->json('data.result');
+        if (! is_array($snapshot) || ($snapshot['char_id'] ?? null) !== $characterId) {
+            throw new GameServerGatewayException('invalid_response', 'Game server returned an invalid response.');
+        }
+
+        return $snapshot;
     }
 
     private function request(): PendingRequest

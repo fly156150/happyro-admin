@@ -5,7 +5,7 @@ export default {
   'menu.gameData.npcs': 'NPC 查询',
   'menu.gameData.maps': '地图查询',
   'menu.operations': '运营管理',
-  'menu.operations.itemGrants': '发放物品',
+  'menu.operations.itemGrants': '物品与 Zeny 发放',
   'menu.operations.itemGrantRecords': '发放记录',
   'menu.players': '用户管理',
   'menu.players.account': '用户账号',

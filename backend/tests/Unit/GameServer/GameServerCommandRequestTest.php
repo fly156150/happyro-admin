@@ -4,6 +4,8 @@ namespace Tests\Unit\GameServer;
 
 use App\Data\GameServer\GameServerCommandRequest;
 use App\Data\GameServer\GameServerCommandType;
+use App\Data\GameServer\OperationActor;
+use App\Models\User;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
@@ -26,7 +28,11 @@ final class GameServerCommandRequestTest extends TestCase
             ['monster' => ['name' => 'Poring', 'id' => 1002], 'count' => 1],
         );
 
-        $this->assertSame($first->fingerprint(7), $second->fingerprint(7));
+        $operator = new User;
+        $operator->id = 7;
+        $actor = OperationActor::admin($operator);
+
+        $this->assertSame($first->fingerprint($actor), $second->fingerprint($actor));
     }
 
     public function test_target_type_and_id_must_be_provided_together(): void

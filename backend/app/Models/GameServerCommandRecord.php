@@ -27,6 +27,7 @@ final class GameServerCommandRecord extends Model
         'error_code',
         'error_message',
         'requested_by',
+        'requested_game_account_id',
         'started_at',
         'completed_at',
     ];
@@ -39,6 +40,7 @@ final class GameServerCommandRecord extends Model
             'payload' => 'array',
             'result' => 'array',
             'requested_by' => 'integer',
+            'requested_game_account_id' => 'integer',
             'started_at' => 'immutable_datetime',
             'completed_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
