@@ -209,7 +209,7 @@ export default {
   'operations.itemGrants.delivery': 'Delivery method',
   'operations.itemGrants.delivery.mail': 'Mail',
   'operations.itemGrants.delivery.inventory': 'Inventory',
-  'operations.itemGrants.inventoryOnlineOnly': 'Inventory delivery requires the character to be online.',
+  'operations.itemGrants.inventoryOnlineOnly': 'Inventory delivery requires the character to be online; equipment is identified automatically.',
   'operations.itemGrants.inventorySuccess': 'Item added to inventory',
   'operations.itemGrants.zenySuccess': 'Zeny granted',
   'operations.itemGrants.zenyOnlineOnly':
@@ -235,6 +235,8 @@ export default {
   'gameData.item.card': 'Card',
   'gameData.item.etc': 'Other',
   'gameData.item.weight': 'Weight',
+  'gameData.item.price': 'Price',
+  'gameData.item.slots': 'Slots',
   'gameData.item.detail': 'Item details',
   'gameData.item.buy': 'Buy price',
   'gameData.item.sell': 'Sell price',

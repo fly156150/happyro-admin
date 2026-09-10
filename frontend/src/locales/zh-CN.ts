@@ -201,7 +201,7 @@ export default {
   'operations.itemGrants.delivery': '发放方式',
   'operations.itemGrants.delivery.mail': '邮件',
   'operations.itemGrants.delivery.inventory': '背包',
-  'operations.itemGrants.inventoryOnlineOnly': '背包发放仅支持当前在线角色。',
+  'operations.itemGrants.inventoryOnlineOnly': '背包发放仅支持当前在线角色；装备会自动使用放大镜鉴定后发放。',
   'operations.itemGrants.inventorySuccess': '物品已发放到背包',
   'operations.itemGrants.zenySuccess': 'Zeny 已发放',
   'operations.itemGrants.zenyOnlineOnly':
@@ -227,6 +227,8 @@ export default {
   'gameData.item.card': '卡片',
   'gameData.item.etc': '其他',
   'gameData.item.weight': '重量',
+  'gameData.item.price': '价格',
+  'gameData.item.slots': '洞数',
   'gameData.item.detail': '物品详情',
   'gameData.item.buy': '买入价',
   'gameData.item.sell': '卖出价',

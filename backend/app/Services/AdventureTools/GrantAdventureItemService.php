@@ -26,14 +26,19 @@ final class GrantAdventureItemService
      */
     public function grant(array $data, GameSessionPrincipal $principal): array
     {
-        abort_unless($this->items->find($data['item_id'], 'server'), 422, '物品不存在或无法发放');
+        $item = $this->items->find($data['item_id'], 'server');
+        abort_unless($item, 422, '物品不存在或无法发放');
         $characterId = $this->targets->resolve($data['target'], $principal);
         $submission = $this->submit->submitForGameAccount(new GameServerCommandRequest(
             $data['idempotency_key'],
             GameServerCommandType::CharacterInventoryItemGrant,
             'character',
             (string) $characterId,
-            ['item_id' => $data['item_id'], 'amount' => $data['amount']],
+            [
+                'item_id' => $data['item_id'],
+                'amount' => $data['amount'],
+                'identify' => in_array($item['Type'] ?? null, ['Weapon', 'Armor', 'PetArmor', 'ShadowGear'], true),
+            ],
         ), $principal->accountId);
         if ($submission->created) {
             $command = $this->execute->execute($submission->command->id);

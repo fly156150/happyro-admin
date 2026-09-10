@@ -135,7 +135,7 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
             <div>
               {t(
                 'operations.itemGrants.inventoryOnlineOnly',
-                '背包发放仅支持当前在线角色。',
+                '背包发放仅支持当前在线角色；装备会自动使用放大镜鉴定后发放。',
               )}
             </div>
           ) : (

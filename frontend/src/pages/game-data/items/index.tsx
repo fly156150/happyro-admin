@@ -132,6 +132,18 @@ function useItemColumns({
         search: false,
       },
       {
+        title: t('gameData.item.price', '价格'),
+        dataIndex: 'Buy',
+        search: false,
+        render: (_, row) => `买 ${row.Buy ?? '-'} / 卖 ${row.Sell ?? '-'}`,
+      },
+      {
+        title: t('gameData.item.slots', '洞数'),
+        dataIndex: 'Slots',
+        search: false,
+        render: (_, row) => row.Slots ?? 0,
+      },
+      {
         title: t('gameData.item.range', '数据范围'),
         dataIndex: 'range',
         hideInTable: true,
@@ -273,11 +285,11 @@ function ItemDetails({
         <Descriptions.Item label={t('gameData.item.source', '数据来源')}>
           <Tag>{sourceLabel(item.source, t)}</Tag>
         </Descriptions.Item>
-        <Descriptions.Item label={t('gameData.item.buy', '买入价')}>
-          {item.Buy ?? '-'}
+        <Descriptions.Item label={t('gameData.item.price', '价格')}>
+          买 {item.Buy ?? '-'} / 卖 {item.Sell ?? '-'}
         </Descriptions.Item>
-        <Descriptions.Item label={t('gameData.item.sell', '卖出价')}>
-          {item.Sell ?? '-'}
+        <Descriptions.Item label={t('gameData.item.slots', '洞数')}>
+          {item.Slots ?? 0}
         </Descriptions.Item>
         <Descriptions.Item label={t('gameData.item.description', '说明')}>
           {item.description?.length

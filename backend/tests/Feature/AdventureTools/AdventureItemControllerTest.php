@@ -80,6 +80,23 @@ final class AdventureItemControllerTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors('target.type');
     }
 
+    public function test_equipment_grants_are_identified_by_the_server(): void
+    {
+        $items = Mockery::mock(ItemRepository::class);
+        $items->expects('find')->with(1101, 'server')->andReturn(['Id' => 1101, 'Type' => 'Weapon']);
+        $this->app->instance(ItemRepository::class, $items);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('battleConfig')->once()->andReturn(['game_tools_item_grant_policy' => 2]);
+        $gateway->expects('execute')
+            ->with(Mockery::on(fn ($command): bool => $command->payload['identify'] === true))
+            ->andReturn(new GameServerCommandResult(['char_id' => 150002, 'item_id' => 1101, 'amount' => 1]));
+        $this->app->instance(GameServerGateway::class, $gateway);
+
+        $this->withHeaders($this->headers())->postJson('/api/adventure-tools/items/grants', [
+            'idempotency_key' => 'equipment-grant-1', 'target' => ['type' => 'self'], 'item_id' => 1101, 'amount' => 1,
+        ])->assertOk()->assertJsonPath('data.item_id', 1101);
+    }
+
     public function test_admin_only_policy_rejects_a_regular_player(): void
     {
         $gateway = Mockery::mock(GameServerGateway::class);

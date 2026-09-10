@@ -26,7 +26,8 @@ final class GrantCharacterInventoryItemService
     /** @param array{item_id:int,char_id:int,amount:int,idempotency_key:string} $data */
     public function grant(array $data, User $operator, ClientContext $context): array
     {
-        if (! $this->items->find($data['item_id'], 'server')) {
+        $item = $this->items->find($data['item_id'], 'server');
+        if (! $item) {
             throw new ItemNotFoundException($data['item_id']);
         }
 
@@ -35,7 +36,11 @@ final class GrantCharacterInventoryItemService
             GameServerCommandType::CharacterInventoryItemGrant,
             'character',
             (string) $data['char_id'],
-            ['item_id' => $data['item_id'], 'amount' => $data['amount']],
+            [
+                'item_id' => $data['item_id'],
+                'amount' => $data['amount'],
+                'identify' => in_array($item['Type'] ?? null, ['Weapon', 'Armor', 'PetArmor', 'ShadowGear'], true),
+            ],
         ), $operator);
 
         if ($submission->created) {
