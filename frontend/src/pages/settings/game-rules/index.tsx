@@ -6,7 +6,7 @@ import {
   ProFormText,
 } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
-import { App, Card, Flex, Spin, Typography } from 'antd';
+import { App, Card, Flex, Spin, Tabs, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import {
   type GameRuleSettings,
@@ -99,227 +99,31 @@ export default function GameRulesSettingPage() {
               return true;
             }}
           >
-            <Typography.Title level={5}>
-              {t('settings.gameRules.section.experienceRates', '经验倍率')}
-            </Typography.Title>
-            {experienceRateKeys.map((key) => {
-              const definition = settings.definitions[key];
-              return (
-                <ProFormDigit
-                  key={key}
-                  name={key}
-                  label={ruleLabel(key, t)}
-                  min={definition.minimum}
-                  max={definition.maximum}
-                  fieldProps={{ precision: 0 }}
-                  addonAfter={t('settings.gameRules.unit.percent', '%')}
-                  extra={ruleExtra(definition, t)}
-                  width="md"
-                  rules={[{ required: true }]}
-                />
-              );
-            })}
-            <Typography.Title level={5}>
-              {t(
-                'settings.gameRules.section.dropRates',
-                '掉落倍率（普通魔物 & MVP）'
-              )}
-            </Typography.Title>
-            <div
-              style={{
-                display: 'grid',
-                gap: 32,
-                gridTemplateColumns: 'repeat(2, minmax(280px, 1fr))',
-                overflowX: 'auto',
-              }}
-            >
-              {[
+            <Tabs
+              defaultActiveKey="rates"
+              items={[
                 {
-                  key: 'normal',
-                  keys: normalDropRateKeys,
+                  key: 'rates',
+                  label: t('settings.gameRules.tab.rates', '倍率'),
+                  children: <RateSettings settings={settings} t={t} />,
                 },
                 {
-                  key: 'mvp',
-                  keys: mvpDropRateKeys,
-                },
-              ].map((group) => (
-                <div key={group.key}>
-                  {group.keys.map((key) => {
-                    const definition = settings.definitions[key];
-                    return (
-                      <ProFormDigit
-                        key={key}
-                        name={key}
-                        label={ruleLabel(key, t)}
-                        min={definition.minimum}
-                        max={definition.maximum}
-                        fieldProps={{ precision: 0 }}
-                        addonAfter={t('settings.gameRules.unit.percent', '%')}
-                        extra={ruleExtra(definition, t)}
-                        width="md"
-                        rules={[{ required: true }]}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-            <Typography.Title level={5}>
-              {t('settings.gameRules.section.navigation', '网页地图传送')}
-            </Typography.Title>
-            <ProFormRadio.Group
-              name="navigation_teleport_policy"
-              label={ruleLabel('navigation_teleport_policy', t)}
-              radioType="button"
-              options={[
-                {
-                  label: t('settings.gameRules.policy.disabled', '关闭'),
-                  value: 0,
+                  key: 'navigation',
+                  label: t('settings.gameRules.tab.navigation', '地图传送'),
+                  children: <NavigationSettings settings={settings} t={t} />,
                 },
                 {
-                  label: t('settings.gameRules.policy.admin', '仅管理员'),
-                  value: 1,
+                  key: 'monster',
+                  label: t('settings.gameRules.tab.monster', '魔物召唤'),
+                  children: <MonsterSpawnSettings settings={settings} t={t} />,
                 },
                 {
-                  label: t('settings.gameRules.policy.everyone', '所有玩家'),
-                  value: 2,
+                  key: 'adventure',
+                  label: t('settings.gameRules.tab.adventure', '冒险工具'),
+                  children: <AdventureToolSettings settings={settings} t={t} />,
                 },
               ]}
-              rules={[{ required: true }]}
             />
-            <ProFormRadio.Group
-              name="navigation_teleport_cross_map"
-              label={ruleLabel('navigation_teleport_cross_map', t)}
-              radioType="button"
-              options={[
-                { label: t('common.enabled', '开启'), value: 1 },
-                { label: t('common.disabled', '关闭'), value: 0 },
-              ]}
-              rules={[{ required: true }]}
-            />
-            <ProFormDigit
-              name="navigation_teleport_cooldown"
-              label={ruleLabel('navigation_teleport_cooldown', t)}
-              min={settings.definitions.navigation_teleport_cooldown.minimum}
-              max={settings.definitions.navigation_teleport_cooldown.maximum}
-              fieldProps={{ precision: 0 }}
-              addonAfter={t('settings.gameRules.unit.seconds', '秒')}
-              extra={ruleExtra(
-                settings.definitions.navigation_teleport_cooldown,
-                t
-              )}
-              width="md"
-              rules={[{ required: true }]}
-            />
-            <ProFormRadio.Group
-              name="navigation_map_channels_enabled"
-              label={ruleLabel('navigation_map_channels_enabled', t)}
-              radioType="button"
-              options={[
-                { label: t('common.enabled', '开启'), value: 1 },
-                { label: t('common.disabled', '关闭'), value: 0 },
-              ]}
-              extra={ruleExtra(
-                settings.definitions.navigation_map_channels_enabled,
-                t
-              )}
-              rules={[{ required: true }]}
-            />
-            <Typography.Title level={5}>
-              {t('settings.gameRules.section.monsterSpawn', '游戏内魔物召唤')}
-            </Typography.Title>
-            <ProFormRadio.Group
-              name="game_tools_monster_spawn_policy"
-              label={ruleLabel('game_tools_monster_spawn_policy', t)}
-              radioType="button"
-              options={[
-                {
-                  label: t('settings.gameRules.policy.disabled', '关闭'),
-                  value: 0,
-                },
-                {
-                  label: t('settings.gameRules.policy.admin', '仅管理员'),
-                  value: 1,
-                },
-                {
-                  label: t('settings.gameRules.policy.everyone', '所有玩家'),
-                  value: 2,
-                },
-              ]}
-              rules={[{ required: true }]}
-            />
-            <ProFormDigit
-              name="game_tools_monster_spawn_cooldown"
-              label={ruleLabel('game_tools_monster_spawn_cooldown', t)}
-              min={
-                settings.definitions.game_tools_monster_spawn_cooldown.minimum
-              }
-              max={
-                settings.definitions.game_tools_monster_spawn_cooldown.maximum
-              }
-              fieldProps={{ precision: 0 }}
-              addonAfter={t('settings.gameRules.unit.seconds', '秒')}
-              extra={ruleExtra(
-                settings.definitions.game_tools_monster_spawn_cooldown,
-                t
-              )}
-              width="md"
-              rules={[{ required: true }]}
-            />
-            <ProFormDigit
-              name="game_tools_monster_spawn_duration"
-              label={ruleLabel('game_tools_monster_spawn_duration', t)}
-              min={
-                settings.definitions.game_tools_monster_spawn_duration.minimum
-              }
-              max={
-                settings.definitions.game_tools_monster_spawn_duration.maximum
-              }
-              fieldProps={{ precision: 0 }}
-              addonAfter={t('settings.gameRules.unit.seconds', '秒')}
-              extra={ruleExtra(
-                settings.definitions.game_tools_monster_spawn_duration,
-                t
-              )}
-              width="md"
-              rules={[{ required: true }]}
-            />
-            <ProFormRadio.Group
-              name="game_tools_monster_spawn_allow_boss"
-              label={ruleLabel('game_tools_monster_spawn_allow_boss', t)}
-              radioType="button"
-              options={[
-                { label: t('common.enabled', '开启'), value: 1 },
-                { label: t('common.disabled', '关闭'), value: 0 },
-              ]}
-              rules={[{ required: true }]}
-            />
-            <Typography.Title level={5}>
-              {t('settings.gameRules.section.adventureTools', '冒险工具管理')}
-            </Typography.Title>
-            {[
-              'game_tools_character_maintenance_policy',
-              'game_tools_game_settings_policy',
-              'game_tools_item_grant_policy',
-            ].map((key) => (
-              <ProFormRadio.Group
-                key={key}
-                name={key}
-                label={ruleLabel(key, t)}
-                radioType="button"
-                options={[
-                  {
-                    label: t('settings.gameRules.policy.admin', '仅管理员'),
-                    value: 1,
-                  },
-                  {
-                    label: t('settings.gameRules.policy.everyone', '所有玩家'),
-                    value: 2,
-                  },
-                ]}
-                rules={[{ required: true }]}
-              />
-            ))}
             <ProFormText
               name="reason"
               label={t('settings.gameRules.reason', '修改原因')}
@@ -330,5 +134,88 @@ export default function GameRulesSettingPage() {
         )}
       </Card>
     </PageContainer>
+  );
+}
+
+function RateSettings({ settings, t }: { settings: GameRuleSettings; t: Translate }) {
+  return (
+    <>
+      <Typography.Title level={5}>{t('settings.gameRules.section.experienceRates', '经验倍率')}</Typography.Title>
+      {experienceRateKeys.map((key) => {
+        const definition = settings.definitions[key];
+        return <RateField key={key} name={key} definition={definition} t={t} />;
+      })}
+      <Typography.Title level={5}>{t('settings.gameRules.section.dropRates', '掉落倍率（普通魔物 & MVP）')}</Typography.Title>
+      <div style={{ display: 'grid', gap: 32, gridTemplateColumns: 'repeat(2, minmax(280px, 1fr))', overflowX: 'auto' }}>
+        {[normalDropRateKeys, mvpDropRateKeys].map((keys, index) => (
+          <div key={index}>
+            {keys.map((key) => <RateField key={key} name={key} definition={settings.definitions[key]} t={t} />)}
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function RateField({ name, definition, t }: { name: string; definition: GameRuleSettings['definitions'][string]; t: Translate }) {
+  return (
+    <ProFormDigit
+      name={name}
+      label={ruleLabel(name, t)}
+      min={definition.minimum}
+      max={definition.maximum}
+      fieldProps={{ precision: 0 }}
+      addonAfter={t('settings.gameRules.unit.percent', '%')}
+      extra={ruleExtra(definition, t)}
+      width="md"
+      rules={[{ required: true }]}
+    />
+  );
+}
+
+function PolicyOptions({ t }: { t: Translate }) {
+  return [
+    { label: t('settings.gameRules.policy.disabled', '关闭'), value: 0 },
+    { label: t('settings.gameRules.policy.admin', '仅管理员'), value: 1 },
+    { label: t('settings.gameRules.policy.everyone', '所有玩家'), value: 2 },
+  ];
+}
+
+function BinaryOptions({ t }: { t: Translate }) {
+  return [
+    { label: t('common.enabled', '开启'), value: 1 },
+    { label: t('common.disabled', '关闭'), value: 0 },
+  ];
+}
+
+function NavigationSettings({ settings, t }: { settings: GameRuleSettings; t: Translate }) {
+  return (
+    <>
+      <Typography.Title level={5}>{t('settings.gameRules.section.navigation', '网页地图传送')}</Typography.Title>
+      <ProFormRadio.Group name="navigation_teleport_policy" label={ruleLabel('navigation_teleport_policy', t)} radioType="button" options={PolicyOptions({ t })} rules={[{ required: true }]} />
+      <ProFormRadio.Group name="navigation_teleport_cross_map" label={ruleLabel('navigation_teleport_cross_map', t)} radioType="button" options={BinaryOptions({ t })} rules={[{ required: true }]} />
+      <ProFormDigit name="navigation_teleport_cooldown" label={ruleLabel('navigation_teleport_cooldown', t)} min={settings.definitions.navigation_teleport_cooldown.minimum} max={settings.definitions.navigation_teleport_cooldown.maximum} fieldProps={{ precision: 0 }} addonAfter={t('settings.gameRules.unit.seconds', '秒')} extra={ruleExtra(settings.definitions.navigation_teleport_cooldown, t)} width="md" rules={[{ required: true }]} />
+      <ProFormRadio.Group name="navigation_map_channels_enabled" label={ruleLabel('navigation_map_channels_enabled', t)} radioType="button" options={BinaryOptions({ t })} extra={ruleExtra(settings.definitions.navigation_map_channels_enabled, t)} rules={[{ required: true }]} />
+    </>
+  );
+}
+
+function MonsterSpawnSettings({ settings, t }: { settings: GameRuleSettings; t: Translate }) {
+  return (
+    <>
+      <Typography.Title level={5}>{t('settings.gameRules.section.monsterSpawn', '游戏内魔物召唤')}</Typography.Title>
+      <ProFormRadio.Group name="game_tools_monster_spawn_policy" label={ruleLabel('game_tools_monster_spawn_policy', t)} radioType="button" options={PolicyOptions({ t })} rules={[{ required: true }]} />
+      {(['game_tools_monster_spawn_cooldown', 'game_tools_monster_spawn_duration'] as const).map((key) => <ProFormDigit key={key} name={key} label={ruleLabel(key, t)} min={settings.definitions[key].minimum} max={settings.definitions[key].maximum} fieldProps={{ precision: 0 }} addonAfter={t('settings.gameRules.unit.seconds', '秒')} extra={ruleExtra(settings.definitions[key], t)} width="md" rules={[{ required: true }]} />)}
+      <ProFormRadio.Group name="game_tools_monster_spawn_allow_boss" label={ruleLabel('game_tools_monster_spawn_allow_boss', t)} radioType="button" options={BinaryOptions({ t })} rules={[{ required: true }]} />
+    </>
+  );
+}
+
+function AdventureToolSettings({ t }: { settings: GameRuleSettings; t: Translate }) {
+  return (
+    <>
+      <Typography.Title level={5}>{t('settings.gameRules.section.adventureTools', '冒险工具管理')}</Typography.Title>
+      {['game_tools_character_maintenance_policy', 'game_tools_game_settings_policy', 'game_tools_item_grant_policy'].map((key) => <ProFormRadio.Group key={key} name={key} label={ruleLabel(key, t)} radioType="button" options={PolicyOptions({ t }).slice(1)} rules={[{ required: true }]} />)}
+    </>
   );
 }

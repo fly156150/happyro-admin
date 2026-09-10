@@ -52,7 +52,7 @@ final class ItemGrantService
             $this->records->markFailed($record, 'item_grant_failed');
             throw $exception;
         }
-        $this->audit->write('operations.item_mailed', $context, $operator, metadata: ['mail_id' => $mailId, 'item_id' => $data['item_id'], 'char_id' => $data['char_id'], 'amount' => $data['amount']]);
+        $this->audit->write('operations.item_mailed', $context, $operator, metadata: ['delivery' => 'mail', 'mail_id' => $mailId, 'item_id' => $data['item_id'], 'char_id' => $data['char_id'], 'amount' => $data['amount']]);
 
         return $mailId;
     }

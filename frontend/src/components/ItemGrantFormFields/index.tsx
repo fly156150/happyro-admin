@@ -3,6 +3,8 @@ import {
   ProFormDigit,
   ProFormText,
   ProFormTextArea,
+  ProFormDependency,
+  ProFormRadio,
 } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
 import { Select } from 'antd';
@@ -108,6 +110,16 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
         </ProForm.Item>
       )}
       <CharacterGrantTargetField />
+      <ProFormRadio.Group
+        name="delivery"
+        label={t('operations.itemGrants.delivery', '发放方式')}
+        initialValue="mail"
+        radioType="button"
+        options={[
+          { label: t('operations.itemGrants.delivery.mail', '邮件'), value: 'mail' },
+          { label: t('operations.itemGrants.delivery.inventory', '背包'), value: 'inventory' },
+        ]}
+      />
       <ProFormDigit
         name="amount"
         label={t('operations.itemGrants.amount', '数量')}
@@ -117,22 +129,37 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
         initialValue={1}
         rules={[{ required: true }]}
       />
-      <ProFormText
-        name="title"
-        label={t('operations.itemGrants.titleField', '邮件标题')}
-        initialValue={t('operations.itemGrants.defaultTitle', '物品发放')}
-        rules={[{ required: true, max: 45 }]}
-      />
-      <ProFormTextArea
-        name="message"
-        label={t('operations.itemGrants.message', '邮件内容')}
-        initialValue={t(
-          'operations.itemGrants.defaultMessage',
-          '管理员向你发放了物品。',
-        )}
-        fieldProps={{ autoSize: { minRows: 3, maxRows: 6 } }}
-        rules={[{ required: true, max: 500 }]}
-      />
+      <ProFormDependency name={['delivery']}>
+        {({ delivery }) =>
+          delivery === 'inventory' ? (
+            <div>
+              {t(
+                'operations.itemGrants.inventoryOnlineOnly',
+                '背包发放仅支持当前在线角色。',
+              )}
+            </div>
+          ) : (
+            <>
+              <ProFormText
+                name="title"
+                label={t('operations.itemGrants.titleField', '邮件标题')}
+                initialValue={t('operations.itemGrants.defaultTitle', '物品发放')}
+                rules={[{ required: true, max: 45 }]}
+              />
+              <ProFormTextArea
+                name="message"
+                label={t('operations.itemGrants.message', '邮件内容')}
+                initialValue={t(
+                  'operations.itemGrants.defaultMessage',
+                  '管理员向你发放了物品。',
+                )}
+                fieldProps={{ autoSize: { minRows: 3, maxRows: 6 } }}
+                rules={[{ required: true, max: 500 }]}
+              />
+            </>
+          )
+        }
+      </ProFormDependency>
     </>
   );
 }

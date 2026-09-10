@@ -8,7 +8,7 @@ import { Alert, App, Image, Tabs, theme } from 'antd';
 import { useRef, useState } from 'react';
 import ItemGrantFormFields from '@/components/ItemGrantFormFields';
 import CharacterGrantTargetField from '@/components/CharacterGrantTargetField';
-import { grantZeny, mailItem } from '@/services/operations/item-grants';
+import { grantItem, grantZeny } from '@/services/operations/item-grants';
 import { createIdempotencyKey } from '@/utils/idempotency';
 
 type ItemImageSource = 'illustration' | 'icon' | 'missing';
@@ -35,17 +35,21 @@ export default function ItemGrants() {
             children: (
               <ProForm
                 onFinish={async (values) => {
-                  await mailItem({
+                  const delivery = values.delivery === 'inventory' ? 'inventory' : 'mail';
+                  await grantItem({
                     item_id: Number(values.item_id),
                     char_id: Number(values.char_id),
                     amount: Number(values.amount),
-                    title: String(values.title),
-                    message: String(values.message),
+                    title: values.title ? String(values.title) : undefined,
+                    message: values.message ? String(values.message) : undefined,
                     bound: Boolean(values.bound),
+                    delivery,
                     idempotency_key: idempotencyKey.current,
                   });
                   message.success(
-                    t('operations.itemGrants.success', '邮件已发送'),
+                    delivery === 'inventory'
+                      ? t('operations.itemGrants.inventorySuccess', '物品已发放到背包')
+                      : t('operations.itemGrants.success', '邮件已发送'),
                   );
                   idempotencyKey.current = createIdempotencyKey();
                   return true;

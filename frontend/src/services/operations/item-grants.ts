@@ -5,9 +5,10 @@ export type ItemGrant = {
   item_id: number;
   char_id: number;
   amount: number;
-  title: string;
-  message: string;
+  title?: string;
+  message?: string;
   bound?: boolean;
+  delivery?: 'mail' | 'inventory';
 };
 
 export async function listItemGrants(page = 1) {
@@ -44,9 +45,11 @@ export async function searchItemGrantTargets(target: string) {
   );
 }
 
-export async function mailItem(data: ItemGrant) {
+export async function grantItem(data: ItemGrant) {
   return request('/api/operations/item-grants/mail', { method: 'POST', data });
 }
+
+export const mailItem = grantItem;
 
 export async function grantZeny(data: {
   idempotency_key: string;

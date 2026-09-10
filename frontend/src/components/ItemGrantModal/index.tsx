@@ -4,7 +4,7 @@ import { useIntl } from '@umijs/max';
 import { App, Button, Image } from 'antd';
 import { useRef } from 'react';
 import ItemGrantFormFields from '@/components/ItemGrantFormFields';
-import { mailItem } from '@/services/operations/item-grants';
+import { grantItem } from '@/services/operations/item-grants';
 import { createIdempotencyKey } from '@/utils/idempotency';
 
 type Props = {
@@ -37,16 +37,22 @@ export default function ItemGrantModal({ itemId, itemName }: Props) {
       width={520}
       modalProps={{ destroyOnHidden: true }}
       onFinish={async (values) => {
-        await mailItem({
+        const delivery = values.delivery === 'inventory' ? 'inventory' : 'mail';
+        await grantItem({
           item_id: itemId,
           char_id: Number(values.char_id),
           amount: Number(values.amount),
-          title: String(values.title),
-          message: String(values.message),
+          title: values.title ? String(values.title) : undefined,
+          message: values.message ? String(values.message) : undefined,
           bound: false,
+          delivery,
           idempotency_key: idempotencyKey.current,
         });
-        message.success(t('operations.itemGrants.success', '邮件已发送'));
+        message.success(
+          delivery === 'inventory'
+            ? t('operations.itemGrants.inventorySuccess', '物品已发放到背包')
+            : t('operations.itemGrants.success', '邮件已发送'),
+        );
         idempotencyKey.current = createIdempotencyKey();
         return true;
       }}
