@@ -25,10 +25,13 @@ export default {
    * @doc https://github.com/chimurai/http-proxy-middleware
    */
   test: {
-    // localhost:8000/api/** -> https://pro-api.ant-design-demo.workers.dev/api/**
     '/api/': {
-      target: 'https://pro-api.ant-design-demo.workers.dev',
-      changeOrigin: true,
+      target: 'http://127.0.0.1:18081',
+      changeOrigin: false,
+    },
+    '/sanctum/': {
+      target: 'http://127.0.0.1:18081',
+      changeOrigin: false,
     },
   },
   pre: {

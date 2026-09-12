@@ -26,7 +26,7 @@ final class WorldDataController
 
     public function mapImage(string $map): BinaryFileResponse
     {
-        abort_unless(preg_match('/^[a-z0-9_]+$/', $map) === 1, 404);
+        abort_unless(preg_match('/^[a-z0-9_@-]+$/', $map) === 1, 404);
         $path = base_path("resources/game-data/world/maps/{$map}.png");
         abort_unless(is_file($path), 404);
 

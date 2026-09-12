@@ -7,6 +7,7 @@ use App\Data\GameData\ItemCatalogSnapshot;
 use App\Models\GameDataCatalog;
 use App\Models\GameItem;
 use App\Models\GameItemSource;
+use App\Services\GameData\ItemSubtype;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -105,7 +106,7 @@ final readonly class DatabaseItemCatalogRepository implements ItemCatalogReposit
             'name_en_us' => $englishName,
             'aegis_name' => is_string($item['AegisName'] ?? null) ? $item['AegisName'] : null,
             'item_type' => is_string($item['Type'] ?? null) ? $item['Type'] : null,
-            'item_subtype' => is_string($item['SubType'] ?? null) ? $item['SubType'] : null,
+            'item_subtype' => ItemSubtype::fromSnapshot($item),
             'resource_name' => is_string($item['identifiedResourceName'] ?? null) ? $item['identifiedResourceName'] : null,
             'description' => $this->json($this->description($item['identifiedDescriptionName'] ?? null)),
             'payload' => $this->json(Arr::except($item, ['names', 'identifiedResourceName', 'identifiedDescriptionName'])),

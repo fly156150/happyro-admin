@@ -69,8 +69,8 @@ final class ImportItemsTest extends TestCase
                 501 => [
                     'names' => ['zh-CN' => '服务端红药', 'en-US' => 'Red Potion'],
                     'AegisName' => 'Red_Potion',
-                    'Type' => 'Healing',
-                    'SubType' => '1hSword',
+                    'Type' => 'Armor',
+                    'Locations' => ['Head_Top' => true],
                     'Weight' => 70,
                 ],
             ]),
@@ -90,8 +90,8 @@ final class ImportItemsTest extends TestCase
             'server_exists' => true,
             'name_zh_cn' => '客户端红药',
             'aegis_name' => 'Red_Potion',
-            'item_type' => 'Healing',
-            'item_subtype' => '1hSword',
+            'item_type' => 'Armor',
+            'item_subtype' => 'Head_Top',
             'weight' => 70,
         ]);
     }

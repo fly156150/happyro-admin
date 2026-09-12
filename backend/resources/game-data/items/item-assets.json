@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "itemSource": "docs/translation/zh-cn/kro-20211105/merged/files/lub/itemInfo_true.json",
+  "itemSource": "localization/sources/kro-20211105/merged/files/lub/itemInfo_true.json",
   "manifestSource": "work/grf-extract/kro-20211105/data/manifest.json",
   "items": {
     "500": {

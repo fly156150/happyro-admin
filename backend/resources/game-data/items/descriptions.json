@@ -1,7 +1,7 @@
 {
   "version": 1,
   "locale": "zh-CN",
-  "source": "docs/translation/zh-cn/kro-20211105/merged/files/lub/itemInfo_true.json",
+  "source": "localization/sources/kro-20211105/merged/files/lub/itemInfo_true.json",
   "items": {
     "500": [
       "把核桃碎片裹在巧克力中揉成圆球的点心。",

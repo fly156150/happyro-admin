@@ -1,5 +1,11 @@
 export default [
   {
+    path: '/welcome',
+    name: 'welcome',
+    icon: 'home',
+    component: './Welcome',
+  },
+  {
     path: '/game-data',
     name: 'gameData',
     icon: 'database',
@@ -28,6 +34,12 @@ export default [
         name: 'itemGrants',
         access: 'canGrantItems',
         component: './operations/item-grants',
+      },
+      {
+        path: '/operations/zeny-grants',
+        name: 'zenyGrants',
+        access: 'canGrantItems',
+        component: './operations/zeny-grants',
       },
       {
         path: '/operations/item-grant-records',
@@ -96,12 +108,6 @@ export default [
         redirect: '/user/login',
       },
     ],
-  },
-  {
-    path: '/welcome',
-    name: 'welcome',
-    icon: 'home',
-    component: './Welcome',
   },
   {
     path: '/',

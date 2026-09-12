@@ -20,6 +20,15 @@ final class WorldDataControllerTest extends TestCase
         $this->assertStringStartsWith('image/png', (string) $response->headers->get('content-type'));
     }
 
+    public function test_authenticated_operator_can_load_instance_map_images(): void
+    {
+        $response = $this->actingAs($this->superAdmin())
+            ->get('/api/game-data/maps/1@nyd/image');
+
+        $response->assertOk();
+        $this->assertStringStartsWith('image/png', (string) $response->headers->get('content-type'));
+    }
+
     private function superAdmin(): User
     {
         $role = Role::query()->firstOrCreate(['name' => 'super_admin'], ['label' => '超级管理员']);

@@ -39,6 +39,16 @@ final class AdventureItemControllerTest extends TestCase
         $this->mock(ItemAssetRepository::class)->shouldReceive('iconPath', 'illustrationPath')->andReturnNull();
     }
 
+    public function test_item_detail_uses_the_same_client_range_as_search(): void
+    {
+        $items = Mockery::mock(ItemRepository::class);
+        $items->expects('find')->with(501, 'client')->andReturn($this->item());
+        $this->app->instance(ItemRepository::class, $items);
+
+        $this->withHeaders($this->headers())->getJson('/api/adventure-tools/items/501')
+            ->assertOk()->assertJsonPath('data.Id', 501)->assertJsonPath('data.names.zh-CN', '红色药水');
+    }
+
     public function test_authenticated_player_can_search_client_supported_items(): void
     {
         $items = Mockery::mock(ItemRepository::class);

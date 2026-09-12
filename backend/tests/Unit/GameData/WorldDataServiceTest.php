@@ -14,6 +14,8 @@ final class WorldDataServiceTest extends TestCase
 
         $this->assertNull($maps->get('alb_ship')['image']);
         $this->assertNotNull($maps->get('prontera')['image']);
+        $this->assertNotNull($maps->get('new_1-1'));
+        $this->assertNotNull($maps->get('1@nyd'));
     }
 
     public function test_reads_maps_and_shared_npc_catalog_metadata(): void
@@ -21,7 +23,7 @@ final class WorldDataServiceTest extends TestCase
         $root = storage_path('framework/testing/world-data');
         File::deleteDirectory($root);
         File::ensureDirectoryExists($root);
-        File::put($root.'/map_index.txt', "prontera 0\n// comment\nprt_fild01\n");
+        File::put($root.'/map_index.txt', "prontera 0\n// comment\nprt_fild01\nnew_1-1\n1@nyd\n");
         File::put($root.'/npc-catalog.json', json_encode([
             'schema' => 'happyro-npc-catalog/v1',
             'entries' => [[
@@ -51,7 +53,7 @@ final class WorldDataServiceTest extends TestCase
 
         $service = new WorldDataService;
 
-        $this->assertSame('prontera', $service->maps()[0]['map']);
+        $this->assertSame(['prontera', 'prt_fild01', 'new_1-1', '1@nyd'], array_column($service->maps(), 'map'));
         $npc = $service->npcs()[0];
         $this->assertSame('Guide Keeper#01', $npc['name']);
         $this->assertSame('向导', $npc['name_zh_cn']);

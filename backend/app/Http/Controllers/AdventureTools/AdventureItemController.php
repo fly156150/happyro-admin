@@ -67,7 +67,7 @@ final class AdventureItemController
 
     public function show(int $itemId): JsonResponse
     {
-        $item = $this->items->find($itemId, 'server');
+        $item = $this->items->find($itemId, 'client');
         abort_unless($item, 404);
 
         return response()->json(['data' => $this->withAssets($item)]);

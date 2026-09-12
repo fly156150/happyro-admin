@@ -49,7 +49,7 @@ Route::prefix('api/game-data')->middleware(['auth:sanctum', 'permission:game-dat
     Route::get('/monsters/{monsterId}', [MonsterController::class, 'show'])->whereNumber('monsterId');
     Route::get('/monsters/{monsterId}/image', [MonsterController::class, 'image'])->whereNumber('monsterId');
     Route::get('/maps', [WorldDataController::class, 'maps']);
-    Route::get('/maps/{map}/image', [WorldDataController::class, 'mapImage'])->where('map', '[a-z0-9_]+');
+    Route::get('/maps/{map}/image', [WorldDataController::class, 'mapImage'])->where('map', '[a-z0-9_@-]+');
     Route::get('/npcs', [WorldDataController::class, 'npcs']);
     Route::get('/npcs/{spriteId}/image', [WorldDataController::class, 'npcImage'])->whereNumber('spriteId');
 });

@@ -47,6 +47,26 @@ function matchRank(row: GameDataNpc, term: string): number {
   return 3;
 }
 
+export function npcsOnMap(
+  rows: GameDataNpc[],
+  map: string,
+  visibility: NpcVisibility = 'game',
+): GameDataNpc[] {
+  const mapName = String(map ?? '')
+    .replace(/\.gat$/i, '')
+    .trim()
+    .toLocaleLowerCase();
+  if (!mapName) return [];
+  return filterAndSortNpcs(rows, {}, visibility)
+    .filter((row) => String(row.map ?? '').toLocaleLowerCase() === mapName)
+    .sort(
+      (left, right) =>
+        left.display_name.localeCompare(right.display_name) ||
+        left.x - right.x ||
+        left.y - right.y,
+    );
+}
+
 export function filterAndSortNpcs(
   rows: GameDataNpc[],
   filters: NpcFilters,

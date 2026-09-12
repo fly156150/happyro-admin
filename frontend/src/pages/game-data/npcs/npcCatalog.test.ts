@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { filterAndSortNpcs, type GameDataNpc } from './npcCatalog';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { filterAndSortNpcs, npcsOnMap, type GameDataNpc } from './npcCatalog';
 
 const npc = (values: Partial<GameDataNpc>): GameDataNpc => ({
   id: 'map:1:1:NPC',
@@ -52,5 +54,37 @@ describe('NPC catalog filtering', () => {
     const result = filterAndSortNpcs(rows, { name_zh_cn: '卡普拉' }, 'game');
 
     expect(result.map((row) => row.id)).toEqual(['exact', 'prefix', 'contains']);
+  });
+
+  it('lists game-visible NPCs for one map using the shared catalog filter', () => {
+    const rows = [
+      npc({ id: 'payon-a', map: 'payon', catalog_order: 1, display_name: '铁匠' }),
+      npc({ id: 'prt-a', map: 'prontera', catalog_order: 0, display_name: '卡普拉' }),
+      npc({
+        id: 'payon-hidden',
+        map: 'payon',
+        catalog_order: 0,
+        display_name: '隐藏',
+        game_visible: false,
+      }),
+      npc({ id: 'payon-b', map: 'PAYON', catalog_order: 2, display_name: '仓库' }),
+    ];
+
+    expect(npcsOnMap(rows, 'payon').map((row) => row.display_name)).toEqual([
+      '仓库',
+      '铁匠',
+    ]);
+    expect(npcsOnMap(rows, 'PAYON').map((row) => row.id)).toEqual(['payon-b', 'payon-a']);
+  });
+});
+
+describe('admin map details', () => {
+  it('renders the filtered NPC list from the shared catalog helper', () => {
+    const source = readFileSync(
+      resolve(import.meta.dirname, '../maps/index.tsx'),
+      'utf8',
+    );
+    expect(source).toContain('npcsOnMap(npcs, detail.map)');
+    expect(source).toContain("id: 'gameData.map.npcs'");
   });
 });

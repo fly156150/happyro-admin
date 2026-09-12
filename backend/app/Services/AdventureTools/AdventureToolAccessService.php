@@ -11,7 +11,7 @@ final class AdventureToolAccessService
 
     public function allows(string $setting, GameSessionPrincipal $principal): bool
     {
-        $policy = $this->gateway->battleConfig()[$setting] ?? 2;
+        $policy = $this->gateway->battleConfig()[$setting] ?? 1;
 
         return $this->allowsPolicy($policy, $principal);
     }

@@ -21,7 +21,7 @@ final class WorldDataService
                     continue;
                 }
                 [$name, $id] = array_pad(preg_split('/\s+/', $line), 2, null);
-                if (is_string($name) && preg_match('/^[a-z0-9_]+$/', $name) === 1) {
+                if (is_string($name) && preg_match('/^[a-z0-9_@-]+$/', $name) === 1) {
                     $lastId = $id !== null ? (int) $id : $lastId + 1;
                     $rows[] = [
                         'id' => $lastId,
