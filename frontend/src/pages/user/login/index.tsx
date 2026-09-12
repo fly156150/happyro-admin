@@ -4,7 +4,7 @@ import {
   ProFormCheckbox,
   ProFormText,
 } from '@ant-design/pro-components';
-import { Helmet, SelectLang, useModel } from '@umijs/max';
+import { Helmet, useModel } from '@umijs/max';
 import { Alert, App } from 'antd';
 import { createStyles } from 'antd-style';
 import React, { startTransition, useState } from 'react';
@@ -107,9 +107,7 @@ const Login: React.FC = () => {
       <Helmet>
         <title>登录 - {Settings.title}</title>
       </Helmet>
-      <div className={styles.lang} data-lang>
-        {SelectLang && <SelectLang />}
-      </div>
+      <div className={styles.lang} data-lang></div>
       <div className={styles.content}>
         <LoginForm
           contentStyle={{ minWidth: 280, maxWidth: '75vw' }}

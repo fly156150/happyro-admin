@@ -140,6 +140,7 @@ export default defineConfig({
     antd: true,
     // HappyRO 的默认维护分支使用简体中文界面。
     baseNavigator: false,
+    useLocalStorage: false,
   },
   /**
    * @name antd 插件

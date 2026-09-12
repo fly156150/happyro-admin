@@ -83,7 +83,7 @@ describe('app getInitialState', () => {
       name: 'Test User',
       access: 'admin',
     });
-    expect(state.settingDrawerOpen).toBe(false);
+    expect(state).not.toHaveProperty('settingDrawerOpen');
     expect(state.fetchUserInfo).toBeDefined();
   });
 

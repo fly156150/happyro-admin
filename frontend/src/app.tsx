@@ -1,6 +1,4 @@
-import { LinkOutlined } from '@ant-design/icons';
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
-import { SettingDrawer } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
 import { App as AntdApp } from 'antd';
@@ -11,19 +9,11 @@ import React, { useEffect } from 'react';
 // Initialize dayjs plugins globally
 dayjs.extend(relativeTime);
 
-import {
-  AvatarDropdown,
-  DocLink,
-  ErrorBoundary,
-  LangDropdown,
-  OfflineBanner,
-  VersionDropdown,
-} from '@/components';
+import { AvatarDropdown, ErrorBoundary, OfflineBanner } from '@/components';
 import { currentUser as queryCurrentUser } from '@/services/auth/index';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig, setRequestFeedback } from './requestErrorConfig';
 
-const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
 
 /**
@@ -34,7 +24,6 @@ export async function getInitialState(): Promise<{
   currentUser?: API.CurrentUser;
   loading?: boolean;
   fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
-  settingDrawerOpen?: boolean;
 }> {
   const fetchUserInfo = async () => {
     try {
@@ -62,21 +51,16 @@ export async function getInitialState(): Promise<{
       fetchUserInfo,
       currentUser,
       settings: defaultSettings as Partial<LayoutSettings>,
-      settingDrawerOpen: false,
     };
   }
   return {
     fetchUserInfo,
     settings: defaultSettings as Partial<LayoutSettings>,
-    settingDrawerOpen: false,
   };
 }
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
-export const layout: RunTimeLayoutConfig = ({
-  initialState,
-  setInitialState,
-}) => {
+export const layout: RunTimeLayoutConfig = ({ initialState }) => {
   return {
     menuItemRender: (item, dom) => {
       if (item.path) {
@@ -88,21 +72,10 @@ export const layout: RunTimeLayoutConfig = ({
       }
       return dom;
     },
-    actionsRender: () => {
-      // `locale: false` opts out of the language switcher. ProLayout's own
-      // `locale` prop is a locale string, so narrow to the boolean toggle here.
-      const localeEnabled =
-        (initialState?.settings as { locale?: boolean })?.locale !== false;
-      return [
-        <DocLink key="doc" />,
-        <VersionDropdown key="version" />,
-        localeEnabled && <LangDropdown key="lang" />,
-      ].filter(Boolean);
-    },
+    actionsRender: () => [],
     avatarProps: {
       src: initialState?.currentUser?.avatar,
-      title:
-        initialState?.currentUser?.name ?? initialState?.currentUser?.userid,
+      title: initialState?.currentUser?.userid,
       render: (_, avatarChildren) => (
         <AvatarDropdown>{avatarChildren}</AvatarDropdown>
       ),
@@ -120,14 +93,7 @@ export const layout: RunTimeLayoutConfig = ({
         );
       }
     },
-    links: isDev
-      ? [
-          <Link key="openapi" to="/umi/plugin/openapi" target="_blank">
-            <LinkOutlined />
-            <span>OpenAPI 文档</span>
-          </Link>,
-        ]
-      : [],
+    links: [],
     // Replace ProLayout's default ErrorBoundary with our offline-aware version,
     // so chunk load errors show friendly messages instead of "Something went wrong."
     ErrorBoundary,
@@ -137,29 +103,7 @@ export const layout: RunTimeLayoutConfig = ({
     // 增加一个 loading 的状态
     childrenRender: (children) => {
       // if (initialState?.loading) return <PageLoading />;
-      return (
-        <>
-          {children}
-          <SettingDrawer
-            disableUrlParams
-            enableDarkTheme
-            collapse={initialState?.settingDrawerOpen}
-            onCollapseChange={(open) => {
-              setInitialState((s) => ({
-                ...s,
-                settingDrawerOpen: open,
-              }));
-            }}
-            settings={initialState?.settings}
-            onSettingChange={(settings) => {
-              setInitialState((s) => ({
-                ...s,
-                settings,
-              }));
-            }}
-          />
-        </>
-      );
+      return <>{children}</>;
     },
     ...initialState?.settings,
   };

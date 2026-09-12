@@ -14,7 +14,7 @@ const Settings: ProLayoutProps & {
   fixSiderbar: true,
   colorWeak: false,
   title: 'HappyRO',
-  logo: 'https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg',
+  logo: '/favicon.ico?v=ro-icon-1',
   iconfontUrl: '',
   token: {
     // 参见ts声明，demo 见文档，通过token 修改样式

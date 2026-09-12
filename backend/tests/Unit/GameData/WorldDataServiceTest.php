@@ -12,7 +12,8 @@ final class WorldDataServiceTest extends TestCase
     {
         $maps = collect((new WorldDataService)->maps())->keyBy('map');
 
-        $this->assertNull($maps->get('alb_ship')['image']);
+        $this->assertSame('terrain', $maps->get('alb_ship')['image_kind']);
+        $this->assertNotNull($maps->get('alb_ship')['image']);
         $this->assertNotNull($maps->get('prontera')['image']);
         $this->assertNotNull($maps->get('new_1-1'));
         $this->assertNotNull($maps->get('1@nyd'));

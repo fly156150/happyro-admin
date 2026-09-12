@@ -9,7 +9,7 @@ final class WorldDataService
     private ?array $mapNames = null;
 
     /** @return list<array{id:int|null,map:string}> */
-    public function maps(): array
+    public function maps(bool $gameOnly = false, bool $channelsEnabled = false): array
     {
         $path = config('happyro.game_data.map_index_path');
         $rows = [];
@@ -33,7 +33,24 @@ final class WorldDataService
             }
         }
 
-        return $rows;
+        $catalog = json_decode(file_get_contents(base_path('resources/game-data/world/map-catalog.json')), true, flags: JSON_THROW_ON_ERROR);
+        $shared = array_column($catalog['entries'], null, 'map');
+        foreach ($rows as &$row) {
+            $entry = $shared[$row['map']] ?? null;
+            $row['supported'] = $entry['supported'] ?? false;
+            $row['channel'] = $entry['channel'] ?? null;
+            $row['name_zh_cn'] = $entry['name'] ?? $row['name_zh_cn'];
+            if ($channelsEnabled && $row['channel'] !== null) {
+                $row['name_zh_cn'] .= ' · 频道 '.$row['channel'];
+            }
+            $row['image_kind'] = $entry['image_kind'] ?? null;
+            if ($row['image_kind'] !== null) {
+                $row['image'] = '/api/game-data/maps/'.$row['map'].'/image?v='.$catalog['version'];
+            }
+        }
+        unset($row);
+
+        return array_values(array_filter($rows, static fn (array $row): bool => ! $gameOnly || ($row['supported'] && ($channelsEnabled || $row['channel'] === null || $row['channel'] === 1))));
     }
 
     /** @return list<array<string, mixed>> */
