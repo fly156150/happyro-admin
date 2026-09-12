@@ -68,7 +68,11 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
     async (target: string) => {
       const response = await searchItemGrantItems(target);
       return response.data.map((item) => ({
-        label: `${item.names[intl.locale] || item.names['en-US'] || item.aegis_name} · ID ${item.item_id}`,
+        label:
+          item.names[intl.locale] ||
+          item.names['en-US'] ||
+          item.aegis_name ||
+          '未命名物品',
         value: item.item_id,
       }));
     },
@@ -116,8 +120,14 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
         initialValue="mail"
         radioType="button"
         options={[
-          { label: t('operations.itemGrants.delivery.mail', '邮件'), value: 'mail' },
-          { label: t('operations.itemGrants.delivery.inventory', '背包'), value: 'inventory' },
+          {
+            label: t('operations.itemGrants.delivery.mail', '邮件'),
+            value: 'mail',
+          },
+          {
+            label: t('operations.itemGrants.delivery.inventory', '背包'),
+            value: 'inventory',
+          },
         ]}
       />
       <ProFormDigit
@@ -143,7 +153,10 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
               <ProFormText
                 name="title"
                 label={t('operations.itemGrants.titleField', '邮件标题')}
-                initialValue={t('operations.itemGrants.defaultTitle', '物品发放')}
+                initialValue={t(
+                  'operations.itemGrants.defaultTitle',
+                  '物品发放',
+                )}
                 rules={[{ required: true, max: 45 }]}
               />
               <ProFormTextArea

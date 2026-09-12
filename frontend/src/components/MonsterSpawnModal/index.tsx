@@ -1,8 +1,8 @@
 import { DeploymentUnitOutlined } from '@ant-design/icons';
 import { ProFormDigit } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
-import { App, AutoComplete, Button, Form, Modal, Space } from 'antd';
-import { useState } from 'react';
+import { App, Select, Button, Form, Modal, Space } from 'antd';
+import { useEffect, useRef, useState } from 'react';
 import { executeGameControlCommand } from '@/services/operations/game-control';
 import { createIdempotencyKey } from '@/utils/idempotency';
 import { listCharacters } from '@/services/players/queries';
@@ -19,6 +19,15 @@ export default function MonsterSpawnModal({ monsterId, monsterName }: Props) {
   const intl = useIntl();
   const { message } = App.useApp();
   const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+  const searchId = useRef(0);
+  useEffect(
+    () => () => {
+      searchId.current += 1;
+    },
+    [],
+  );
   const [targets, setTargets] = useState<Character[]>([]);
   const [form] = Form.useForm<{
     target: number;
@@ -29,6 +38,8 @@ export default function MonsterSpawnModal({ monsterId, monsterName }: Props) {
   const t = (id: string, fallback: string) =>
     intl.formatMessage({ id, defaultMessage: fallback });
   const close = () => {
+    if (submittingRef.current) return;
+    searchId.current += 1;
     setOpen(false);
     form.resetFields();
     setTargets([]);
@@ -51,28 +62,43 @@ export default function MonsterSpawnModal({ monsterId, monsterName }: Props) {
         okText={t('common.confirm', '确认')}
         cancelText={t('common.cancel', '取消')}
         onOk={() => form.submit()}
+        confirmLoading={submitting}
+        closable={!submitting}
+        maskClosable={!submitting}
+        cancelButtonProps={{ disabled: submitting }}
         destroyOnHidden
       >
         <Form
           form={form}
           layout="vertical"
+          disabled={submitting}
           initialValues={{ count: 1, radius: 3, duration: 300 }}
           onFinish={async (values) => {
-            await executeGameControlCommand({
-              idempotency_key: createIdempotencyKey(),
-              type: 'monster.spawn',
-              target: { type: 'character', id: String(values.target) },
-              payload: {
-                monster_id: monsterId,
-                count: values.count,
-                radius: values.radius,
-                duration_seconds: values.duration,
-              },
-            });
-            message.success(
-              t('gameData.monster.spawnSuccess', '召唤命令已提交'),
-            );
-            close();
+            if (submittingRef.current) return;
+            submittingRef.current = true;
+            setSubmitting(true);
+            try {
+              await executeGameControlCommand({
+                idempotency_key: createIdempotencyKey(),
+                type: 'monster.spawn',
+                target: { type: 'character', id: String(values.target) },
+                payload: {
+                  monster_id: monsterId,
+                  count: values.count,
+                  radius: values.radius,
+                  duration_seconds: values.duration,
+                },
+              });
+              message.success(
+                t('gameData.monster.spawnSuccess', '召唤命令已提交'),
+              );
+              setOpen(false);
+              form.resetFields();
+              setTargets([]);
+            } finally {
+              submittingRef.current = false;
+              setSubmitting(false);
+            }
           }}
         >
           <Form.Item
@@ -80,30 +106,38 @@ export default function MonsterSpawnModal({ monsterId, monsterName }: Props) {
             label={t('gameData.monster.spawnTarget', '在线目标角色')}
             rules={[{ required: true }]}
           >
-            <AutoComplete
+            <Select
+              showSearch
+              filterOption={false}
               placeholder={t(
                 'gameData.monster.spawnTargetPlaceholder',
                 '输入角色名或账号搜索',
               )}
-              onChange={async (value) => {
+              onSearch={async (value) => {
+                const currentSearch = ++searchId.current;
                 if (!value.trim()) {
                   setTargets([]);
                   return;
                 }
-                const result = await listCharacters({
-                  current: 1,
-                  pageSize: 20,
-                  username: value,
-                });
-                setTargets(
-                  result.data.filter(
-                    (character) => Number(character.online) === 1,
-                  ) as Character[],
-                );
+                try {
+                  const result = await listCharacters({
+                    current: 1,
+                    pageSize: 20,
+                    username: value,
+                  });
+                  if (currentSearch !== searchId.current) return;
+                  setTargets(
+                    result.data.filter(
+                      (character) => Number(character.online) === 1,
+                    ) as Character[],
+                  );
+                } catch {
+                  if (currentSearch === searchId.current) setTargets([]);
+                }
               }}
               options={targets.map((character) => ({
                 value: character.char_id,
-                label: `${character.name} · ${character.username ?? ''} (#${character.char_id})`,
+                label: `${character.name} · ${character.username ?? ''}`,
               }))}
             />
           </Form.Item>

@@ -33,12 +33,23 @@ describe('characterFormValues', () => {
     expect(characterFormValues('progression', character)).toEqual({
       base_level: 99,
       job_level: 50,
-      job_id: 7,
     });
+    expect(characterFormValues('job', character)).toEqual({ job_id: 7 });
   });
 
   it('returns no values for commands with an empty payload', () => {
     expect(characterFormValues('statsReset', character)).toEqual({});
+  });
+
+  it('uses the returned job after a successful job change', () => {
+    const updated = mergeCharacterResult(character, { job_id: 4054 });
+    expect(characterFormValues('job', updated)).toEqual({ job_id: 4054 });
+  });
+
+  it('keeps skill point zero as a valid value', () => {
+    expect(characterFormValues('skillPoints', { skill_point: 0 })).toEqual({
+      skill_points: 0,
+    });
   });
 
   it('keeps command results as the next form snapshot', () => {

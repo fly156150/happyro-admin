@@ -1,4 +1,5 @@
 import component from './en-US/component';
+import jobOptions from './en-US/job-options';
 import globalHeader from './en-US/globalHeader';
 import menu from './en-US/menu';
 import network from './en-US/network';
@@ -30,7 +31,8 @@ export default {
   'settings.gameSettings.key.navigation_map_channels_enabled':
     'Enable map channels',
   'settings.gameSettings.key.game_tools_monster_spawn_policy': 'Availability',
-  'settings.gameSettings.key.game_tools_monster_spawn_cooldown': 'Summon cooldown',
+  'settings.gameSettings.key.game_tools_monster_spawn_cooldown':
+    'Summon cooldown',
   'settings.gameSettings.key.game_tools_monster_spawn_duration':
     'Monster lifetime',
   'settings.gameSettings.key.game_tools_monster_spawn_allow_boss':
@@ -49,7 +51,8 @@ export default {
   'settings.gameSettings.key.base_exp_rate': 'Base rate',
   'settings.gameSettings.key.job_exp_rate': 'Job EXP rate',
   'settings.gameSettings.key.item_rate_common': 'Common item drop rate',
-  'settings.gameSettings.key.item_rate_common_boss': 'Boss common item drop rate',
+  'settings.gameSettings.key.item_rate_common_boss':
+    'Boss common item drop rate',
   'settings.gameSettings.key.item_rate_common_mvp': 'MVP common item drop rate',
   'settings.gameSettings.key.item_rate_heal': 'Healing item drop rate',
   'settings.gameSettings.key.item_rate_heal_mvp': 'MVP healing item drop rate',
@@ -71,7 +74,7 @@ export default {
   'settings.gameSettingHistory.revision': 'Revision',
   'settings.gameSettingHistory.changes': 'Changes',
   'settings.gameSettingHistory.operator': 'Operator',
-  'players.character.maintain': 'Maintain',
+  'players.character.maintain': 'Character attributes',
   'players.character.maintainAction': 'Action',
   'players.character.progression': 'Level and job',
   'players.character.stats': 'Stats',
@@ -85,7 +88,8 @@ export default {
   'players.character.vitalsRestoreConfirm': 'This restores HP, SP, and AP.',
   'players.character.field.base_level': 'Base level',
   'players.character.field.job_level': 'Job level',
-  'players.character.field.job_id': 'Job ID',
+  'players.character.field.job_id': 'Job',
+  'players.character.field.skill_points': 'Skill points',
   'players.character.field.str': 'STR',
   'players.character.field.agi': 'AGI',
   'players.character.field.vit': 'VIT',
@@ -207,7 +211,8 @@ export default {
   'operations.itemGrants.delivery': 'Delivery method',
   'operations.itemGrants.delivery.mail': 'Mail',
   'operations.itemGrants.delivery.inventory': 'Inventory',
-  'operations.itemGrants.inventoryOnlineOnly': 'Inventory delivery requires the character to be online; equipment is identified automatically.',
+  'operations.itemGrants.inventoryOnlineOnly':
+    'Inventory delivery requires the character to be online; equipment is identified automatically.',
   'operations.itemGrants.inventorySuccess': 'Item added to inventory',
   'operations.itemGrants.zenySuccess': 'Zeny granted',
   'operations.itemGrants.zenyOnlineOnly':
@@ -420,5 +425,6 @@ export default {
   ...settings,
   ...network,
   ...component,
+  ...jobOptions,
   ...pages,
 };

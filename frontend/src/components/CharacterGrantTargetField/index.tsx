@@ -32,7 +32,7 @@ export default function CharacterGrantTargetField() {
         if (requestId.current === currentRequest) {
           setOptions(
             response.data.map((character) => ({
-              label: `${character.name} · ID ${character.char_id} · ${character.username}`,
+              label: `${character.name} · ${character.username}`,
               value: character.char_id,
             })),
           );

@@ -1,4 +1,6 @@
 import component from './zh-CN/component';
+import jobOptions from './zh-CN/job-options';
+import characterFields from './zh-CN/character-fields';
 import globalHeader from './zh-CN/globalHeader';
 import menu from './zh-CN/menu';
 import network from './zh-CN/network';
@@ -33,8 +35,9 @@ export default {
   'settings.gameSettings.key.game_tools_monster_spawn_allow_boss':
     '允许召唤 Boss / MVP',
   'settings.gameSettings.key.game_tools_character_maintenance_policy':
-    '角色维护开放范围',
-  'settings.gameSettings.key.game_tools_game_settings_policy': '游戏设置开放范围',
+    '角色属性修改开放范围',
+  'settings.gameSettings.key.game_tools_game_settings_policy':
+    '游戏设置开放范围',
   'settings.gameSettings.key.game_tools_item_grant_policy': '物品发放开放范围',
   'settings.gameSettings.policy.disabled': '关闭',
   'settings.gameSettings.policy.admin': '仅管理员',
@@ -66,20 +69,21 @@ export default {
   'settings.gameSettingHistory.revision': '版本',
   'settings.gameSettingHistory.changes': '修改内容',
   'settings.gameSettingHistory.operator': '操作人',
-  'players.character.maintain': '维护',
+  'players.character.maintain': '角色属性',
   'players.character.maintainAction': '操作',
   'players.character.progression': '等级与职业',
   'players.character.stats': '属性',
   'players.character.statsReset': '重置属性',
   'players.character.statsRange': '请输入 1 到 32767 之间的数值',
-  'players.character.skillsReset': '重置技能点',
+  'players.character.skillsReset': '重置技能',
   'players.character.vitalsRestore': '恢复状态',
   'players.character.maintainSuccess': '操作已提交',
   'players.character.skillsResetConfirm': '将重置该角色的技能点。',
   'players.character.vitalsRestoreConfirm': '将恢复该角色的生命、SP 和 AP。',
   'players.character.field.base_level': '基础等级',
   'players.character.field.job_level': '职业等级',
-  'players.character.field.job_id': '职业 ID',
+  'players.character.field.job_id': '职业',
+  'players.character.field.skill_points': '技能点',
   'players.character.field.str': '力量',
   'players.character.field.agi': '敏捷',
   'players.character.field.vit': '体质',
@@ -199,7 +203,8 @@ export default {
   'operations.itemGrants.delivery': '发放方式',
   'operations.itemGrants.delivery.mail': '邮件',
   'operations.itemGrants.delivery.inventory': '背包',
-  'operations.itemGrants.inventoryOnlineOnly': '背包发放仅支持当前在线角色；装备会自动使用放大镜鉴定后发放。',
+  'operations.itemGrants.inventoryOnlineOnly':
+    '背包发放仅支持当前在线角色；装备会自动使用放大镜鉴定后发放。',
   'operations.itemGrants.inventorySuccess': '物品已发放到背包',
   'operations.itemGrants.zenySuccess': 'Zeny 已发放',
   'operations.itemGrants.zenyOnlineOnly':
@@ -411,4 +416,6 @@ export default {
   ...settings,
   ...network,
   ...component,
+  ...jobOptions,
+  ...characterFields,
 };

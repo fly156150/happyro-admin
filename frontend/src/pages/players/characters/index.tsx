@@ -141,8 +141,29 @@ export default function Characters() {
               'online',
               'last_login',
             ].map((key) => (
-              <Descriptions.Item key={key} label={key}>
-                {String(detail[key] ?? '-')}
+              <Descriptions.Item
+                key={key}
+                label={t(`players.character.detail.${key}`, key)}
+              >
+                {key === 'class'
+                  ? t(
+                      jobMappings[Number(detail[key])] ?? 'players.job.unknown',
+                      '其他职业',
+                    )
+                  : key === 'last_map'
+                    ? t(
+                        mapMappings[String(detail[key])] ??
+                          'players.map.unknown',
+                        String(detail[key] ?? '-'),
+                      )
+                    : key === 'online'
+                      ? t(
+                          Number(detail[key]) === 1
+                            ? 'players.character.online'
+                            : 'players.character.offline',
+                          Number(detail[key]) === 1 ? '在线' : '离线',
+                        )
+                      : String(detail[key] ?? '-')}
               </Descriptions.Item>
             ))}
           </Descriptions>

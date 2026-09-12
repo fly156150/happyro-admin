@@ -2,10 +2,11 @@ import { EditOutlined } from '@ant-design/icons';
 import { ProFormDigit, ProFormSelect } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
 import { App, Button, Form, Modal, Space } from 'antd';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { executeGameControlCommand } from '@/services/operations/game-control';
 import { getCharacter } from '@/services/players/queries';
 import { createIdempotencyKey } from '@/utils/idempotency';
+import { jobMappings } from '@/data/game/jobs';
 import {
   actionFields,
   characterFormValues,
@@ -17,6 +18,8 @@ import {
 type Props = { charId: number; characterName: string };
 
 const commandTypes: Record<MaintenanceAction, string> = {
+  job: 'character.progression.update',
+  skillPoints: 'character.skill_points.update',
   progression: 'character.progression.update',
   stats: 'character.stats.update',
   statsReset: 'character.stats.reset',
@@ -34,6 +37,8 @@ export default function CharacterMaintenanceModal({
   const { message } = App.useApp();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const [action, setAction] = useState<MaintenanceAction>('progression');
   const [character, setCharacter] = useState<CharacterSnapshot>();
   const [form] = Form.useForm<Record<string, number>>();
@@ -41,15 +46,12 @@ export default function CharacterMaintenanceModal({
     intl.formatMessage({ id, defaultMessage: fallback });
   const fields = actionFields[action];
   const close = () => {
+    if (submitting) return;
     setOpen(false);
     form.resetFields();
   };
   const openMaintenance = async () => {
     setOpen(true);
-    if (character) {
-      form.setFieldsValue(characterFormValues(action, character));
-      return;
-    }
     setLoading(true);
     try {
       const response = await getCharacter(charId);
@@ -70,43 +72,71 @@ export default function CharacterMaintenanceModal({
         icon={<EditOutlined />}
         onClick={() => void openMaintenance()}
       >
-        {t('players.character.maintain', '维护')}
+        {t('players.character.maintain', '角色属性')}
       </Button>
       <Modal
-        title={`${t('players.character.maintain', '维护')} · ${characterName}`}
+        title={`${t('players.character.maintain', '角色属性')} · ${characterName}`}
         open={open}
         onCancel={close}
         okText={t('common.confirm', '确认')}
         cancelText={t('common.cancel', '取消')}
         onOk={() => form.submit()}
         okButtonProps={{ disabled: loading }}
+        confirmLoading={submitting}
+        cancelButtonProps={{ disabled: submitting }}
+        closable={!submitting}
+        maskClosable={!submitting}
         destroyOnHidden
       >
         <Form
           form={form}
           layout="vertical"
+          disabled={loading || submitting}
           onFinish={async (values) => {
-            const response = await executeGameControlCommand({
-              idempotency_key: createIdempotencyKey(),
-              type: commandTypes[action],
-              target: { type: 'character', id: String(charId) },
-              // Ant Design omits the values object when an action has no fields.
-              // Game Control still requires an explicit object payload.
-              payload: fields.length === 0 ? {} : values,
-            });
-            setCharacter((current) =>
-              mergeCharacterResult(current, response.data.result),
+            if (submittingRef.current) return;
+            const original = character
+              ? characterFormValues(action, character)
+              : {};
+            const payload = Object.fromEntries(
+              Object.entries(values).filter(
+                ([key, value]) => value !== original[key],
+              ),
             );
-            message.success(
-              t('players.character.maintainSuccess', '操作已提交'),
-            );
-            close();
+            if (fields.length && !Object.keys(payload).length) {
+              message.info('没有需要应用的修改');
+              return;
+            }
+            setSubmitting(true);
+            submittingRef.current = true;
+            try {
+              const response = await executeGameControlCommand({
+                idempotency_key: createIdempotencyKey(),
+                type: commandTypes[action],
+                target: { type: 'character', id: String(charId) },
+                // Ant Design omits the values object when an action has no fields.
+                // Game Control still requires an explicit object payload.
+                payload: fields.length === 0 ? {} : payload,
+              });
+              setCharacter((current) =>
+                mergeCharacterResult(current, response.data.result),
+              );
+              message.success(
+                t('players.character.maintainSuccess', '操作已提交'),
+              );
+              setOpen(false);
+              form.resetFields();
+            } finally {
+              setSubmitting(false);
+              submittingRef.current = false;
+            }
           }}
         >
           <ProFormSelect
             label={t('players.character.maintainAction', '操作')}
             valueEnum={{
-              progression: t('players.character.progression', '等级与职业'),
+              job: '转换职业',
+              progression: '等级',
+              skillPoints: '技能点',
               stats: t('players.character.stats', '属性'),
               statsReset: t('players.character.statsReset', '重置属性'),
               skills: t('players.character.skillsReset', '重置技能点'),
@@ -114,7 +144,7 @@ export default function CharacterMaintenanceModal({
             }}
             fieldProps={{
               value: action,
-              disabled: loading,
+              disabled: loading || submitting,
               onChange: (value) => {
                 const nextAction = value as MaintenanceAction;
                 setAction(nextAction);
@@ -127,31 +157,49 @@ export default function CharacterMaintenanceModal({
               },
             }}
           />
-          {fields.map((field) => (
-            <ProFormDigit
-              key={field}
-              name={field}
-              label={t(`players.character.field.${field}`, field)}
-              min={1}
-              max={action === 'stats' ? maxMaintainedStat : undefined}
-              width="md"
-              rules={[
-                { required: true },
-                ...(action === 'stats'
-                  ? [
-                      {
-                        type: 'number' as const,
-                        max: maxMaintainedStat,
-                        message: t(
-                          'players.character.statsRange',
-                          `请输入 1 到 ${maxMaintainedStat} 之间的数值`,
-                        ),
-                      },
-                    ]
-                  : []),
-              ]}
-            />
-          ))}
+          {fields.map((field) =>
+            field === 'job_id' ? (
+              <ProFormSelect
+                key={field}
+                name={field}
+                label="职业"
+                showSearch
+                options={Object.entries(jobMappings).map(([id, key]) => ({
+                  value: Number(id),
+                  label: t(key, '未知职业'),
+                }))}
+                fieldProps={{ optionFilterProp: 'label' }}
+                rules={[{ required: true }]}
+              />
+            ) : (
+              <ProFormDigit
+                key={field}
+                name={field}
+                label={t(`players.character.field.${field}`, field)}
+                min={field === 'skill_points' ? 0 : 1}
+                max={action === 'stats' ? maxMaintainedStat : undefined}
+                width="md"
+                rules={[
+                  { required: true },
+                  ...(action === 'stats'
+                    ? [
+                        {
+                          type: 'number' as const,
+                          max: maxMaintainedStat,
+                          message: t(
+                            'players.character.statsRange',
+                            `请输入 1 到 ${maxMaintainedStat} 之间的数值`,
+                          ),
+                        },
+                      ]
+                    : []),
+                ]}
+              />
+            ),
+          )}
+          {action === 'statsReset' && (
+            <Space>重置该角色的基础属性，并返还属性点。</Space>
+          )}
           {action === 'skills' && (
             <Space>
               {t(
