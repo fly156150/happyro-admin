@@ -38,7 +38,16 @@ export default function Monsters() {
         dataIndex: 'image',
         search: false,
         width: 96,
-        render: (_, row) => <MonsterImage monster={row} locale={locale} />,
+        render: (_, row) => (
+          <Button
+            type="text"
+            aria-label={`查看${monsterName(row, locale)}详情`}
+            style={{ height: 'auto', padding: 0 }}
+            onClick={async () => setDetail((await getMonster(row.Id)).data)}
+          >
+            <MonsterImage monster={row} locale={locale} />
+          </Button>
+        ),
       },
       {
         title: t('gameData.monster.id', '魔物 ID'),

@@ -1,6 +1,5 @@
 import { EyeOutlined } from '@ant-design/icons';
 import {
-  type ActionType,
   PageContainer,
   type ProColumns,
   ProTable,
@@ -14,9 +13,10 @@ import {
   Empty,
   Image,
   Space,
-  Segmented,
+  Tag,
 } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { compareMaps } from '@/data/game/map-order';
 import { type GameDataNpc, npcsOnMap } from '@/pages/game-data/npcs/npcCatalog';
 import { listNpcs } from '@/pages/game-data/npcs/service';
 import { listMaps } from './service';
@@ -76,37 +76,9 @@ function MapPreview({ row, large = false }: { row: MapRow; large?: boolean }) {
 
 export default function Maps() {
   const intl = useIntl();
-  const [rows, setRows] = useState<MapRow[]>([]);
   const [npcs, setNpcs] = useState<GameDataNpc[]>([]);
   const [detail, setDetail] = useState<MapRow>();
-  const [scope, setScope] = useState<'game' | 'all'>('game');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const actionRef = useRef<ActionType>(null);
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError('');
-    setDetail(undefined);
-    listMaps(scope)
-      .then((result) => {
-        if (cancelled) return;
-        setRows(result.data);
-        actionRef.current?.reload();
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setRows([]);
-          setError('地图列表加载失败，请重试。');
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [scope]);
   useEffect(() => {
     listNpcs()
       .then((result) => {
@@ -116,6 +88,15 @@ export default function Maps() {
   }, []);
   const columns: ProColumns<MapRow>[] = [
     {
+      title: '地图范围',
+      dataIndex: 'scope',
+      valueType: 'select',
+      hideInTable: true,
+      initialValue: 'game',
+      valueEnum: { game: '游戏可用地图', all: '全部服务端地图' },
+      fieldProps: { allowClear: false },
+    },
+    {
       title: intl.formatMessage({
         id: 'gameData.map.image',
         defaultMessage: '地图',
@@ -123,7 +104,16 @@ export default function Maps() {
       dataIndex: 'image',
       search: false,
       width: 120,
-      render: (_, row) => <MapPreview row={row} />,
+      render: (_, row) => (
+        <Button
+          type="text"
+          aria-label={`查看${row.name_zh_cn || row.map}详情`}
+          onClick={() => setDetail(row)}
+          style={{ height: 'auto', padding: 0 }}
+        >
+          <MapPreview row={row} />
+        </Button>
+      ),
     },
     {
       title: intl.formatMessage({
@@ -155,6 +145,16 @@ export default function Maps() {
       dataIndex: 'map',
     },
     {
+      title: '游戏支持',
+      dataIndex: 'supported',
+      search: false,
+      render: (_, row) => (
+        <Tag color={row.supported ? 'success' : 'default'}>
+          {row.supported ? '支持' : '不支持'}
+        </Tag>
+      ),
+    },
+    {
       title: intl.formatMessage({
         id: 'common.actions',
         defaultMessage: '操作',
@@ -181,34 +181,29 @@ export default function Maps() {
       })}
     >
       <ProTable<MapRow>
-        params={{ scope, catalogVersion: rows.length }}
-        loading={loading}
-        toolBarRender={() => [
-          <Segmented
-            key="scope"
-            value={scope}
-            onChange={(value) => setScope(value as 'game' | 'all')}
-            options={[
-              { label: '游戏可用地图', value: 'game' },
-              { label: '全部服务端地图', value: 'all' },
-            ]}
-          />,
-        ]}
         headerTitle={error ? <Alert type="error" title={error} /> : undefined}
         rowKey="map"
         columns={columns}
-        actionRef={actionRef}
         request={async (params) => {
+          const result = await listMaps(
+            params.scope === 'all' ? 'all' : 'game',
+          );
           const code = String(params.map ?? '').toLowerCase();
           const name = String(params.name_zh_cn ?? '').toLowerCase();
-          const data = rows.filter(
-            (row) =>
-              (!code || row.map.toLowerCase().includes(code)) &&
-              (!name || row.name_zh_cn?.toLowerCase().includes(name)),
-          );
+          const data = result.data
+            .filter(
+              (row) =>
+                (!code || row.map.toLowerCase().includes(code)) &&
+                (!name || row.name_zh_cn?.toLowerCase().includes(name)),
+            )
+            .sort(compareMaps);
           const current = Number(params.current || 1);
           const pageSize = Number(params.pageSize || 20);
-          return { data: data.slice((current - 1) * pageSize, current * pageSize), total: data.length, success: true };
+          return {
+            data: data.slice((current - 1) * pageSize, current * pageSize),
+            total: data.length,
+            success: true,
+          };
         }}
         pagination={{ pageSize: 20 }}
       />
@@ -238,14 +233,6 @@ function MapDetails({ map, npcs }: { map: MapRow; npcs: GameDataNpc[] }) {
   return (
     <Space orientation="vertical" size={20} style={{ width: '100%' }}>
       <MapPreview row={map} large />
-      <Alert
-        type="info"
-        title={
-          map.supported
-            ? '客户端资源与服务端配置支持此地图；实际进入仍受副本、任务与传送规则限制。'
-            : '此地图仅登记在服务端索引中，未列入游戏可用地图。'
-        }
-      />
       <Descriptions bordered size="small" column={1}>
         <Descriptions.Item label="地图编号">
           {map.id ?? '暂无'}

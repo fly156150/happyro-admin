@@ -78,11 +78,6 @@ export default [
     access: 'canManageSettings',
     routes: [
       {
-        path: '/settings/game-data',
-        name: 'gameData',
-        component: './settings/game-data',
-      },
-      {
         path: '/settings/game-settings',
         name: 'gameSettings',
         component: './settings/game-settings',

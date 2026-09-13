@@ -7,7 +7,7 @@ import {
 } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
 import { App, Card, Flex, Spin, Tabs, Typography } from 'antd';
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { type CSSProperties, useEffect, useState } from 'react';
 import {
   type GameSettingDefinition,
   type GameSettings,
@@ -40,11 +40,17 @@ function isRate(definition: GameSettingDefinition): boolean {
   return definition.unit === 'percent';
 }
 
-function toDisplayValue(value: number, definition: GameSettingDefinition): number {
+function toDisplayValue(
+  value: number,
+  definition: GameSettingDefinition,
+): number {
   return isRate(definition) ? value / 100 : value;
 }
 
-function toStoredValue(value: number, definition: GameSettingDefinition): number {
+function toStoredValue(
+  value: number,
+  definition: GameSettingDefinition,
+): number {
   return isRate(definition) ? Math.round(value * 100) : value;
 }
 
@@ -82,7 +88,9 @@ export default function GameSettingsPage() {
     getGameSettings()
       .then(({ data }) => setSettings(data))
       .catch(() =>
-        message.error(t('settings.gameSettings.loadFailed', '游戏设置加载失败'))
+        message.error(
+          t('settings.gameSettings.loadFailed', '游戏设置加载失败'),
+        ),
       );
   }, []);
 
@@ -93,7 +101,7 @@ export default function GameSettingsPage() {
           settings.definitions[key]
             ? toDisplayValue(value, settings.definitions[key])
             : value,
-        ])
+        ]),
       )
     : undefined;
 
@@ -115,8 +123,11 @@ export default function GameSettingsPage() {
                   .filter((key) => values[key] !== undefined)
                   .map((key) => [
                     key,
-                    toStoredValue(Number(values[key]), settings.definitions[key]),
-                  ])
+                    toStoredValue(
+                      Number(values[key]),
+                      settings.definitions[key],
+                    ),
+                  ]),
               );
               const remark = String(values.remark ?? '').trim();
               await updateGameSettings({
@@ -125,7 +136,9 @@ export default function GameSettingsPage() {
               });
               const { data } = await getGameSettings();
               setSettings(data);
-              message.success(t('settings.gameSettings.saved', '游戏设置已保存'));
+              message.success(
+                t('settings.gameSettings.saved', '游戏设置已保存'),
+              );
               return true;
             }}
           >
@@ -135,7 +148,9 @@ export default function GameSettingsPage() {
                 {
                   key: 'experience',
                   label: t('settings.gameSettings.tab.experience', '经验倍率'),
-                  children: <ExperienceRateSettings settings={settings} t={t} />,
+                  children: (
+                    <ExperienceRateSettings settings={settings} t={t} />
+                  ),
                 },
                 {
                   key: 'drops',
@@ -171,10 +186,6 @@ export default function GameSettingsPage() {
   );
 }
 
-function SectionTitle({ children }: { children: ReactNode }) {
-  return <Typography.Title level={5}>{children}</Typography.Title>;
-}
-
 function ExperienceRateSettings({
   settings,
   t,
@@ -183,23 +194,18 @@ function ExperienceRateSettings({
   t: Translate;
 }) {
   return (
-    <>
-      <SectionTitle>
-        {t('settings.gameSettings.tab.experience', '经验倍率')}
-      </SectionTitle>
-      <div style={twoColumnStyle()}>
-        <RateField
-          name="base_exp_rate"
-          definition={settings.definitions.base_exp_rate}
-          t={t}
-        />
-        <RateField
-          name="job_exp_rate"
-          definition={settings.definitions.job_exp_rate}
-          t={t}
-        />
-      </div>
-    </>
+    <div style={twoColumnStyle()}>
+      <RateField
+        name="base_exp_rate"
+        definition={settings.definitions.base_exp_rate}
+        t={t}
+      />
+      <RateField
+        name="job_exp_rate"
+        definition={settings.definitions.job_exp_rate}
+        t={t}
+      />
+    </div>
   );
 }
 
@@ -211,23 +217,20 @@ function DropRateSettings({
   t: Translate;
 }) {
   return (
-    <>
-      <SectionTitle>{t('settings.gameSettings.tab.drops', '掉落倍率')}</SectionTitle>
-      <div style={twoColumnStyle()}>
-        {[normalDropRateKeys, mvpDropRateKeys].map((keys, index) => (
-          <div key={index}>
-            {keys.map((key) => (
-              <RateField
-                key={key}
-                name={key}
-                definition={settings.definitions[key]}
-                t={t}
-              />
-            ))}
-          </div>
-        ))}
-      </div>
-    </>
+    <div style={twoColumnStyle()}>
+      {[normalDropRateKeys, mvpDropRateKeys].map((keys) => (
+        <div key={keys[0]}>
+          {keys.map((key) => (
+            <RateField
+              key={key}
+              name={key}
+              definition={settings.definitions[key]}
+              t={t}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -278,9 +281,6 @@ function NavigationSettings({
 }) {
   return (
     <>
-      <SectionTitle>
-        {t('settings.gameSettings.tab.navigation', '地图传送')}
-      </SectionTitle>
       <ProFormRadio.Group
         name="navigation_teleport_policy"
         label={ruleLabel('navigation_teleport_policy', t)}
@@ -311,7 +311,10 @@ function NavigationSettings({
         label={ruleLabel('navigation_map_channels_enabled', t)}
         radioType="button"
         options={BinaryOptions({ t })}
-        extra={ruleExtra(settings.definitions.navigation_map_channels_enabled, t)}
+        extra={ruleExtra(
+          settings.definitions.navigation_map_channels_enabled,
+          t,
+        )}
         rules={[{ required: true }]}
       />
     </>
@@ -327,9 +330,6 @@ function MonsterSpawnSettings({
 }) {
   return (
     <>
-      <SectionTitle>
-        {t('settings.gameSettings.tab.monster', '魔物召唤')}
-      </SectionTitle>
       <ProFormRadio.Group
         name="game_tools_monster_spawn_policy"
         label={ruleLabel('game_tools_monster_spawn_policy', t)}
@@ -370,9 +370,6 @@ function MonsterSpawnSettings({
 function AdventureToolSettings({ t }: { t: Translate }) {
   return (
     <>
-      <SectionTitle>
-        {t('settings.gameSettings.tab.adventure', '冒险工具')}
-      </SectionTitle>
       {[
         'game_tools_character_maintenance_policy',
         'game_tools_game_settings_policy',

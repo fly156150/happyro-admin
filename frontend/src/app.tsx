@@ -11,6 +11,7 @@ dayjs.extend(relativeTime);
 
 import { AvatarDropdown, ErrorBoundary, OfflineBanner } from '@/components';
 import { currentUser as queryCurrentUser } from '@/services/auth/index';
+import ThemeToggle from '@/components/RightContent/ThemeToggle';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig, setRequestFeedback } from './requestErrorConfig';
 
@@ -72,7 +73,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
       }
       return dom;
     },
-    actionsRender: () => [],
+    actionsRender: () => [<ThemeToggle key="theme" />],
     avatarProps: {
       src: initialState?.currentUser?.avatar,
       title: initialState?.currentUser?.userid,

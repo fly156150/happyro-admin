@@ -56,7 +56,6 @@ Route::prefix('api/game-data')->middleware(['auth:sanctum', 'permission:game-dat
 
 Route::prefix('api/settings')->middleware(['auth:sanctum', 'permission:settings.manage'])->group(function () {
     Route::get('/game-data', [GameDataSettingController::class, 'show']);
-    Route::put('/game-data', [GameDataSettingController::class, 'update']);
     Route::get('/game-data/history', [GameDataSettingController::class, 'history']);
     Route::get('/game-settings', [GameServerSettingController::class, 'show']);
     Route::put('/game-settings', [GameServerSettingController::class, 'update']);

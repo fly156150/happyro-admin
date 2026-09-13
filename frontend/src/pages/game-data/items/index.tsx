@@ -106,8 +106,15 @@ function useItemColumns({
         search: false,
         width: 72,
         render: (_, row) => (
-          <span
+          <Button
+            type="text"
+            aria-label={`查看${itemName(row, locale)}详情`}
+            onClick={async () => {
+              const query = formRef.current?.getFieldsValue() as ItemQuery;
+              setDetail((await getItem(row.Id, query)).data);
+            }}
             style={{
+              padding: 0,
               display: 'inline-flex',
               width: 48,
               height: 64,
@@ -124,7 +131,7 @@ function useItemColumns({
               height={64}
               style={{ objectFit: 'contain', display: 'block' }}
             />
-          </span>
+          </Button>
         ),
       },
       {

@@ -10,6 +10,4 @@ interface GameDataSettingRepository
 
     /** @return array{client: list<string>, server: list<string>} */
     public function available(): array;
-
-    public function save(GameDataVersions $versions): GameDataVersions;
 }
