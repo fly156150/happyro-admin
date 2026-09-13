@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use App\Contracts\Auth\UserProvisioner;
 use App\Data\Auth\CreateUserData;
+use App\Models\Role;
+use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -15,6 +17,7 @@ class CreateUserCommand extends Command
         {--name= : 显示名称}
         {--password= : 登录密码；省略时安全提示输入}
         {--role=super_admin : super_admin、administrator、operator 或 auditor}
+        {--ensure : 已存在时更新密码、名称和角色}
         {--no-color : 禁用 ANSI 颜色}';
 
     protected $description = 'Create an internal GM user';
@@ -39,10 +42,11 @@ class CreateUserCommand extends Command
             'password' => $password,
             'role' => $this->option('role'),
         ];
+        $existing = User::query()->where('username', $input['username'])->first();
         $validator = Validator::make($input, [
-            'username' => ['required', 'string', 'max:64', 'regex:/^[a-z0-9_.-]+$/', Rule::unique('users')],
+            'username' => ['required', 'string', 'max:64', 'regex:/^[a-z0-9_.-]+$/', Rule::unique('users')->ignore($existing?->id)],
             'name' => ['required', 'string', 'max:255'],
-            'password' => ['required', 'string', 'min:12', 'max:255'],
+            'password' => ['required', 'string', 'min:5', 'max:255'],
             'role' => ['required', Rule::in(['super_admin', 'administrator', 'operator', 'auditor'])],
         ]);
 
@@ -56,7 +60,22 @@ class CreateUserCommand extends Command
             return self::FAILURE;
         }
 
-        $user = $this->users->create(new CreateUserData(...$validator->validated()));
+        if ($existing && ! $this->option('ensure')) {
+            $this->error("用户 {$existing->username} 已存在；使用 --ensure 更新");
+
+            return self::FAILURE;
+        }
+
+        if ($existing) {
+            $data = $validator->validated();
+            $existing->update(['name' => $data['name'], 'password' => $data['password'], 'is_active' => true]);
+            $existing->roles()->sync([
+                Role::query()->firstOrCreate(['name' => $data['role']], ['label' => $this->roleLabel($data['role'])])->id,
+            ]);
+            $user = $existing;
+        } else {
+            $user = $this->users->create(new CreateUserData(...$validator->validated()));
+        }
 
         $this->newLine();
         $this->info("已创建 GM 用户 {$user->username}");
@@ -80,5 +99,15 @@ class CreateUserCommand extends Command
         $this->output->writeln($style('36', '  php artisan gm:user:create admin --name="管理员"'));
         $this->output->writeln($style('36', '  php artisan gm:user:create auditor --role=auditor --no-color'));
         $this->output->writeln('');
+    }
+
+    private function roleLabel(string $role): string
+    {
+        return match ($role) {
+            'super_admin' => '超级管理员',
+            'administrator' => '管理员',
+            'operator' => '运营人员',
+            'auditor' => '审计员',
+        };
     }
 }
