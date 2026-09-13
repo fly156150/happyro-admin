@@ -25,6 +25,28 @@ export default [
     ],
   },
   {
+    path: '/players',
+    name: 'players',
+    icon: 'team',
+    routes: [
+      {
+        path: '/players/accounts',
+        name: 'account',
+        component: './players/accounts',
+      },
+      {
+        path: '/players/characters',
+        name: 'character',
+        component: './players/characters',
+      },
+      {
+        path: '/players/login-logs',
+        name: 'loginLog',
+        component: './players/login-logs',
+      },
+    ],
+  },
+  {
     path: '/operations',
     name: 'operations',
     icon: 'tool',
@@ -46,28 +68,6 @@ export default [
         name: 'itemGrantRecords',
         access: 'canGrantItems',
         component: './operations/item-grant-records',
-      },
-    ],
-  },
-  {
-    path: '/players',
-    name: 'players',
-    icon: 'team',
-    routes: [
-      {
-        path: '/players/accounts',
-        name: 'account',
-        component: './players/accounts',
-      },
-      {
-        path: '/players/characters',
-        name: 'character',
-        component: './players/characters',
-      },
-      {
-        path: '/players/login-logs',
-        name: 'loginLog',
-        component: './players/login-logs',
       },
     ],
   },
