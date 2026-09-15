@@ -12,23 +12,14 @@ import {
   Drawer,
   Empty,
   Image,
+  Skeleton,
   Space,
   Tag,
 } from 'antd';
 import { useEffect, useState } from 'react';
-import { compareMaps } from '@/data/game/map-order';
-import { type GameDataNpc, npcsOnMap } from '@/pages/game-data/npcs/npcCatalog';
-import { listNpcs } from '@/pages/game-data/npcs/service';
-import { listMaps } from './service';
-
-type MapRow = {
-  id: number | null;
-  map: string;
-  name_zh_cn?: string;
-  image?: string;
-  supported?: boolean;
-  image_kind?: 'image' | 'terrain' | null;
-};
+import type { GameDataNpc } from '@/pages/game-data/npcs/npcCatalog';
+import { listMapNpcs } from '@/pages/game-data/npcs/service';
+import { listMaps, type MapRow } from './service';
 
 function MapPreview({ row, large = false }: { row: MapRow; large?: boolean }) {
   const intl = useIntl();
@@ -77,15 +68,38 @@ function MapPreview({ row, large = false }: { row: MapRow; large?: boolean }) {
 export default function Maps() {
   const intl = useIntl();
   const [npcs, setNpcs] = useState<GameDataNpc[]>([]);
+  const [npcsLoading, setNpcsLoading] = useState(false);
   const [detail, setDetail] = useState<MapRow>();
   const [error, setError] = useState('');
   useEffect(() => {
-    listNpcs()
+    if (!detail) {
+      setNpcs([]);
+      return;
+    }
+    let active = true;
+    setNpcsLoading(true);
+    listMapNpcs(detail.map)
       .then((result) => {
-        setNpcs(result.data);
+        if (active) {
+          setNpcs(result.data);
+          setError('');
+        }
       })
-      .catch(() => setError('NPC 列表加载失败，地图详情暂不包含 NPC。'));
-  }, []);
+      .catch(() => {
+        if (active) {
+          setNpcs([]);
+          setError('NPC 列表加载失败，地图详情暂不包含 NPC。');
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setNpcsLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [detail]);
   const columns: ProColumns<MapRow>[] = [
     {
       title: '地图范围',
@@ -185,25 +199,14 @@ export default function Maps() {
         rowKey="map"
         columns={columns}
         request={async (params) => {
-          const result = await listMaps(
-            params.scope === 'all' ? 'all' : 'game',
-          );
-          const code = String(params.map ?? '').toLowerCase();
-          const name = String(params.name_zh_cn ?? '').toLowerCase();
-          const data = result.data
-            .filter(
-              (row) =>
-                (!code || row.map.toLowerCase().includes(code)) &&
-                (!name || row.name_zh_cn?.toLowerCase().includes(name)),
-            )
-            .sort(compareMaps);
-          const current = Number(params.current || 1);
-          const pageSize = Number(params.pageSize || 20);
-          return {
-            data: data.slice((current - 1) * pageSize, current * pageSize),
-            total: data.length,
-            success: true,
-          };
+          const { data, total } = await listMaps({
+            scope: params.scope === 'all' ? 'all' : 'game',
+            map: params.map,
+            name_zh_cn: params.name_zh_cn,
+            page: params.current,
+            perPage: params.pageSize,
+          });
+          return { data, total, success: true };
         }}
         pagination={{ pageSize: 20 }}
       />
@@ -221,14 +224,22 @@ export default function Maps() {
         size={560}
       >
         {detail ? (
-          <MapDetails map={detail} npcs={npcsOnMap(npcs, detail.map)} />
+          <MapDetails map={detail} npcs={npcs} loading={npcsLoading} />
         ) : null}
       </Drawer>
     </PageContainer>
   );
 }
 
-function MapDetails({ map, npcs }: { map: MapRow; npcs: GameDataNpc[] }) {
+function MapDetails({
+  map,
+  npcs,
+  loading,
+}: {
+  map: MapRow;
+  npcs: GameDataNpc[];
+  loading: boolean;
+}) {
   const intl = useIntl();
   return (
     <Space orientation="vertical" size={20} style={{ width: '100%' }}>
@@ -273,7 +284,9 @@ function MapDetails({ map, npcs }: { map: MapRow; npcs: GameDataNpc[] }) {
           })}
           {npcs.length ? `（${npcs.length}）` : ''}
         </h4>
-        {npcs.length ? (
+        {loading ? (
+          <Skeleton active paragraph={{ rows: 4 }} title={false} />
+        ) : npcs.length ? (
           <Space orientation="vertical" size={8} style={{ width: '100%' }}>
             {npcs.map((npc) => (
               <div

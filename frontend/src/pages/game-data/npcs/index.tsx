@@ -8,27 +8,17 @@ import { CheckCircleOutlined, EyeOutlined } from '@ant-design/icons';
 import { Button, Descriptions, Drawer, Empty, Image, Space, Tag, Typography } from 'antd';
 import { useIntl } from '@umijs/max';
 import { useEffect, useRef, useState } from 'react';
-import {
-  filterAndSortNpcs,
-  type GameDataNpc,
-  type NpcVisibility,
-} from './npcCatalog';
+import type { GameDataNpc, NpcVisibility } from './npcCatalog';
 import { listNpcs } from './service';
 
 export default function Npcs() {
   const intl = useIntl();
-  const [rows, setRows] = useState<GameDataNpc[]>([]);
   const [visibility, setVisibility] = useState<NpcVisibility>('game');
   const [detail, setDetail] = useState<GameDataNpc>();
   const actionRef = useRef<ActionType>(null);
   useEffect(() => {
-    listNpcs().then((result) => {
-      setRows(result.data);
-    });
-  }, []);
-  useEffect(() => {
     actionRef.current?.reload();
-  }, [rows, visibility]);
+  }, [visibility]);
   const columns: ProColumns<GameDataNpc>[] = [
     {
       title: intl.formatMessage({
@@ -193,16 +183,15 @@ export default function Npcs() {
         columns={columns}
         actionRef={actionRef}
         request={async (params) => {
-          const data = filterAndSortNpcs(
-            rows,
-            {
-              map: params.map,
-              name: params.name,
-              name_zh_cn: params.name_zh_cn,
-            },
-            (params.visibility as NpcVisibility | undefined) ?? visibility,
-          );
-          return { data, total: data.length, success: true };
+          const { data, total } = await listNpcs({
+            map: params.map,
+            name: params.name,
+            name_zh_cn: params.name_zh_cn,
+            visibility: (params.visibility as NpcVisibility | undefined) ?? visibility,
+            page: params.current,
+            perPage: params.pageSize,
+          });
+          return { data, total, success: true };
         }}
         pagination={{ pageSize: 20 }}
       />

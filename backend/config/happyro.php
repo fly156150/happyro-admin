@@ -17,6 +17,7 @@ return ['players' => [
     'monster_image_root' => env('GAME_MONSTER_IMAGE_ROOT', base_path('../../../work/game-data/monsters/kro-20211105')),
     'map_index_path' => env('GAME_MAP_INDEX_PATH', base_path('../../happyro-server/db/map_index.txt')),
     'npc_catalog_path' => env('GAME_NPC_CATALOG_PATH', base_path('resources/game-data/world/npc-catalog.json')),
+    'world_asset_version' => 'kro-20211105-transparent-v2',
 ], 'game_control' => [
     'base_url' => env('GAME_CONTROL_BASE_URL', 'http://127.0.0.1:8889'),
     'token' => env('GAME_CONTROL_TOKEN', ''),

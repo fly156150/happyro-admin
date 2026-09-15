@@ -3,36 +3,70 @@
 namespace App\Http\Controllers\GameData;
 
 use App\Contracts\GameServer\GameServerGateway;
+use App\Data\GameData\MapQuery;
+use App\Data\GameData\NpcQuery;
 use App\Exceptions\GameServerGatewayException;
+use App\Http\Requests\GameData\ListMapsRequest;
+use App\Http\Requests\GameData\ListNpcsRequest;
+use App\Services\GameData\NpcCatalogService;
 use App\Services\GameData\WorldDataService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 final class WorldDataController
 {
-    public function __construct(private readonly WorldDataService $world) {}
+    public function __construct(
+        private readonly WorldDataService $world,
+        private readonly NpcCatalogService $npcs,
+    ) {}
 
-    public function maps(Request $request, GameServerGateway $gateway): JsonResponse
+    public function maps(ListMapsRequest $request, GameServerGateway $gateway): JsonResponse
     {
-        $scope = $request->query('scope', 'game');
-        abort_unless(in_array($scope, ['game', 'all'], true), 422);
+        $data = $request->validated();
+        $gameOnly = ($data['scope'] ?? 'game') === 'game';
         $channelsEnabled = false;
-        if ($scope === 'game') {
+        if ($gameOnly) {
             try {
                 $channelsEnabled = (bool) ($gateway->battleConfig()['navigation_map_channels_enabled'] ?? false);
-            } catch (GameServerGatewayException $exception) {
+            } catch (GameServerGatewayException) {
                 return response()->json(['message' => '暂时无法读取游戏地图配置，请重试或查看全部服务端地图。'], 503);
             }
         }
-        $rows = $this->world->maps($scope === 'game', $channelsEnabled);
+        $result = $this->world->maps(new MapQuery(
+            gameOnly: $gameOnly,
+            channelsEnabled: $channelsEnabled,
+            map: $data['map'] ?? null,
+            name: $data['name_zh_cn'] ?? null,
+            page: $data['page'] ?? 1,
+            perPage: $data['perPage'] ?? 20,
+        ));
 
-        return response()->json(['data' => $rows, 'total' => count($rows), 'success' => true]);
+        return response()->json([...$result, 'success' => true]);
     }
 
-    public function npcs(): JsonResponse
+    public function npcs(ListNpcsRequest $request): JsonResponse
     {
-        $rows = $this->world->npcs();
+        $data = $request->validated();
+        $result = $this->npcs->search(new NpcQuery(
+            query: $data['query'] ?? null,
+            map: $data['map'] ?? null,
+            name: $data['name'] ?? null,
+            displayName: $data['name_zh_cn'] ?? null,
+            gameVisibleOnly: ($data['visibility'] ?? 'game') === 'game',
+            page: $data['page'] ?? 1,
+            perPage: $data['perPage'] ?? 20,
+        ));
+
+        return response()->json([...$result, 'success' => true]);
+    }
+
+    /**
+     * Every NPC placed on one map. Map detail assembles a whole map, so this is
+     * deliberately returned in full rather than paginated.
+     */
+    public function mapNpcs(ListNpcsRequest $request, string $map): JsonResponse
+    {
+        $rows = $this->npcs->onMap($map, ($request->validated()['visibility'] ?? 'game') === 'game');
 
         return response()->json(['data' => $rows, 'total' => count($rows), 'success' => true]);
     }
@@ -40,12 +74,8 @@ final class WorldDataController
     public function mapImage(string $map): BinaryFileResponse
     {
         abort_unless(preg_match('/^[a-z0-9_@-]+$/', $map) === 1, 404);
-        $catalog = json_decode(file_get_contents(base_path('resources/game-data/world/map-catalog.json')), true, flags: JSON_THROW_ON_ERROR);
-        $entry = array_column($catalog['entries'], null, 'map')[$map] ?? null;
-        $imageMap = $entry['image_map'] ?? $map;
-        $folder = ($entry['image_kind'] ?? null) === 'terrain' ? 'terrain' : 'maps';
-        $path = base_path("resources/game-data/world/{$folder}/{$imageMap}.png");
-        abort_unless(is_file($path), 404);
+        $path = $this->world->mapImagePath($map);
+        abort_unless($path, 404);
 
         return response()->file($path, ['Cache-Control' => 'public, max-age=86400']);
     }

@@ -19,6 +19,9 @@ use App\Contracts\GameData\MonsterAssetRepository;
 use App\Contracts\GameData\MonsterCatalogRepository;
 use App\Contracts\GameData\MonsterRepository;
 use App\Contracts\GameData\MonsterSnapshotReader;
+use App\Contracts\GameData\NpcCatalogRepository;
+use App\Contracts\GameData\NpcRepository;
+use App\Contracts\GameData\NpcSnapshotReader;
 use App\Contracts\GameServer\GameServerCommandRepository;
 use App\Contracts\GameServer\GameServerConfigWriter;
 use App\Contracts\GameServer\GameServerGateway;
@@ -35,6 +38,7 @@ use App\Infrastructure\GameServer\HttpGameServerGateway;
 use App\Infrastructure\Persistence\Audit\EloquentAuditLogRepository;
 use App\Infrastructure\Persistence\GameData\DatabaseItemCatalogRepository;
 use App\Infrastructure\Persistence\GameData\DatabaseMonsterCatalogRepository;
+use App\Infrastructure\Persistence\GameData\DatabaseNpcCatalogRepository;
 use App\Infrastructure\Persistence\GameServer\DatabaseGameServerCommandRepository;
 use App\Infrastructure\Persistence\GameServer\DatabaseGameServerSettingRepository;
 use App\Infrastructure\Persistence\GameServer\DatabaseGameServerSettingRevisionRepository;
@@ -49,8 +53,10 @@ use App\Services\GameData\DatabaseGameDataSettingRepository;
 use App\Services\GameData\DatabaseItemRepository;
 use App\Services\GameData\DatabaseItemViewBuilder;
 use App\Services\GameData\DatabaseMonsterRepository;
+use App\Services\GameData\DatabaseNpcRepository;
 use App\Services\GameData\JsonItemSnapshotReader;
 use App\Services\GameData\JsonMonsterSnapshotReader;
+use App\Services\GameData\JsonNpcSnapshotReader;
 use App\Services\GameData\LocalItemAssetRepository;
 use App\Services\GameData\LocalMonsterAssetRepository;
 use App\Services\Operations\DatabaseItemGrantRepository;
@@ -99,6 +105,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(MonsterAssetRepository::class, fn () => new LocalMonsterAssetRepository(
             config('happyro.game_data.monster_image_root'),
         ));
+        $this->app->bind(NpcRepository::class, DatabaseNpcRepository::class);
+        $this->app->bind(NpcCatalogRepository::class, DatabaseNpcCatalogRepository::class);
+        $this->app->bind(NpcSnapshotReader::class, JsonNpcSnapshotReader::class);
         $this->app->bind(GameServerCommandRepository::class, DatabaseGameServerCommandRepository::class);
         $this->app->bind(GameServerSettingRevisionRepository::class, DatabaseGameServerSettingRevisionRepository::class);
         $this->app->bind(GameServerSettingRepository::class, DatabaseGameServerSettingRepository::class);
