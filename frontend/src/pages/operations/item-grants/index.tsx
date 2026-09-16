@@ -1,7 +1,7 @@
 import { PageContainer, ProForm } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
 import { App, Image, theme } from 'antd';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import ItemGrantFormFields from '@/components/ItemGrantFormFields';
 import { grantItem } from '@/services/operations/item-grants';
 import { createIdempotencyKey } from '@/utils/idempotency';
@@ -12,7 +12,6 @@ export default function ItemGrants() {
   const [selectedItemId, setSelectedItemId] = useState<number>();
   const [itemImageSource, setItemImageSource] =
     useState<ItemImageSource>('illustration');
-  const idempotencyKey = useRef(createIdempotencyKey());
   const intl = useIntl();
   const { message } = App.useApp();
   const { token } = theme.useToken();
@@ -23,7 +22,8 @@ export default function ItemGrants() {
     <PageContainer title={t('operations.itemGrants.title', '物品发放')}>
       <ProForm
         onFinish={async (values) => {
-          const delivery = values.delivery === 'inventory' ? 'inventory' : 'mail';
+          const delivery =
+            values.delivery === 'inventory' ? 'inventory' : 'mail';
           await grantItem({
             item_id: Number(values.item_id),
             char_id: Number(values.char_id),
@@ -32,14 +32,13 @@ export default function ItemGrants() {
             message: values.message ? String(values.message) : undefined,
             bound: Boolean(values.bound),
             delivery,
-            idempotency_key: idempotencyKey.current,
+            idempotency_key: createIdempotencyKey(),
           });
           message.success(
             delivery === 'inventory'
               ? t('operations.itemGrants.inventorySuccess', '物品已发放到背包')
               : t('operations.itemGrants.success', '邮件已发送'),
           );
-          idempotencyKey.current = createIdempotencyKey();
           return true;
         }}
       >

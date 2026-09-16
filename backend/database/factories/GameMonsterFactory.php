@@ -30,7 +30,7 @@ class GameMonsterFactory extends Factory
             'race' => 'Plant',
             'element' => 'Water',
             'element_level' => 1,
-            'is_boss' => false,
+            'kind' => 'normal',
             'payload' => [],
             'sync_token' => fake()->uuid(),
         ];

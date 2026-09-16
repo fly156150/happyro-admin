@@ -14,6 +14,7 @@ use App\Http\Requests\AdventureTools\ListAdventureItemsRequest;
 use App\Services\AdventureTools\AdventureToolAccessService;
 use App\Services\AdventureTools\GrantAdventureItemService;
 use App\Services\Operations\GrantCharacterZenyService;
+use App\Support\GameServerErrorMessage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -61,7 +62,7 @@ final class AdventureItemController
         } catch (GameServerGatewayException $exception) {
             $status = in_array($exception->errorCode, ['character_offline', 'zeny_amount_exceeded', 'command_not_replayable'], true) ? 409 : 502;
 
-            return response()->json(['error' => ['code' => $exception->errorCode, 'message' => $exception->getMessage()]], $status);
+            return response()->json(['error' => ['code' => $exception->errorCode, 'message' => GameServerErrorMessage::from($exception)]], $status);
         }
     }
 
@@ -107,7 +108,7 @@ final class AdventureItemController
                 default => 502,
             };
 
-            return response()->json(['error' => ['code' => $exception->errorCode, 'message' => $exception->getMessage()]], $status);
+            return response()->json(['error' => ['code' => $exception->errorCode, 'message' => GameServerErrorMessage::from($exception)]], $status);
         }
     }
 

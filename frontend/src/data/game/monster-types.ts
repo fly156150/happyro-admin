@@ -27,3 +27,4 @@ export const MONSTER_ELEMENTS = [
   'Undead',
 ] as const;
 export const MONSTER_SIZES = ['Small', 'Medium', 'Large'] as const;
+export const MONSTER_KINDS = ['all', 'normal', 'mini', 'mvp'] as const;

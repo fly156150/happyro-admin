@@ -13,6 +13,7 @@ use App\Http\Requests\Operations\GrantCharacterZenyRequest;
 use App\Services\Operations\GrantCharacterInventoryItemService;
 use App\Services\Operations\GrantCharacterZenyService;
 use App\Services\Operations\ItemGrantService;
+use App\Support\GameServerErrorMessage;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -49,7 +50,7 @@ final class ItemGrantController
         } catch (GameServerGatewayException $exception) {
             $status = in_array($exception->errorCode, ['character_offline', 'inventory_full', 'inventory_overweight', 'item_amount_exceeded', 'command_not_replayable'], true) ? 409 : 502;
 
-            return response()->json(['error' => ['code' => $exception->errorCode, 'message' => $exception->getMessage()]], $status);
+            return $this->gatewayError($exception, $status);
         }
 
         return response()->json(['data' => ['mail_id' => $mailId], 'success' => true], 201);
@@ -68,7 +69,7 @@ final class ItemGrantController
         } catch (GameServerGatewayException $exception) {
             $status = in_array($exception->errorCode, ['character_offline', 'zeny_amount_exceeded', 'command_not_replayable'], true) ? 409 : 502;
 
-            return response()->json(['error' => ['code' => $exception->errorCode, 'message' => $exception->getMessage()]], $status);
+            return $this->gatewayError($exception, $status);
         }
 
         return response()->json(['data' => $result, 'success' => true]);
@@ -79,5 +80,10 @@ final class ItemGrantController
         $records = $this->records->paginate(min(max($request->integer('per_page', 20), 1), 100));
 
         return response()->json(['data' => $records->items(), 'meta' => ['current_page' => $records->currentPage(), 'last_page' => $records->lastPage(), 'total' => $records->total()], 'success' => true]);
+    }
+
+    private function gatewayError(GameServerGatewayException $exception, int $status): JsonResponse
+    {
+        return response()->json(['error' => ['code' => $exception->errorCode, 'message' => GameServerErrorMessage::from($exception)]], $status);
     }
 }

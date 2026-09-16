@@ -4,6 +4,7 @@ namespace App\Infrastructure\Persistence\GameData;
 
 use App\Contracts\GameData\MonsterCatalogRepository;
 use App\Data\GameData\MonsterCatalogSnapshot;
+use App\Data\GameData\MonsterKind;
 use App\Models\GameDataCatalog;
 use App\Models\GameMonster;
 use Illuminate\Database\DatabaseManager;
@@ -39,7 +40,7 @@ final readonly class DatabaseMonsterCatalogRepository implements MonsterCatalogR
             }
             GameMonster::query()->upsert($rows, ['game_data_catalog_id', 'monster_id'], [
                 'aegis_name', 'name_zh_cn', 'name_en_us', 'level', 'hp', 'size', 'race',
-                'element', 'element_level', 'is_boss', 'sprite_name', 'payload', 'sync_token', 'updated_at',
+                'element', 'element_level', 'kind', 'sprite_name', 'payload', 'sync_token', 'updated_at',
             ]);
         }
         $deleted = GameMonster::query()->where('game_data_catalog_id', $catalog->id)
@@ -69,7 +70,7 @@ final readonly class DatabaseMonsterCatalogRepository implements MonsterCatalogR
             'size' => (string) ($monster['Size'] ?? 'Small'), 'race' => (string) ($monster['Race'] ?? 'Formless'),
             'element' => (string) ($monster['Element'] ?? 'Neutral'),
             'element_level' => (int) ($monster['ElementLevel'] ?? 1),
-            'is_boss' => ($monster['Class'] ?? 'Normal') === 'Boss' || isset($monster['MvpDrops']),
+            'kind' => MonsterKind::fromSnapshot($monster),
             'sprite_name' => is_string($monster['spriteName'] ?? null) ? $monster['spriteName'] : null,
             'payload' => json_encode(Arr::except($monster, ['names']), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
             'sync_token' => $token, 'created_at' => $now, 'updated_at' => $now,

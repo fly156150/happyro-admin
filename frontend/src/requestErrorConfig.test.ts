@@ -9,7 +9,16 @@ const feedback = {
 
 vi.mock('@umijs/max', () => ({
   getIntl: vi.fn(() => ({
-    formatMessage: vi.fn(({ defaultMessage }) => defaultMessage),
+    formatMessage: vi.fn(({ id, defaultMessage }, values) => {
+      const messages: Record<string, string> = {
+        'app.request.status': '请求失败（{status}）。',
+        'app.request.error.character_offline': '角色不在线。',
+      };
+      const template = messages[id] ?? defaultMessage;
+      return String(template).replace(/\{(\w+)\}/g, (_, key) =>
+        String(values?.[key] ?? ''),
+      );
+    }),
   })),
 }));
 
@@ -185,7 +194,36 @@ describe('transport error handler', () => {
 
     errorHandler(error, {});
 
-    expect(feedback.error).toHaveBeenCalledWith('Response status:500');
+    expect(feedback.error).toHaveBeenCalledWith('请求失败（500）。');
+  });
+
+  it('should show a localized message for character_offline conflicts', () => {
+    const error: any = new Error('Axios error');
+    error.response = {
+      status: 409,
+      data: {
+        error: {
+          code: 'character_offline',
+          message: 'Game server rejected the request.',
+        },
+      },
+    };
+
+    errorHandler(error, {});
+
+    expect(feedback.error).toHaveBeenCalledWith('角色不在线。');
+  });
+
+  it('should show the response message when no localized code exists', () => {
+    const error: any = new Error('Axios error');
+    error.response = {
+      status: 409,
+      data: { message: '该请求标识已用于其他物品发放' },
+    };
+
+    errorHandler(error, {});
+
+    expect(feedback.error).toHaveBeenCalledWith('该请求标识已用于其他物品发放');
   });
 
   it('should handle offline error', () => {

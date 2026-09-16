@@ -14,4 +14,6 @@ export default {
   'app.error.home': 'Back Home',
   'app.request.offline':
     'Network unavailable. Please check your connection and try again.',
+  'app.request.status': '请求失败（{status}）。',
+  'app.request.error.character_offline': '角色不在线。',
 };

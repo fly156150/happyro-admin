@@ -1,10 +1,10 @@
 import {
   ProForm,
+  ProFormDependency,
   ProFormDigit,
+  ProFormRadio,
   ProFormText,
   ProFormTextArea,
-  ProFormDependency,
-  ProFormRadio,
 } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
 import { Select } from 'antd';
@@ -142,10 +142,10 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
       <ProFormDependency name={['delivery']}>
         {({ delivery }) =>
           delivery === 'inventory' ? (
-            <div>
+            <div style={{ marginBottom: 24 }}>
               {t(
                 'operations.itemGrants.inventoryOnlineOnly',
-                '背包发放仅支持当前在线角色；装备会自动使用放大镜鉴定后发放。',
+                '背包发放仅支持当前在线角色。',
               )}
             </div>
           ) : (

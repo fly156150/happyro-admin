@@ -43,10 +43,10 @@ final class ApplyGameServerSettingsRequest extends FormRequest
 
                 $value = $this->input("changes.$key");
                 if (is_numeric($value) && (int) $value < $this->definitions[$key]->minimum) {
-                    $validator->errors()->add("changes.$key", 'Game server setting value is outside the allowed range.');
+                    $validator->errors()->add("changes.$key", __('messages.game_server_setting_out_of_range'));
                 }
                 if (is_numeric($value) && (int) $value > $this->definitions[$key]->maximum) {
-                    $validator->errors()->add("changes.$key", 'Game server setting value is outside the allowed range.');
+                    $validator->errors()->add("changes.$key", __('messages.game_server_setting_out_of_range'));
                 }
             }
         });

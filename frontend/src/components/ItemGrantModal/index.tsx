@@ -2,7 +2,6 @@ import { SendOutlined } from '@ant-design/icons';
 import { ModalForm } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
 import { App, Button, Image } from 'antd';
-import { useRef } from 'react';
 import ItemGrantFormFields from '@/components/ItemGrantFormFields';
 import { grantItem } from '@/services/operations/item-grants';
 import { createIdempotencyKey } from '@/utils/idempotency';
@@ -15,7 +14,6 @@ type Props = {
 export default function ItemGrantModal({ itemId, itemName }: Props) {
   const intl = useIntl();
   const { message } = App.useApp();
-  const idempotencyKey = useRef(createIdempotencyKey());
   const t = (id: string, fallback: string) =>
     intl.formatMessage({ id, defaultMessage: fallback });
 
@@ -46,14 +44,13 @@ export default function ItemGrantModal({ itemId, itemName }: Props) {
           message: values.message ? String(values.message) : undefined,
           bound: false,
           delivery,
-          idempotency_key: idempotencyKey.current,
+          idempotency_key: createIdempotencyKey(),
         });
         message.success(
           delivery === 'inventory'
             ? t('operations.itemGrants.inventorySuccess', '物品已发放到背包')
             : t('operations.itemGrants.success', '邮件已发送'),
         );
-        idempotencyKey.current = createIdempotencyKey();
         return true;
       }}
     >

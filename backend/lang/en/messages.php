@@ -1,3 +1,31 @@
 <?php
 
-return ['player_database_unconfigured' => 'The player database is not configured', 'player_account_not_found' => 'The player account was not found', 'item_not_found' => 'The item was not found', 'character_not_found' => 'The character was not found', 'game_data_client_version_invalid' => 'The client resource version does not exist', 'game_data_server_version_invalid' => 'The server data version does not exist', 'item_grant_idempotency_conflict' => 'This request key belongs to a different item grant', 'item_grant_not_replayable' => 'This item grant is still processing or has failed', 'game_server_unavailable' => 'The game server is temporarily unavailable'];
+return [
+    'player_database_unconfigured' => '玩家数据库尚未配置',
+    'player_account_not_found' => '玩家账号不存在',
+    'item_not_found' => '物品不存在',
+    'character_not_found' => '角色不存在',
+    'character_offline' => '角色不在线。',
+    'inventory_full' => '背包已满。',
+    'inventory_overweight' => '背包超重。',
+    'item_amount_exceeded' => '物品数量超出限制。',
+    'zeny_amount_exceeded' => 'Zeny 数量超出限制。',
+    'command_not_replayable' => '该操作尚未完成，不能重复执行。',
+    'no_spawn_cell' => '当前位置无法召唤魔物。',
+    'reset_failed' => '角色重置失败。',
+    'item_not_grantable' => '该物品不能发放。',
+    'invalid_parameter' => '请求参数无效。',
+    'authentication_failed' => '游戏服务认证失败。',
+    'unsupported_command' => '游戏服务不支持该操作。',
+    'request_failed' => '游戏服务请求失败。',
+    'request_rejected' => '游戏服务拒绝了该请求。',
+    'invalid_response' => '游戏服务返回了无效响应。',
+    'unavailable' => '游戏服务暂时不可用。',
+    'map_server_unavailable' => '地图服务暂时不可用。',
+    'game_data_client_version_invalid' => '客户端资源版本不存在',
+    'game_data_server_version_invalid' => '服务端资料版本不存在',
+    'item_grant_idempotency_conflict' => '该请求标识已用于其他物品发放',
+    'item_grant_not_replayable' => '该物品发放仍在处理中或已经失败',
+    'game_server_unavailable' => '游戏服务暂时不可用',
+    'game_server_setting_out_of_range' => '游戏设置数值超出允许范围。',
+];

@@ -15,6 +15,7 @@ use App\Services\GameServer\ApplyGameServerSettingsService;
 use App\Services\GameServer\ExecuteGameServerCommandService;
 use App\Services\GameServer\GameServerSettingRegistry;
 use App\Services\GameServer\SubmitGameServerCommandService;
+use App\Support\GameServerErrorMessage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -71,9 +72,7 @@ final class AdventureToolController extends Controller
                 (string) $principal->characterId,
                 $data['payload'] ?? [],
             ), $principal->accountId);
-            if ($submission->created) {
-                $this->execute->execute($submission->command->id);
-            }
+            $this->execute->complete($submission);
 
             return response()->json(['data' => $this->gateway->characterSnapshot($principal->characterId)]);
         } catch (GameServerGatewayException $exception) {
@@ -134,6 +133,6 @@ final class AdventureToolController extends Controller
             default => 502,
         };
 
-        return response()->json(['error' => ['code' => $exception->errorCode, 'message' => $exception->getMessage()]], $status);
+        return response()->json(['error' => ['code' => $exception->errorCode, 'message' => GameServerErrorMessage::from($exception)]], $status);
     }
 }

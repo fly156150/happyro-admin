@@ -10,13 +10,16 @@ import { useMemo, useState } from 'react';
 import MonsterSpawnModal from '@/components/MonsterSpawnModal';
 import {
   MONSTER_ELEMENTS,
+  MONSTER_KINDS,
   MONSTER_RACES,
   MONSTER_SIZES,
 } from '@/data/game/monster-types';
 import {
   type GameDataMonster,
+  type GameDataMonsterDrop,
   getMonster,
   listMonsters,
+  monsterDropName,
   monsterName,
 } from '@/services/game-data/monsters';
 
@@ -97,11 +100,18 @@ export default function Monsters() {
         ),
       },
       {
-        title: t('gameData.monster.boss', '首领'),
-        dataIndex: 'boss',
+        title: t('gameData.monster.kind', '级别'),
+        dataIndex: 'kind',
         hideInTable: true,
         valueType: 'select',
-        valueEnum: { 1: t('common.yes', '是'), 0: t('common.no', '否') },
+        initialValue: 'all',
+        fieldProps: { allowClear: false },
+        valueEnum: Object.fromEntries(
+          MONSTER_KINDS.map((value) => [
+            value,
+            t(`gameData.monster.kind.${value}`, value),
+          ]),
+        ),
       },
       {
         title: t('common.actions', '操作'),
@@ -240,11 +250,9 @@ function MonsterDetails({
         <Descriptions.Item label={t('gameData.monster.size', '体型')}>
           {typeLabel('size', monster.Size, t)}
         </Descriptions.Item>
-        <Descriptions.Item label={t('gameData.monster.class', '级别')}>
-          <Tag color={monster.isBoss ? 'gold' : undefined}>
-            {monster.isBoss
-              ? t('gameData.monster.boss', '首领')
-              : t('gameData.monster.normal', '普通')}
+        <Descriptions.Item label={t('gameData.monster.kind', '级别')}>
+          <Tag color={monster.kind === 'normal' ? undefined : 'gold'}>
+            {t(`gameData.monster.kind.${monster.kind}`, monster.kind)}
           </Tag>
         </Descriptions.Item>
         <Descriptions.Item label={t('gameData.monster.baseExp', '基础经验')}>
@@ -268,14 +276,14 @@ function MonsterDetails({
           span={2}
           label={t('gameData.monster.drops', '掉落物品')}
         >
-          <DropList drops={monster.Drops} t={t} />
+          <DropList drops={monster.Drops} locale={locale} t={t} />
         </Descriptions.Item>
         {monster.MvpDrops && (
           <Descriptions.Item
             span={2}
             label={t('gameData.monster.mvpDrops', 'MVP 奖励')}
           >
-            <DropList drops={monster.MvpDrops} t={t} />
+            <DropList drops={monster.MvpDrops} locale={locale} t={t} />
           </Descriptions.Item>
         )}
       </Descriptions>
@@ -285,16 +293,18 @@ function MonsterDetails({
 
 function DropList({
   drops,
+  locale,
   t,
 }: {
-  drops?: { Item: string; Rate: number }[];
+  drops?: GameDataMonsterDrop[];
+  locale: string;
   t: Translate;
 }) {
   return drops?.length ? (
     <Space wrap>
       {drops.map((drop) => (
         <Tag key={`${drop.Item}-${drop.Rate}`}>
-          {drop.Item} · {(drop.Rate / 100).toFixed(2)}%
+          {monsterDropName(drop, locale)} · {(drop.Rate / 100).toFixed(2)}%
         </Tag>
       ))}
     </Space>

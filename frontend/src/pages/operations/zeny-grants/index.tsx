@@ -5,13 +5,11 @@ import {
 } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
 import { Alert, App } from 'antd';
-import { useRef } from 'react';
 import CharacterGrantTargetField from '@/components/CharacterGrantTargetField';
 import { grantZeny } from '@/services/operations/item-grants';
 import { createIdempotencyKey } from '@/utils/idempotency';
 
 export default function ZenyGrants() {
-  const idempotencyKey = useRef(createIdempotencyKey());
   const intl = useIntl();
   const { message } = App.useApp();
   const t = (id: string, fallback: string) =>
@@ -24,10 +22,11 @@ export default function ZenyGrants() {
           await grantZeny({
             char_id: Number(values.char_id),
             amount: Number(values.amount),
-            idempotency_key: idempotencyKey.current,
+            idempotency_key: createIdempotencyKey(),
           });
-          message.success(t('operations.itemGrants.zenySuccess', 'Zeny 已发放'));
-          idempotencyKey.current = createIdempotencyKey();
+          message.success(
+            t('operations.itemGrants.zenySuccess', 'Zeny 已发放'),
+          );
           return true;
         }}
       >

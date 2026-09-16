@@ -50,7 +50,7 @@ final class DatabaseGameServerCommandRepository implements GameServerCommandRepo
 
     public function markRunning(string $id): GameServerCommand
     {
-        return $this->transition($id, [GameServerCommandStatus::Pending, GameServerCommandStatus::Indeterminate], GameServerCommandStatus::Running, [
+        return $this->transition($id, [GameServerCommandStatus::Pending, GameServerCommandStatus::Failed, GameServerCommandStatus::Indeterminate], GameServerCommandStatus::Running, [
             'started_at' => now(),
             'completed_at' => null,
             'error_code' => null,

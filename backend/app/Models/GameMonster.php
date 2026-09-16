@@ -16,7 +16,7 @@ class GameMonster extends Model
 
     protected function casts(): array
     {
-        return ['is_boss' => 'boolean', 'payload' => 'array'];
+        return ['payload' => 'array'];
     }
 
     public function catalog(): BelongsTo

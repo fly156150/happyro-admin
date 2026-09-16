@@ -10,6 +10,7 @@ use App\Http\Requests\AdventureTools\ListAdventureMapsRequest;
 use App\Http\Requests\AdventureTools\ListAdventureNpcsRequest;
 use App\Services\GameData\NpcCatalogService;
 use App\Services\GameData\WorldDataService;
+use App\Support\GameServerErrorMessage;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -54,7 +55,7 @@ final class AdventureWorldController
             $channelsEnabled = (bool) ($gateway->battleConfig()['navigation_map_channels_enabled'] ?? false);
         } catch (GameServerGatewayException $exception) {
             return response()->json(
-                ['error' => ['code' => $exception->errorCode, 'message' => $exception->getMessage()]],
+                ['error' => ['code' => $exception->errorCode, 'message' => GameServerErrorMessage::from($exception)]],
                 503,
             );
         }

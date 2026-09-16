@@ -10,6 +10,7 @@ use App\Exceptions\GameServerGatewayException;
 use App\Http\Requests\Operations\SubmitGameServerCommandRequest;
 use App\Services\GameServer\ExecuteGameServerCommandService;
 use App\Services\GameServer\SubmitGameServerCommandService;
+use App\Support\GameServerErrorMessage;
 use Illuminate\Http\JsonResponse;
 
 final class GameServerCommandController
@@ -49,13 +50,11 @@ final class GameServerCommandController
         ), $request->user());
 
         try {
-            $command = $submission->created
-                ? $this->execute->execute($submission->command->id)
-                : $submission->command;
+            $command = $this->execute->complete($submission);
         } catch (GameServerGatewayException $exception) {
             $status = in_array($exception->errorCode, ['character_offline', 'no_spawn_cell'], true) ? 409 : 502;
 
-            return response()->json(['error' => ['code' => $exception->errorCode, 'message' => $exception->getMessage()]], $status);
+            return response()->json(['error' => ['code' => $exception->errorCode, 'message' => GameServerErrorMessage::from($exception)]], $status);
         }
 
         return response()->json(['data' => $command, 'success' => true], $submission->created ? 202 : 200);

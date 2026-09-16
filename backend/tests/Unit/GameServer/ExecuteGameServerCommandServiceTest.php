@@ -7,6 +7,7 @@ use App\Contracts\GameServer\GameServerGateway;
 use App\Data\GameServer\GameServerCommand;
 use App\Data\GameServer\GameServerCommandResult;
 use App\Data\GameServer\GameServerCommandStatus;
+use App\Data\GameServer\GameServerCommandSubmission;
 use App\Data\GameServer\GameServerCommandType;
 use App\Exceptions\GameServerGatewayException;
 use App\Services\GameServer\ExecuteGameServerCommandService;
@@ -73,6 +74,38 @@ final class ExecuteGameServerCommandServiceTest extends TestCase
         $this->expectException(GameServerGatewayException::class);
 
         (new ExecuteGameServerCommandService($commands, $gateway))->execute('command-1');
+    }
+
+    public function test_complete_retries_a_failed_command(): void
+    {
+        $failed = $this->command(GameServerCommandStatus::Failed);
+        $running = $this->command(GameServerCommandStatus::Running);
+        $succeeded = $this->command(GameServerCommandStatus::Succeeded, ['item_id' => 501]);
+        $commands = Mockery::mock(GameServerCommandRepository::class);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $commands->expects('markRunning')->with('command-1')->andReturn($running);
+        $gateway->expects('execute')->with($running)->andReturn(new GameServerCommandResult(['item_id' => 501]));
+        $commands->expects('markSucceeded')->with('command-1', ['item_id' => 501])->andReturn($succeeded);
+
+        $result = (new ExecuteGameServerCommandService($commands, $gateway))
+            ->complete(new GameServerCommandSubmission($failed, false));
+
+        $this->assertSame(GameServerCommandStatus::Succeeded, $result->status);
+        $this->assertSame(['item_id' => 501], $result->result);
+    }
+
+    public function test_complete_returns_a_succeeded_command_without_replaying(): void
+    {
+        $succeeded = $this->command(GameServerCommandStatus::Succeeded, ['item_id' => 501]);
+        $commands = Mockery::mock(GameServerCommandRepository::class);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $commands->shouldNotReceive('markRunning');
+        $gateway->shouldNotReceive('execute');
+
+        $result = (new ExecuteGameServerCommandService($commands, $gateway))
+            ->complete(new GameServerCommandSubmission($succeeded, false));
+
+        $this->assertSame($succeeded, $result);
     }
 
     /** @param array<string, mixed>|null $result */

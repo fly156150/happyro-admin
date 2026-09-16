@@ -53,6 +53,35 @@ function refreshCsrfCookie() {
   return csrfRefreshPromise;
 }
 
+function responseErrorMessage(response: {
+  status?: number;
+  data?: {
+    message?: unknown;
+    error?: { code?: unknown; message?: unknown };
+  };
+}): string {
+  const code = String(response.data?.error?.code ?? '');
+  if (code === 'character_offline') {
+    return '角色不在线。';
+  }
+  if (code) {
+    const id = `app.request.error.${code}`;
+    const localized = getIntl().formatMessage({ id, defaultMessage: id });
+    if (localized !== id) {
+      return localized;
+    }
+  }
+
+  const message = [response.data?.error?.message, response.data?.message].find(
+    (value) => typeof value === 'string' && value.trim() !== '',
+  );
+  if (typeof message === 'string') {
+    return message;
+  }
+
+  return `请求失败（${response.status ?? ''}）。`;
+}
+
 function currentXsrfToken() {
   const cookie = document.cookie
     .split('; ')
@@ -112,9 +141,7 @@ export const errorConfig: RequestConfig = {
           }
         }
       } else if (error.response) {
-        // Axios 的错误
-        // 请求成功发出且服务器也响应了状态码，但状态代码超出了 2xx 的范围
-        requestFeedback?.error(`Response status:${error.response.status}`);
+        requestFeedback?.error(responseErrorMessage(error.response));
       } else if (typeof navigator !== 'undefined' && !navigator.onLine) {
         requestFeedback?.error(
           getIntl().formatMessage({

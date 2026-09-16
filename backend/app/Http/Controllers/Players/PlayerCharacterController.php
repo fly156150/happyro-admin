@@ -32,6 +32,6 @@ final class PlayerCharacterController
 
         return $character
             ? response()->json(['data' => $character])
-            : response()->json(['message' => 'Character not found'], 404);
+            : response()->json(['message' => __('messages.character_not_found')], 404);
     }
 }

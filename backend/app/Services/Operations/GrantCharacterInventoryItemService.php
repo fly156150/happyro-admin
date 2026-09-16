@@ -6,9 +6,7 @@ use App\Contracts\Audit\AuditWriter;
 use App\Contracts\GameData\ItemRepository;
 use App\Data\Auth\ClientContext;
 use App\Data\GameServer\GameServerCommandRequest;
-use App\Data\GameServer\GameServerCommandStatus;
 use App\Data\GameServer\GameServerCommandType;
-use App\Exceptions\GameServerGatewayException;
 use App\Exceptions\ItemNotFoundException;
 use App\Models\User;
 use App\Services\GameServer\ExecuteGameServerCommandService;
@@ -43,18 +41,7 @@ final class GrantCharacterInventoryItemService
             ],
         ), $operator);
 
-        if ($submission->created) {
-            $command = $this->execute->execute($submission->command->id);
-        } else {
-            $command = $submission->command;
-            if ($command->status !== GameServerCommandStatus::Succeeded) {
-                throw new GameServerGatewayException(
-                    $command->errorCode ?? 'command_not_replayable',
-                    $command->errorMessage ?? 'The original item grant has not completed successfully.',
-                    $command->status === GameServerCommandStatus::Indeterminate,
-                );
-            }
-        }
+        $command = $this->execute->complete($submission);
 
         $this->audit->write('operations.item_granted_inventory', $context, $operator, metadata: [
             'command_id' => $command->id,

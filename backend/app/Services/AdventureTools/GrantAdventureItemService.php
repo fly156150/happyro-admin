@@ -5,9 +5,7 @@ namespace App\Services\AdventureTools;
 use App\Contracts\GameData\ItemRepository;
 use App\Data\Auth\GameSessionPrincipal;
 use App\Data\GameServer\GameServerCommandRequest;
-use App\Data\GameServer\GameServerCommandStatus;
 use App\Data\GameServer\GameServerCommandType;
-use App\Exceptions\GameServerGatewayException;
 use App\Services\GameServer\ExecuteGameServerCommandService;
 use App\Services\GameServer\SubmitGameServerCommandService;
 
@@ -40,18 +38,7 @@ final class GrantAdventureItemService
                 'identify' => in_array($item['Type'] ?? null, ['Weapon', 'Armor', 'PetArmor', 'ShadowGear'], true),
             ],
         ), $principal->accountId);
-        if ($submission->created) {
-            $command = $this->execute->execute($submission->command->id);
-        } else {
-            $command = $submission->command;
-            if ($command->status !== GameServerCommandStatus::Succeeded) {
-                throw new GameServerGatewayException(
-                    $command->errorCode ?? 'command_not_replayable',
-                    $command->errorMessage ?? 'The original item grant has not completed successfully.',
-                    $command->status === GameServerCommandStatus::Indeterminate,
-                );
-            }
-        }
+        $command = $this->execute->complete($submission);
 
         return $command->result ?? [];
     }

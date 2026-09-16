@@ -11,4 +11,6 @@ export default {
   'app.error.reload': '刷新页面',
   'app.error.home': '返回首页',
   'app.request.offline': '网络不可用，请检查网络连接后重试。',
+  'app.request.status': '请求失败（{status}）。',
+  'app.request.error.character_offline': '角色不在线。',
 };

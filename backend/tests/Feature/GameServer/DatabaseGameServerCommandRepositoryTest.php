@@ -76,6 +76,12 @@ final class DatabaseGameServerCommandRepositoryTest extends TestCase
         $this->assertSame('target_offline', $failed->errorCode);
         $this->assertSame('Target character is offline.', $failed->errorMessage);
         $this->assertNotNull($failed->completedAt);
+
+        $retried = $repository->markRunning($failed->id);
+
+        $this->assertSame(GameServerCommandStatus::Running, $retried->status);
+        $this->assertNull($retried->errorCode);
+        $this->assertNull($retried->completedAt);
     }
 
     public function test_indeterminate_command_can_be_retried_with_same_identity(): void

@@ -42,7 +42,23 @@ final class ImportMonstersTest extends TestCase
         $this->assertSame(1, $result['imported']);
         $this->assertSame(1, $result['deleted']);
         $this->assertDatabaseCount('game_monsters', 1);
-        $this->assertDatabaseHas('game_monsters', ['monster_id' => 1002, 'name_zh_cn' => '波利（新）']);
+        $this->assertDatabaseHas('game_monsters', ['monster_id' => 1002, 'name_zh_cn' => '波利（新）', 'kind' => 'normal']);
+    }
+
+    public function test_import_stores_normal_mini_and_mvp_kinds(): void
+    {
+        $reader = Mockery::mock(MonsterSnapshotReader::class);
+        $reader->expects('read')->once()->andReturn($this->snapshot([
+            1002 => $this->monster('波利'),
+            1096 => [...$this->monster('天使波利'), 'Class' => 'Boss'],
+            1039 => [...$this->monster('巴风特'), 'Class' => 'Boss', 'MvpDrops' => [['Item' => 'Baphomet_Card', 'Rate' => 1]]],
+        ]));
+        $service = new ImportMonstersService($reader, app(MonsterCatalogRepository::class));
+        $service->import('monsters.json');
+
+        $this->assertDatabaseHas('game_monsters', ['monster_id' => 1002, 'kind' => 'normal']);
+        $this->assertDatabaseHas('game_monsters', ['monster_id' => 1096, 'kind' => 'mini']);
+        $this->assertDatabaseHas('game_monsters', ['monster_id' => 1039, 'kind' => 'mvp']);
     }
 
     /** @param array<int, array<string, mixed>> $monsters */

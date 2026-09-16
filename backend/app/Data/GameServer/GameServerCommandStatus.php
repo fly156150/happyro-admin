@@ -13,10 +13,10 @@ enum GameServerCommandStatus: string
     public function canTransitionTo(self $next): bool
     {
         return match ($this) {
-            self::Pending => $next === self::Running,
+            self::Pending, self::Failed => $next === self::Running,
             self::Running => in_array($next, [self::Succeeded, self::Failed, self::Indeterminate], true),
             self::Indeterminate => in_array($next, [self::Running, self::Succeeded, self::Failed], true),
-            self::Succeeded, self::Failed => false,
+            self::Succeeded => false,
         };
     }
 }

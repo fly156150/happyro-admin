@@ -1,7 +1,7 @@
-import component from './zh-CN/component';
-import jobOptions from './zh-CN/job-options';
 import characterFields from './zh-CN/character-fields';
+import component from './zh-CN/component';
 import globalHeader from './zh-CN/globalHeader';
+import jobOptions from './zh-CN/job-options';
 import menu from './zh-CN/menu';
 import network from './zh-CN/network';
 import pages from './zh-CN/pages';
@@ -150,6 +150,11 @@ export default {
   'gameData.monster.element': '属性',
   'gameData.monster.size': '体型',
   'gameData.monster.class': '级别',
+  'gameData.monster.kind': '级别',
+  'gameData.monster.kind.all': '全部',
+  'gameData.monster.kind.normal': '普通',
+  'gameData.monster.kind.mini': 'Mini',
+  'gameData.monster.kind.mvp': 'MVP',
   'gameData.monster.boss': '首领',
   'gameData.monster.normal': '普通',
   'gameData.monster.baseExp': '基础经验',
@@ -210,8 +215,7 @@ export default {
   'operations.itemGrants.delivery': '发放方式',
   'operations.itemGrants.delivery.mail': '邮件',
   'operations.itemGrants.delivery.inventory': '背包',
-  'operations.itemGrants.inventoryOnlineOnly':
-    '背包发放仅支持当前在线角色；装备会自动使用放大镜鉴定后发放。',
+  'operations.itemGrants.inventoryOnlineOnly': '背包发放仅支持当前在线角色。',
   'operations.itemGrants.inventorySuccess': '物品已发放到背包',
   'operations.itemGrants.zenySuccess': 'Zeny 已发放',
   'operations.itemGrants.zenyOnlineOnly':

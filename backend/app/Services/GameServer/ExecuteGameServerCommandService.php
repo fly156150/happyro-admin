@@ -5,6 +5,8 @@ namespace App\Services\GameServer;
 use App\Contracts\GameServer\GameServerCommandRepository;
 use App\Contracts\GameServer\GameServerGateway;
 use App\Data\GameServer\GameServerCommand;
+use App\Data\GameServer\GameServerCommandStatus;
+use App\Data\GameServer\GameServerCommandSubmission;
 use App\Exceptions\GameServerGatewayException;
 use Throwable;
 
@@ -14,6 +16,23 @@ final class ExecuteGameServerCommandService
         private readonly GameServerCommandRepository $commands,
         private readonly GameServerGateway $gateway,
     ) {}
+
+    public function complete(GameServerCommandSubmission $submission): GameServerCommand
+    {
+        $command = $submission->command;
+        if ($submission->created || $command->status === GameServerCommandStatus::Failed) {
+            return $this->execute($command->id);
+        }
+        if ($command->status !== GameServerCommandStatus::Succeeded) {
+            throw new GameServerGatewayException(
+                $command->errorCode ?? 'command_not_replayable',
+                $command->errorMessage ?? 'The original command has not completed successfully.',
+                $command->status === GameServerCommandStatus::Indeterminate,
+            );
+        }
+
+        return $command;
+    }
 
     /** @throws Throwable */
     public function execute(string $id): GameServerCommand

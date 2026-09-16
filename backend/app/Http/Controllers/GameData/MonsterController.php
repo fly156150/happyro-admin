@@ -18,7 +18,7 @@ final class MonsterController
         $data = $request->validated();
         $result = $this->monsters->search(new MonsterQuery(
             $data['query'] ?? null, $data['race'] ?? null, $data['element'] ?? null,
-            $data['size'] ?? null, $data['boss'] ?? null,
+            $data['size'] ?? null, $data['kind'] ?? null,
             $data['page'] ?? 1, $data['perPage'] ?? 20,
         ));
         $result['data'] = array_map($this->withImage(...), $result['data']);
