@@ -12,7 +12,6 @@ final class GameServerSettingRevision extends Model
         'revision',
         'changes',
         'status',
-        'remark',
         'requested_by',
         'requested_game_account_id',
         'applied_at',

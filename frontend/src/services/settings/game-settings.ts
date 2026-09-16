@@ -19,7 +19,6 @@ export async function getGameSettings() {
 
 export async function updateGameSettings(data: {
   changes: Record<string, number>;
-  remark?: string;
 }) {
   return request<{ data: unknown }>('/api/settings/game-settings', {
     method: 'PUT',

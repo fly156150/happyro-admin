@@ -23,7 +23,7 @@ final class PrepareGameServerSettingsServiceTest extends TestCase
         $writer->expects('write')->once()->with(['base_exp_rate' => 200]);
 
         $result = (new PrepareGameServerSettingsService(new GameServerSettingRegistry, $revisions, $writer))
-            ->prepare(['base_exp_rate' => 200], 'test', OperationActor::admin(User::factory()->make(['id' => 1])));
+            ->prepare(['base_exp_rate' => 200], OperationActor::admin(User::factory()->make(['id' => 1])));
 
         $this->assertSame($revision, $result);
     }
@@ -42,6 +42,6 @@ final class PrepareGameServerSettingsServiceTest extends TestCase
         $this->expectExceptionMessage('write failed');
 
         (new PrepareGameServerSettingsService(new GameServerSettingRegistry, $revisions, $writer))
-            ->prepare(['base_exp_rate' => 200], 'test', OperationActor::admin(User::factory()->make(['id' => 1])));
+            ->prepare(['base_exp_rate' => 200], OperationActor::admin(User::factory()->make(['id' => 1])));
     }
 }

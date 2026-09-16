@@ -27,25 +27,25 @@ final readonly class ApplyGameServerSettingsService
     ) {}
 
     /** @param array<string, int> $changes */
-    public function apply(array $changes, ?string $remark, User $operator): GameServerSettingRevision
+    public function apply(array $changes, User $operator): GameServerSettingRevision
     {
-        return $this->applyForActor($changes, $remark, OperationActor::admin($operator));
+        return $this->applyForActor($changes, OperationActor::admin($operator));
     }
 
     /** @param array<string, int> $changes */
-    public function applyForGameAccount(array $changes, ?string $remark, int $accountId): GameServerSettingRevision
+    public function applyForGameAccount(array $changes, int $accountId): GameServerSettingRevision
     {
-        return $this->applyForActor($changes, $remark, OperationActor::gameAccount($accountId));
+        return $this->applyForActor($changes, OperationActor::gameAccount($accountId));
     }
 
     /** @param array<string, int> $changes */
-    private function applyForActor(array $changes, ?string $remark, OperationActor $actor): GameServerSettingRevision
+    private function applyForActor(array $changes, OperationActor $actor): GameServerSettingRevision
     {
         $snapshot = $this->writer->snapshot();
         $revision = null;
 
         try {
-            $revision = $this->prepare->prepare($changes, $remark, $actor);
+            $revision = $this->prepare->prepare($changes, $actor);
             $command = $this->submit->submitForActor(new GameServerCommandRequest(
                 (string) Str::uuid(),
                 GameServerCommandType::BattleConfigApply,

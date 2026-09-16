@@ -17,6 +17,42 @@ final class GameServerSettingControllerTest extends TestCase
 {
     use LazilyRefreshDatabase;
 
+    public function test_applies_independent_normal_mini_and_mvp_drop_rates(): void
+    {
+        $this->actingAs($this->superAdmin());
+        $changes = [
+            'item_rate_card' => 100,
+            'item_rate_card_boss' => 1000000,
+            'item_rate_card_mvp' => 300,
+            'item_rate_common_boss' => 400,
+            'item_rate_heal_boss' => 500,
+            'item_rate_use_boss' => 600,
+            'item_rate_equip_boss' => 700,
+        ];
+        $writer = Mockery::mock(GameServerConfigWriter::class);
+        $writer->expects('snapshot')->once()->andReturn('old config');
+        $writer->expects('write')->once()->with($changes);
+        $this->app->instance(GameServerConfigWriter::class, $writer);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('execute')->once()->with(Mockery::on(
+            fn ($command) => array_column($command->payload['changes'], 'value', 'key') == $changes,
+        ))->andReturn(new GameServerCommandResult(['changes' => []]));
+        $gateway->expects('battleConfig')->twice()->andReturn($changes + ['game_tools_game_settings_policy' => 2]);
+        $this->app->instance(GameServerGateway::class, $gateway);
+
+        $this->putJson('/api/settings/game-settings', ['changes' => $changes])
+            ->assertOk()->assertJsonPath('data.status', 'applied');
+
+        foreach ($changes as $key => $value) {
+            $this->assertDatabaseHas('game_server_settings', ['setting_key' => $key, 'actual_value' => $value]);
+        }
+        $this->getJson('/api/settings/game-settings')->assertOk()
+            ->assertJsonPath('data.values.item_rate_card_boss', 1000000)
+            ->assertJsonPath('data.definitions.item_rate_heal_boss.maximum', 1000000)
+            ->assertJsonPath('data.definitions.item_rate_use_boss.unit', 'percent')
+            ->assertJsonPath('data.definitions.item_rate_equip_boss.minimum', 0);
+    }
+
     public function test_super_admin_can_read_registered_values(): void
     {
         $gateway = Mockery::mock(GameServerGateway::class);
@@ -37,7 +73,6 @@ final class GameServerSettingControllerTest extends TestCase
         $this->actingAs($this->superAdmin())
             ->putJson('/api/settings/game-settings', [
                 'changes' => ['unknown_rate' => 100],
-                'remark' => 'test',
             ])
             ->assertUnprocessable();
     }
@@ -57,7 +92,6 @@ final class GameServerSettingControllerTest extends TestCase
         $this->actingAs($this->superAdmin())
             ->putJson('/api/settings/game-settings', [
                 'changes' => ['navigation_teleport_policy' => 3],
-                'remark' => 'invalid policy',
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('changes.navigation_teleport_policy');
@@ -80,7 +114,6 @@ final class GameServerSettingControllerTest extends TestCase
         $this->actingAs($this->superAdmin())
             ->putJson('/api/settings/game-settings', [
                 'changes' => ['base_exp_rate' => 1000001],
-                'remark' => 'verify registered limit',
             ])
             ->assertOk()
             ->assertJsonPath('data.status', 'applied');
@@ -98,8 +131,8 @@ final class GameServerSettingControllerTest extends TestCase
     public function test_super_admin_can_query_game_setting_history(): void
     {
         $user = $this->superAdmin();
-        GameServerSettingRevision::query()->create(['server_key' => 'primary', 'revision' => 1, 'changes' => ['base_exp_rate' => 200], 'status' => 'applied', 'remark' => 'event', 'requested_by' => $user->id, 'applied_at' => now()]);
-        $this->actingAs($user)->getJson('/api/settings/game-settings/history')->assertOk()->assertJsonPath('data.0.revision', 1)->assertJsonPath('data.0.changes.base_exp_rate', 200)->assertJsonPath('data.0.requester.id', $user->id)->assertJsonPath('meta.total', 1);
+        GameServerSettingRevision::query()->create(['server_key' => 'primary', 'revision' => 1, 'changes' => ['base_exp_rate' => 200], 'status' => 'applied', 'requested_by' => $user->id, 'applied_at' => now()]);
+        $this->actingAs($user)->getJson('/api/settings/game-settings/history')->assertOk()->assertJsonPath('data.0.revision', 1)->assertJsonPath('data.0.changes.base_exp_rate', 200)->assertJsonPath('data.0.requester.id', $user->id)->assertJsonPath('meta.total', 1)->assertJsonMissingPath('data.0.remark');
     }
 
     private function superAdmin(): User

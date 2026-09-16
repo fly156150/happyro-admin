@@ -49,7 +49,6 @@ final readonly class GameServerSettingController
         $data = $request->validated();
         $revision = $this->applySettings->apply(
             $data['changes'],
-            $data['remark'] ?? null,
             $request->user(),
         );
 

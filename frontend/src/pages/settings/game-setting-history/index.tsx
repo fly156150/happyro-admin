@@ -5,7 +5,6 @@ import { Flex, Tag, Typography } from 'antd';
 type Revision = {
   id: number;
   revision: number;
-  remark: string | null;
   status: string;
   changes: Record<string, number>;
   requester?: { username?: string; name?: string };
@@ -13,7 +12,10 @@ type Revision = {
 };
 
 function formatChange(key: string, value: number): string {
-  return key.includes('_rate') ? (value / 100).toFixed(2) : String(value);
+  if (!key.includes('_rate')) {
+    return String(value);
+  }
+  return String(Number((value / 100).toFixed(2)));
 }
 
 export default function GameSettingHistory() {
@@ -65,11 +67,6 @@ export default function GameSettingHistory() {
                 ))}
               </Flex>
             ),
-          },
-          {
-            title: t('settings.gameSettings.remark', '修改备注'),
-            dataIndex: 'remark',
-            render: (_, record) => record.remark || '-',
           },
           {
             title: t('settings.gameSettingHistory.operator', '操作人'),

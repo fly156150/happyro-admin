@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\AdventureTools;
 
+use App\Contracts\GameServer\GameServerConfigWriter;
 use App\Contracts\GameServer\GameServerGateway;
 use App\Data\GameServer\GameServerCommandResult;
 use App\Exceptions\GameServerGatewayException;
@@ -40,6 +41,42 @@ final class AdventureToolControllerTest extends TestCase
             $table->integer('account_id');
             $table->integer('online')->default(0);
         });
+    }
+
+    public function test_applies_independent_normal_mini_and_mvp_drop_rates(): void
+    {
+        $this->createSession(groupId: 0);
+        $changes = [
+            'item_rate_card' => 100,
+            'item_rate_card_boss' => 1000000,
+            'item_rate_card_mvp' => 300,
+            'item_rate_common_boss' => 400,
+            'item_rate_heal_boss' => 500,
+            'item_rate_use_boss' => 600,
+            'item_rate_equip_boss' => 700,
+        ];
+        $writer = Mockery::mock(GameServerConfigWriter::class);
+        $writer->expects('snapshot')->once()->andReturn('old config');
+        $writer->expects('write')->once()->with($changes);
+        $this->app->instance(GameServerConfigWriter::class, $writer);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('execute')->once()->with(Mockery::on(
+            fn ($command) => array_column($command->payload['changes'], 'value', 'key') == $changes,
+        ))->andReturn(new GameServerCommandResult(['changes' => []]));
+        $gateway->expects('battleConfig')->times(4)->andReturn($changes + ['game_tools_game_settings_policy' => 2]);
+        $this->app->instance(GameServerGateway::class, $gateway);
+
+        $this->withHeaders($this->headers())->putJson('/api/adventure-tools/game-settings', ['changes' => $changes])
+            ->assertOk()->assertJsonPath('data.values.item_rate_card_boss', 1000000);
+
+        foreach ($changes as $key => $value) {
+            $this->assertDatabaseHas('game_server_settings', ['setting_key' => $key, 'actual_value' => $value]);
+        }
+        $this->withHeaders($this->headers())->getJson('/api/adventure-tools/game-settings')->assertOk()
+            ->assertJsonPath('data.values.item_rate_card_boss', 1000000)
+            ->assertJsonPath('data.definitions.item_rate_heal_boss.maximum', 1000000)
+            ->assertJsonPath('data.definitions.item_rate_use_boss.unit', 'percent')
+            ->assertJsonPath('data.definitions.item_rate_equip_boss.minimum', 0);
     }
 
     public function test_rejects_an_invalid_game_session(): void
@@ -123,8 +160,7 @@ final class AdventureToolControllerTest extends TestCase
         $this->withHeaders($this->headers())->putJson('/api/adventure-tools/game-settings', [
             'changes' => ['game_tools_game_settings_policy' => 1],
         ])->assertUnprocessable()
-            ->assertJsonValidationErrors('changes')
-            ->assertJsonMissingValidationErrors('remark');
+            ->assertJsonValidationErrors('changes');
     }
 
     public function test_accepts_skill_points_above_the_current_job_level(): void

@@ -113,7 +113,7 @@ final class AdventureToolController extends Controller
         try {
             $this->access->authorize('game_tools_game_settings_policy', $principal);
             $data = $request->validated();
-            $this->applySettings->applyForGameAccount($data['changes'], '游戏内冒险工具修改', $principal->accountId);
+            $this->applySettings->applyForGameAccount($data['changes'], $principal->accountId);
 
             return response()->json(['data' => ['values' => $this->gateway->battleConfig()]]);
         } catch (GameServerGatewayException $exception) {

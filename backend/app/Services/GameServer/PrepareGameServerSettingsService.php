@@ -18,7 +18,7 @@ final readonly class PrepareGameServerSettingsService
     ) {}
 
     /** @param array<string, int> $changes */
-    public function prepare(array $changes, ?string $remark, OperationActor $actor): GameServerSettingRevision
+    public function prepare(array $changes, OperationActor $actor): GameServerSettingRevision
     {
         if ($changes === []) {
             throw new InvalidArgumentException('At least one setting change is required.');
@@ -31,7 +31,7 @@ final readonly class PrepareGameServerSettingsService
             $this->registry->validate($key, $value);
         }
 
-        $revision = $this->revisions->create('primary', $changes, $remark, $actor);
+        $revision = $this->revisions->create('primary', $changes, $actor);
         try {
             $this->writer->write($changes);
         } catch (Throwable $exception) {

@@ -38,6 +38,6 @@ final class ApplyGameServerSettingsServiceTest extends TestCase
 
         $service = new ApplyGameServerSettingsService($prepare, $revisions, Mockery::mock(GameServerSettingRepository::class), $writer, $submit, $execute, Mockery::mock(GameServerGateway::class));
         $this->expectException(\RuntimeException::class);
-        $service->apply(['base_exp_rate' => 200], 'test', User::factory()->make(['id' => 1]));
+        $service->apply(['base_exp_rate' => 200], User::factory()->make(['id' => 1]));
     }
 }
