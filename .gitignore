@@ -6,3 +6,11 @@
 /frontend/cloudflare-worker/
 /frontend/public/CNAME
 /frontend/codecov.yml
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
