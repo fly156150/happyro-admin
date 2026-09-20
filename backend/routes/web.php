@@ -74,6 +74,7 @@ Route::prefix('api/operations')->middleware(['auth:sanctum', 'permission:operati
 Route::prefix('api/operations/game-control')->middleware(['auth:sanctum', 'permission:operations.game-control'])->group(function () {
     Route::get('/capabilities', [GameServerCommandController::class, 'capabilities']);
     Route::get('/battle-config', [GameServerCommandController::class, 'battleConfig']);
+    Route::get('/characters/{characterId}', [GameServerCommandController::class, 'characterSnapshot'])->whereNumber('characterId');
     Route::post('/commands', [GameServerCommandController::class, 'store']);
     Route::get('/commands/{commandId}', [GameServerCommandController::class, 'show']);
 });

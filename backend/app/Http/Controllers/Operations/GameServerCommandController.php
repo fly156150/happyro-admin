@@ -37,6 +37,18 @@ final class GameServerCommandController
         return response()->json(['data' => ['values' => $this->gateway->battleConfig()], 'success' => true]);
     }
 
+    public function characterSnapshot(int $characterId): JsonResponse
+    {
+        try {
+            return response()->json(['data' => $this->gateway->characterSnapshot($characterId), 'success' => true]);
+        } catch (GameServerGatewayException $exception) {
+            return response()->json(['error' => [
+                'code' => $exception->errorCode,
+                'message' => GameServerErrorMessage::from($exception),
+            ]], $exception->errorCode === 'character_offline' ? 409 : 502);
+        }
+    }
+
     public function store(SubmitGameServerCommandRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -52,7 +64,8 @@ final class GameServerCommandController
         try {
             $command = $this->execute->complete($submission);
         } catch (GameServerGatewayException $exception) {
-            $status = in_array($exception->errorCode, ['character_offline', 'no_spawn_cell'], true) ? 409 : 502;
+            $status = in_array($exception->errorCode, ['character_offline', 'no_spawn_cell'], true)
+                || str_starts_with($exception->errorCode, 'navigation_') ? 409 : 502;
 
             return response()->json(['error' => ['code' => $exception->errorCode, 'message' => GameServerErrorMessage::from($exception)]], $status);
         }

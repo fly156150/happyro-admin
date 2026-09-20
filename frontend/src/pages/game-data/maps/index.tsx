@@ -4,7 +4,8 @@ import {
   type ProColumns,
   ProTable,
 } from '@ant-design/pro-components';
-import { useIntl } from '@umijs/max';
+import { useIntl, useAccess } from '@umijs/max';
+import CharacterNavigationModal from '@/components/CharacterNavigationModal';
 import {
   Alert,
   Button,
@@ -66,6 +67,7 @@ function MapPreview({ row, large = false }: { row: MapRow; large?: boolean }) {
 }
 
 export default function Maps() {
+  const access = useAccess();
   const intl = useIntl();
   const [npcs, setNpcs] = useState<GameDataNpc[]>([]);
   const [npcsLoading, setNpcsLoading] = useState(false);
@@ -174,16 +176,27 @@ export default function Maps() {
         defaultMessage: '操作',
       }),
       valueType: 'option',
-      width: 90,
+      width: 180,
       search: false,
       render: (_, row) => (
-        <Button
-          type="link"
-          icon={<EyeOutlined />}
-          onClick={() => setDetail(row)}
-        >
-          {intl.formatMessage({ id: 'common.detail', defaultMessage: '详情' })}
-        </Button>
+        <Space>
+          <Button
+            type="link"
+            icon={<EyeOutlined />}
+            onClick={() => setDetail(row)}
+          >
+            {intl.formatMessage({
+              id: 'common.detail',
+              defaultMessage: '详情',
+            })}
+          </Button>
+          {access.canGameControl && access.canViewPlayers && (
+            <CharacterNavigationModal
+              map={row.map}
+              name={row.name_zh_cn || row.map}
+            />
+          )}
+        </Space>
       ),
     },
   ];

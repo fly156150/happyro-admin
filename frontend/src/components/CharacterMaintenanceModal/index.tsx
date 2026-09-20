@@ -3,14 +3,18 @@ import { ProFormDigit, ProFormSelect } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
 import { App, Button, Form, Modal, Space } from 'antd';
 import { useRef, useState } from 'react';
-import { executeGameControlCommand } from '@/services/operations/game-control';
-import { getCharacter } from '@/services/players/queries';
+import {
+  executeGameControlCommand,
+  getCharacterSnapshot,
+  type CharacterSnapshot,
+} from '@/services/operations/game-control';
 import { createIdempotencyKey } from '@/utils/idempotency';
 import { jobMappings } from '@/data/game/jobs';
 import {
   actionFields,
   characterFormValues,
-  maxMaintainedStat,
+  fieldMaximum,
+  jobChangePayload,
   mergeCharacterResult,
   type MaintenanceAction,
 } from './form-values';
@@ -23,11 +27,12 @@ const commandTypes: Record<MaintenanceAction, string> = {
   progression: 'character.progression.update',
   stats: 'character.stats.update',
   statsReset: 'character.stats.reset',
+  traits: 'character.traits.update',
+  traitsReset: 'character.traits.reset',
+  skillsLearnAll: 'character.skills.learn_all',
   skills: 'character.skills.reset',
   vitals: 'character.vitals.restore',
 };
-
-type CharacterSnapshot = Record<string, unknown>;
 
 export default function CharacterMaintenanceModal({
   charId,
@@ -54,9 +59,15 @@ export default function CharacterMaintenanceModal({
     setOpen(true);
     setLoading(true);
     try {
-      const response = await getCharacter(charId);
+      const response = await getCharacterSnapshot(charId);
       setCharacter(response.data);
-      form.setFieldsValue(characterFormValues(action, response.data));
+      const nextAction =
+        (action === 'traits' || action === 'traitsReset') &&
+        !response.data.traits?.enabled
+          ? 'progression'
+          : action;
+      setAction(nextAction);
+      form.setFieldsValue(characterFormValues(nextAction, response.data));
     } catch (_error) {
       setOpen(false);
     } finally {
@@ -115,7 +126,12 @@ export default function CharacterMaintenanceModal({
                 target: { type: 'character', id: String(charId) },
                 // Ant Design omits the values object when an action has no fields.
                 // Game Control still requires an explicit object payload.
-                payload: fields.length === 0 ? {} : payload,
+                payload:
+                  action === 'job' && character
+                    ? jobChangePayload(values.job_id, character)
+                    : fields.length === 0
+                      ? {}
+                      : payload,
               });
               setCharacter((current) =>
                 mergeCharacterResult(current, response.data.result),
@@ -139,6 +155,10 @@ export default function CharacterMaintenanceModal({
               skillPoints: '技能点',
               stats: t('players.character.stats', '属性'),
               statsReset: t('players.character.statsReset', '重置属性'),
+              ...(character?.traits?.enabled
+                ? { traits: '特性属性', traitsReset: '重置特性属性' }
+                : {}),
+              skillsLearnAll: '学满职业技能',
               skills: t('players.character.skillsReset', '重置技能点'),
               vitals: t('players.character.vitalsRestore', '恢复状态'),
             }}
@@ -164,9 +184,9 @@ export default function CharacterMaintenanceModal({
                 name={field}
                 label="职业"
                 showSearch
-                options={Object.entries(jobMappings).map(([id, key]) => ({
-                  value: Number(id),
-                  label: t(key, '未知职业'),
+                options={(character?.jobs ?? []).map(({ id }) => ({
+                  value: id,
+                  label: t(jobMappings[id], `职业 ${id}`),
                 }))}
                 fieldProps={{ optionFilterProp: 'label' }}
                 rules={[{ required: true }]}
@@ -176,20 +196,17 @@ export default function CharacterMaintenanceModal({
                 key={field}
                 name={field}
                 label={t(`players.character.field.${field}`, field)}
-                min={field === 'skill_points' ? 0 : 1}
-                max={action === 'stats' ? maxMaintainedStat : undefined}
+                min={field === 'skill_points' || action === 'traits' ? 0 : 1}
+                max={fieldMaximum(action, field, character)}
                 width="md"
                 rules={[
                   { required: true },
-                  ...(action === 'stats'
+                  ...(fieldMaximum(action, field, character) !== undefined
                     ? [
                         {
                           type: 'number' as const,
-                          max: maxMaintainedStat,
-                          message: t(
-                            'players.character.statsRange',
-                            `请输入 1 到 ${maxMaintainedStat} 之间的数值`,
-                          ),
+                          max: fieldMaximum(action, field, character),
+                          message: `不能超过 ${fieldMaximum(action, field, character)}`,
                         },
                       ]
                     : []),
@@ -199,6 +216,21 @@ export default function CharacterMaintenanceModal({
           )}
           {action === 'statsReset' && (
             <Space>重置该角色的基础属性，并返还属性点。</Space>
+          )}
+          {action === 'job' && (
+            <Space>超过目标职业上限的 Base / Job 等级会随转职下调。</Space>
+          )}
+          {action === 'traits' && (
+            <Space>
+              特性点预算：{character?.traits?.budget}，当前剩余：
+              {character?.traits?.points}。各项总和不能超过预算。
+            </Space>
+          )}
+          {action === 'traitsReset' && (
+            <Space>重置全部特性属性，并返还特性点。</Space>
+          )}
+          {action === 'skillsLearnAll' && (
+            <Space>将当前职业及前置职业的可学习技能升满，不消耗技能点。</Space>
           )}
           {action === 'skills' && (
             <Space>

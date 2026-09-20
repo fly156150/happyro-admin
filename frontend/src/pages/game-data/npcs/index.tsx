@@ -5,13 +5,24 @@ import {
   type ActionType,
 } from '@ant-design/pro-components';
 import { CheckCircleOutlined, EyeOutlined } from '@ant-design/icons';
-import { Button, Descriptions, Drawer, Empty, Image, Space, Tag, Typography } from 'antd';
-import { useIntl } from '@umijs/max';
+import {
+  Button,
+  Descriptions,
+  Drawer,
+  Empty,
+  Image,
+  Space,
+  Tag,
+  Typography,
+} from 'antd';
+import { useIntl, useAccess } from '@umijs/max';
+import CharacterNavigationModal from '@/components/CharacterNavigationModal';
 import { useEffect, useRef, useState } from 'react';
 import type { GameDataNpc, NpcVisibility } from './npcCatalog';
 import { listNpcs } from './service';
 
 export default function Npcs() {
+  const access = useAccess();
   const intl = useIntl();
   const [visibility, setVisibility] = useState<NpcVisibility>('game');
   const [detail, setDetail] = useState<GameDataNpc>();
@@ -47,7 +58,8 @@ export default function Npcs() {
             }),
           },
         ],
-        onChange: (value: string | number) => setVisibility(value as NpcVisibility),
+        onChange: (value: string | number) =>
+          setVisibility(value as NpcVisibility),
       },
     },
     {
@@ -109,8 +121,7 @@ export default function Npcs() {
         defaultMessage: '中文名称',
       }),
       dataIndex: 'name_zh_cn',
-      render: (_, row) =>
-        row.name_zh_cn || row.source_name,
+      render: (_, row) => row.name_zh_cn || row.source_name,
     },
     {
       title: intl.formatMessage({
@@ -149,25 +160,57 @@ export default function Npcs() {
           ) : (
             <Tag color={row.navigation ? 'error' : 'warning'}>
               {row.navigation
-                ? intl.formatMessage({ id: 'gameData.npc.noImage', defaultMessage: '无图片' })
-                : intl.formatMessage({ id: 'gameData.npc.noNavigation', defaultMessage: '无导航' })}
+                ? intl.formatMessage({
+                    id: 'gameData.npc.noImage',
+                    defaultMessage: '无图片',
+                  })
+                : intl.formatMessage({
+                    id: 'gameData.npc.noNavigation',
+                    defaultMessage: '无导航',
+                  })}
             </Tag>
           )}
           {row.dynamic ? (
-            <Tag>{intl.formatMessage({ id: 'gameData.npc.dynamic', defaultMessage: '动态' })}</Tag>
+            <Tag>
+              {intl.formatMessage({
+                id: 'gameData.npc.dynamic',
+                defaultMessage: '动态',
+              })}
+            </Tag>
           ) : null}
         </Space>
       ),
     },
     {
-      title: intl.formatMessage({ id: 'common.actions', defaultMessage: '操作' }),
+      title: intl.formatMessage({
+        id: 'common.actions',
+        defaultMessage: '操作',
+      }),
       valueType: 'option',
-      width: 90,
+      width: 180,
       fixed: 'right',
       render: (_, row) => (
-        <Button type="link" icon={<EyeOutlined />} onClick={() => setDetail(row)}>
-          {intl.formatMessage({ id: 'common.detail', defaultMessage: '详情' })}
-        </Button>
+        <Space>
+          <Button
+            type="link"
+            icon={<EyeOutlined />}
+            onClick={() => setDetail(row)}
+          >
+            {intl.formatMessage({
+              id: 'common.detail',
+              defaultMessage: '详情',
+            })}
+          </Button>
+          {access.canGameControl && access.canViewPlayers && row.navigation && (
+            <CharacterNavigationModal
+              map={row.map}
+              name={row.display_name || row.name}
+              x={row.x}
+              y={row.y}
+              npcClass={row.navigation.class}
+            />
+          )}
+        </Space>
       ),
     },
   ];
@@ -187,7 +230,8 @@ export default function Npcs() {
             map: params.map,
             name: params.name,
             name_zh_cn: params.name_zh_cn,
-            visibility: (params.visibility as NpcVisibility | undefined) ?? visibility,
+            visibility:
+              (params.visibility as NpcVisibility | undefined) ?? visibility,
             page: params.current,
             perPage: params.pageSize,
           });
@@ -198,7 +242,10 @@ export default function Npcs() {
       <Drawer
         title={
           detail?.display_name ||
-          intl.formatMessage({ id: 'gameData.npc.detail', defaultMessage: 'NPC 详情' })
+          intl.formatMessage({
+            id: 'gameData.npc.detail',
+            defaultMessage: 'NPC 详情',
+          })
         }
         open={Boolean(detail)}
         onClose={() => setDetail(undefined)}
@@ -213,7 +260,9 @@ export default function Npcs() {
 function NpcDetails({ npc }: { npc: GameDataNpc }) {
   const intl = useIntl();
   const source = `${npc.source.path}:${npc.source.line}`;
-  const mapName = npc.map_name_zh_cn ? `${npc.map_name_zh_cn} (${npc.map})` : npc.map;
+  const mapName = npc.map_name_zh_cn
+    ? `${npc.map_name_zh_cn} (${npc.map})`
+    : npc.map;
   return (
     <Space orientation="vertical" size={20} style={{ width: '100%' }}>
       <div
@@ -230,7 +279,13 @@ function NpcDetails({ npc }: { npc: GameDataNpc }) {
             alt={npc.display_name}
             width={144}
             height={144}
-            styles={{ root: { display: 'flex', alignItems: 'center', justifyContent: 'center' } }}
+            styles={{
+              root: {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              },
+            }}
             style={{ objectFit: 'contain', imageRendering: 'pixelated' }}
           />
         ) : (
@@ -245,75 +300,130 @@ function NpcDetails({ npc }: { npc: GameDataNpc }) {
       </div>
       <Descriptions bordered size="small" column={1}>
         <Descriptions.Item
-          label={intl.formatMessage({ id: 'gameData.npc.nameZhCn', defaultMessage: '中文名称' })}
+          label={intl.formatMessage({
+            id: 'gameData.npc.nameZhCn',
+            defaultMessage: '中文名称',
+          })}
         >
           {npc.display_name}
         </Descriptions.Item>
         <Descriptions.Item
-          label={intl.formatMessage({ id: 'gameData.npc.name', defaultMessage: 'NPC 原名' })}
+          label={intl.formatMessage({
+            id: 'gameData.npc.name',
+            defaultMessage: 'NPC 原名',
+          })}
         >
           {npc.name}
         </Descriptions.Item>
         <Descriptions.Item
-          label={intl.formatMessage({ id: 'gameData.npc.map', defaultMessage: '地图' })}
+          label={intl.formatMessage({
+            id: 'gameData.npc.map',
+            defaultMessage: '地图',
+          })}
         >
           {mapName}
         </Descriptions.Item>
         <Descriptions.Item
-          label={intl.formatMessage({ id: 'gameData.npc.position', defaultMessage: '坐标' })}
+          label={intl.formatMessage({
+            id: 'gameData.npc.position',
+            defaultMessage: '坐标',
+          })}
         >
           {npc.x}, {npc.y}
         </Descriptions.Item>
         <Descriptions.Item
-          label={intl.formatMessage({ id: 'gameData.npc.status', defaultMessage: '状态' })}
+          label={intl.formatMessage({
+            id: 'gameData.npc.status',
+            defaultMessage: '状态',
+          })}
         >
           <Space wrap>
             <Tag color={npc.game_visible ? 'success' : 'default'}>
               {npc.game_visible
-                ? intl.formatMessage({ id: 'gameData.npc.gameVisible', defaultMessage: '游戏内可见' })
-                : intl.formatMessage({ id: 'gameData.npc.notGameVisible', defaultMessage: '游戏内不可见' })}
+                ? intl.formatMessage({
+                    id: 'gameData.npc.gameVisible',
+                    defaultMessage: '游戏内可见',
+                  })
+                : intl.formatMessage({
+                    id: 'gameData.npc.notGameVisible',
+                    defaultMessage: '游戏内不可见',
+                  })}
             </Tag>
             {npc.dynamic ? (
-              <Tag>{intl.formatMessage({ id: 'gameData.npc.dynamic', defaultMessage: '动态' })}</Tag>
+              <Tag>
+                {intl.formatMessage({
+                  id: 'gameData.npc.dynamic',
+                  defaultMessage: '动态',
+                })}
+              </Tag>
             ) : null}
           </Space>
         </Descriptions.Item>
         <Descriptions.Item
-          label={intl.formatMessage({ id: 'gameData.npc.scriptType', defaultMessage: '脚本类型' })}
+          label={intl.formatMessage({
+            id: 'gameData.npc.scriptType',
+            defaultMessage: '脚本类型',
+          })}
         >
           <Tag>{npc.type}</Tag>
         </Descriptions.Item>
         <Descriptions.Item
-          label={intl.formatMessage({ id: 'gameData.npc.displaySpriteId', defaultMessage: '显示形象 ID' })}
+          label={intl.formatMessage({
+            id: 'gameData.npc.displaySpriteId',
+            defaultMessage: '显示形象 ID',
+          })}
         >
           {npc.display_sprite_id ?? '-'}
         </Descriptions.Item>
         <Descriptions.Item
-          label={intl.formatMessage({ id: 'gameData.npc.scriptSpriteId', defaultMessage: '脚本 Sprite ID' })}
+          label={intl.formatMessage({
+            id: 'gameData.npc.scriptSpriteId',
+            defaultMessage: '脚本 Sprite ID',
+          })}
         >
           {npc.sprite_id ?? '-'}
         </Descriptions.Item>
         <Descriptions.Item
-          label={intl.formatMessage({ id: 'gameData.npc.navigationClass', defaultMessage: '传送 Class' })}
+          label={intl.formatMessage({
+            id: 'gameData.npc.navigationClass',
+            defaultMessage: '传送 Class',
+          })}
         >
           {npc.navigation?.class ?? '-'}
         </Descriptions.Item>
         <Descriptions.Item
-          label={intl.formatMessage({ id: 'gameData.npc.navigationId', defaultMessage: '导航 ID' })}
+          label={intl.formatMessage({
+            id: 'gameData.npc.navigationId',
+            defaultMessage: '导航 ID',
+          })}
         >
           {npc.navigation?.id ?? '-'}
         </Descriptions.Item>
         <Descriptions.Item
-          label={intl.formatMessage({ id: 'gameData.npc.source', defaultMessage: '脚本来源' })}
+          label={intl.formatMessage({
+            id: 'gameData.npc.source',
+            defaultMessage: '脚本来源',
+          })}
         >
-          <Typography.Text code copyable={{ text: source }} style={{ wordBreak: 'break-all' }}>
+          <Typography.Text
+            code
+            copyable={{ text: source }}
+            style={{ wordBreak: 'break-all' }}
+          >
             {source}
           </Typography.Text>
         </Descriptions.Item>
         <Descriptions.Item
-          label={intl.formatMessage({ id: 'gameData.npc.instanceId', defaultMessage: '实例 ID' })}
+          label={intl.formatMessage({
+            id: 'gameData.npc.instanceId',
+            defaultMessage: '实例 ID',
+          })}
         >
-          <Typography.Text code copyable={{ text: npc.id }} style={{ wordBreak: 'break-all' }}>
+          <Typography.Text
+            code
+            copyable={{ text: npc.id }}
+            style={{ wordBreak: 'break-all' }}
+          >
             {npc.id}
           </Typography.Text>
         </Descriptions.Item>

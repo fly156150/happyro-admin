@@ -1,4 +1,5 @@
-// Source: happyro-client JobDisplayNameTable.js; selectable IDs follow CharacterMaintenanceTab.js.
+// Source: happyro-client src/DB/Jobs/JobDisplayNameTable.js (2026-09-20).
+// Display/filter mapping only. Online selectable jobs and limits come from Game Control.
 export const jobMappings: Record<number, string> = {
   '0': 'players.job.option.0',
   '1': 'players.job.option.1',
@@ -108,4 +109,24 @@ export const jobMappings: Record<number, string> = {
   '4108': 'players.job.option.4108',
   '4218': 'players.job.option.4218',
   '4220': 'players.job.option.4220',
+  '4252': 'players.job.option.4252',
+  '4253': 'players.job.option.4253',
+  '4254': 'players.job.option.4254',
+  '4255': 'players.job.option.4255',
+  '4256': 'players.job.option.4256',
+  '4257': 'players.job.option.4257',
+  '4258': 'players.job.option.4258',
+  '4259': 'players.job.option.4259',
+  '4260': 'players.job.option.4260',
+  '4261': 'players.job.option.4261',
+  '4262': 'players.job.option.4262',
+  '4263': 'players.job.option.4263',
+  '4264': 'players.job.option.4264',
+  '4302': 'players.job.option.4302',
+  '4303': 'players.job.option.4303',
+  '4304': 'players.job.option.4304',
+  '4305': 'players.job.option.4305',
+  '4306': 'players.job.option.4306',
+  '4307': 'players.job.option.4307',
+  '4308': 'players.job.option.4308',
 };

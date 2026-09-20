@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
   characterFormValues,
-  maxMaintainedStat,
+  fieldMaximum,
+  jobChangePayload,
   mergeCharacterResult,
 } from './form-values';
 
 const character = {
   base_level: 99,
   job_level: 50,
-  class: 7,
+  job_id: 7,
   str: 11,
   agi: 22,
   vit: 33,
@@ -18,6 +19,15 @@ const character = {
 };
 
 describe('characterFormValues', () => {
+  it('clamps levels when changing from a fourth job to a lower-cap job', () => {
+    expect(
+      jobChangePayload(9, {
+        base_level: 275,
+        job_level: 60,
+        jobs: [{ id: 9, max_base_level: 99, max_job_level: 50 }],
+      }),
+    ).toEqual({ job_id: 9, base_level: 99, job_level: 50 });
+  });
   it('maps current character stats into the stats form', () => {
     expect(characterFormValues('stats', character)).toEqual({
       str: 11,
@@ -47,7 +57,7 @@ describe('characterFormValues', () => {
   });
 
   it('keeps skill point zero as a valid value', () => {
-    expect(characterFormValues('skillPoints', { skill_point: 0 })).toEqual({
+    expect(characterFormValues('skillPoints', { skill_points: 0 })).toEqual({
       skill_points: 0,
     });
   });
@@ -63,6 +73,27 @@ describe('characterFormValues', () => {
       dex: 55,
       luk: 66,
     });
-    expect(maxMaintainedStat).toBe(32767);
+  });
+
+  it('uses live job limits and nested trait values instead of database defaults', () => {
+    const snapshot = {
+      ...character,
+      max_base_level: 250,
+      max_job_level: 50,
+      max_stats: { str: 130 },
+      traits: {
+        enabled: true,
+        values: { pow: 12, sta: 0, wis: 0, spl: 0, con: 0, crt: 0 },
+        maximums: { pow: 100 },
+        points: 10,
+        budget: 22,
+      },
+    };
+    expect(characterFormValues('traits', snapshot)).toEqual(
+      snapshot.traits.values,
+    );
+    expect(fieldMaximum('stats', 'str', snapshot)).toBe(130);
+    expect(fieldMaximum('traits', 'pow', snapshot)).toBe(100);
+    expect(fieldMaximum('progression', 'base_level', snapshot)).toBe(250);
   });
 });

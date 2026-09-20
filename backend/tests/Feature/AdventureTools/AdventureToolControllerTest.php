@@ -202,6 +202,72 @@ final class AdventureToolControllerTest extends TestCase
             ->assertJsonPath('error.code', 'unavailable');
     }
 
+    public function test_applies_traits_to_the_authenticated_character_and_returns_updated_points(): void
+    {
+        $this->createSession(groupId: 0);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('battleConfig')->once()->andReturn(['game_tools_character_maintenance_policy' => 2]);
+        $gateway->expects('execute')->once()->with(Mockery::on(
+            fn ($command) => $command->type->value === 'character.traits.update'
+                && $command->payload === ['pow' => 7],
+        ))->andReturn(new GameServerCommandResult([]));
+        $gateway->expects('characterSnapshot')->once()->with(150002)->andReturn([
+            ...$this->snapshot(), 'traits' => ['values' => ['pow' => 7], 'points' => 0],
+        ]);
+        $this->app->instance(GameServerGateway::class, $gateway);
+
+        $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
+            'idempotency_key' => 'traits-1', 'type' => 'character.traits.update', 'payload' => ['pow' => 7],
+        ])->assertOk()->assertJsonPath('data.traits.values.pow', 7)->assertJsonPath('data.traits.points', 0);
+
+        $this->assertDatabaseHas('game_server_commands', [
+            'idempotency_key' => 'traits-1', 'type' => 'character.traits.update',
+            'target_id' => '150002', 'status' => 'succeeded',
+        ]);
+    }
+
+    public function test_rejects_cross_operation_trait_parameters_with_422_without_execution(): void
+    {
+        $this->createSession(groupId: 0);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->shouldNotReceive('execute');
+        $this->app->instance(GameServerGateway::class, $gateway);
+
+        $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
+            'idempotency_key' => 'traits-invalid', 'type' => 'character.traits.update',
+            'payload' => ['pow' => 1, 'job_id' => 4252],
+        ])->assertUnprocessable()->assertJsonValidationErrors('payload')
+            ->assertJsonPath('errors.payload.0', '操作参数无效');
+
+        $this->assertDatabaseMissing('game_server_commands', ['idempotency_key' => 'traits-invalid']);
+    }
+
+    public function test_rejects_negative_trait_values_with_422(): void
+    {
+        $this->createSession(groupId: 0);
+
+        $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
+            'idempotency_key' => 'traits-negative', 'type' => 'character.traits.update', 'payload' => ['pow' => -1],
+        ])->assertUnprocessable()->assertJsonValidationErrors('payload.pow');
+
+        $this->assertDatabaseMissing('game_server_commands', ['idempotency_key' => 'traits-negative']);
+    }
+
+    public function test_forbids_trait_reset_under_admin_only_policy_with_403(): void
+    {
+        $this->createSession(groupId: 0);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('battleConfig')->once()->andReturn(['game_tools_character_maintenance_policy' => 1]);
+        $gateway->shouldNotReceive('execute');
+        $this->app->instance(GameServerGateway::class, $gateway);
+
+        $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
+            'idempotency_key' => 'traits-forbidden', 'type' => 'character.traits.reset', 'payload' => [],
+        ])->assertForbidden();
+
+        $this->assertDatabaseMissing('game_server_commands', ['idempotency_key' => 'traits-forbidden']);
+    }
+
     private function createSession(int $groupId, bool $online = true): void
     {
         DB::connection('game')->table('login')->insert([
