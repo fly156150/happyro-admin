@@ -110,6 +110,23 @@ final class HttpGameServerGatewayTest extends TestCase
         }
     }
 
+    public function test_preserves_400_parameter_rejection_as_known_failure(): void
+    {
+        $http = $this->fakeHttp([
+            'http://127.0.0.1:8889/game-control/v1/commands' => Factory::response([
+                'error' => ['code' => 'invalid_parameter'],
+            ], 400),
+        ]);
+
+        try {
+            $this->gateway($http)->execute($this->command());
+            $this->fail('Expected a gateway exception.');
+        } catch (GameServerGatewayException $exception) {
+            $this->assertSame('invalid_parameter', $exception->errorCode);
+            $this->assertFalse($exception->outcomeUnknown);
+        }
+    }
+
     public function test_maps_not_implemented_command_to_explicit_rejection(): void
     {
         $http = $this->fakeHttp([

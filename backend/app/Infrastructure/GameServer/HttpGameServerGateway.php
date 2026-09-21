@@ -132,11 +132,11 @@ final class HttpGameServerGateway implements GameServerGateway
         [$code, $message] = match ($response->status()) {
             401, 403 => ['authentication_failed', 'Game server authentication failed.'],
             404, 501 => ['unsupported_command', 'Game server does not support this command.'],
-            409, 422 => $this->rejection($response),
+            400, 409, 422 => $this->rejection($response),
             default => ['request_failed', 'Game server request failed.'],
         };
 
-        $outcomeUnknown = $mayHaveSideEffects && ! in_array($response->status(), [401, 403, 404, 409, 422, 501], true);
+        $outcomeUnknown = $mayHaveSideEffects && ! in_array($response->status(), [400, 401, 403, 404, 409, 422, 501], true);
 
         throw new GameServerGatewayException($code, $message, $outcomeUnknown);
     }
