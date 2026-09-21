@@ -222,8 +222,8 @@ export default function CharacterMaintenanceModal({
           )}
           {action === 'traits' && (
             <Space>
-              特性点预算：{character?.traits?.budget}，当前剩余：
-              {character?.traits?.points}。各项总和不能超过预算。
+              直接设置特性值，不受当前特性点限制。当前剩余：
+              {character?.traits?.points}，设置不消耗剩余点数。
             </Space>
           )}
           {action === 'traitsReset' && (

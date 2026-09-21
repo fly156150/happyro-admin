@@ -8,6 +8,7 @@ enum GameServerCommandType: string
     case CharacterNavigationTeleport = 'character.navigation.teleport';
     case CharacterNavigationRoute = 'character.navigation.route';
     case CharacterProgressionUpdate = 'character.progression.update';
+    case CharacterPointsUpdate = 'character.points.update';
     case CharacterSkillPointsUpdate = 'character.skill_points.update';
     case CharacterStatsUpdate = 'character.stats.update';
     case CharacterStatsReset = 'character.stats.reset';
@@ -25,7 +26,7 @@ enum GameServerCommandType: string
     public static function characterMaintenanceValues(): array
     {
         return array_map(fn (self $type): string => $type->value, [
-            self::CharacterProgressionUpdate, self::CharacterSkillPointsUpdate,
+            self::CharacterProgressionUpdate, self::CharacterSkillPointsUpdate, self::CharacterPointsUpdate,
             self::CharacterStatsUpdate, self::CharacterStatsReset,
             self::CharacterTraitsUpdate, self::CharacterTraitsReset,
             self::CharacterSkillsReset, self::CharacterSkillsLearnAll, self::CharacterVitalsRestore,

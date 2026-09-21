@@ -9,9 +9,10 @@ final class CharacterMaintenancePayload
     {
         $fields = match ($type) {
             'character.progression.update' => ['base_level' => 'min:1', 'job_level' => 'min:1', 'job_id' => 'min:0'],
+            'character.points.update' => ['skill_points' => 'between:0,32767', 'status_points' => 'between:0,2147483647'],
             'character.skill_points.update' => ['skill_points' => 'between:0,32767'],
             'character.stats.update' => array_fill_keys(['str', 'agi', 'vit', 'int', 'dex', 'luk'], 'min:1'),
-            'character.traits.update' => array_fill_keys(['pow', 'sta', 'wis', 'spl', 'con', 'crt'], 'min:0'),
+            'character.traits.update' => array_fill_keys(['pow', 'sta', 'wis', 'spl', 'con', 'crt'], 'between:0,32767'),
             default => [],
         };
 

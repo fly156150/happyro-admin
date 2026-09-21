@@ -401,6 +401,8 @@ export default {
   'players.loginLog.message': '说明',
   'players.account.registered': '账号已注册',
   'players.account.sex': '性别',
+  'players.account.sex.male': '男',
+  'players.account.sex.female': '女',
   'players.account.lastIp': '最后 IP',
   'common.actions': '操作',
   'common.detail': '详情',

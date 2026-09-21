@@ -14,9 +14,20 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
-import { App, Button, Dropdown, Form, Input, Modal, Space, Tag } from 'antd';
+import {
+  App,
+  Button,
+  Dropdown,
+  Form,
+  Input,
+  Modal,
+  Select,
+  Space,
+  Tag,
+} from 'antd';
 import type { Key, RefObject } from 'react';
 import { useRef, useState } from 'react';
+import { sexMappings } from '@/data/game/sex';
 import {
   batchAccounts,
   deleteAccount,
@@ -26,6 +37,7 @@ import {
   resetPassword,
   updateAccount,
 } from '@/services/players';
+import styles from './index.less';
 
 type AccountAction = 'delete' | 'ban' | 'unban' | 'kick';
 type Translate = (id: string, fallback: string) => string;
@@ -190,6 +202,14 @@ function AccountDialogs({
 }: AccountDialogsProps) {
   const [passwordForm] = Form.useForm();
   const [registerForm] = Form.useForm();
+  const formLayout = {
+    className: styles.dialogForm,
+    size: 'large' as const,
+    variant: 'outlined' as const,
+    labelAlign: 'left' as const,
+    labelCol: { xs: { span: 24 }, sm: { span: 5 } },
+    wrapperCol: { xs: { span: 24 }, sm: { span: 19 } },
+  };
 
   return (
     <>
@@ -201,6 +221,7 @@ function AccountDialogs({
         afterClose={() => passwordForm.resetFields()}
       >
         <Form
+          {...formLayout}
           form={passwordForm}
           onFinish={({ password }) =>
             passwordId && onPasswordReset(passwordId, password)
@@ -211,7 +232,10 @@ function AccountDialogs({
             label={t('players.account.newPassword', '新密码')}
             rules={[{ required: true, min: 8 }]}
           >
-            <Input.Password />
+            <Input.Password
+              placeholder="请输入至少 8 位新密码"
+              autoComplete="new-password"
+            />
           </Form.Item>
         </Form>
       </Modal>
@@ -222,34 +246,42 @@ function AccountDialogs({
         onOk={() => registerForm.submit()}
         afterClose={() => registerForm.resetFields()}
       >
-        <Form form={registerForm} onFinish={onRegister}>
+        <Form {...formLayout} form={registerForm} onFinish={onRegister}>
           <Form.Item
             name="userid"
             label={t('players.account.username', '用户名')}
             rules={[{ required: true, min: 4, max: 23 }]}
           >
-            <Input />
+            <Input placeholder="请输入 4–23 位用户名" autoComplete="off" />
           </Form.Item>
           <Form.Item
             name="user_pass"
             label={t('players.account.newPassword', '新密码')}
             rules={[{ required: true, min: 8 }]}
           >
-            <Input.Password />
+            <Input.Password
+              placeholder="请输入至少 8 位密码"
+              autoComplete="new-password"
+            />
           </Form.Item>
           <Form.Item
             name="email"
             label={t('players.account.email', '邮箱')}
             rules={[{ required: true, type: 'email' }]}
           >
-            <Input />
+            <Input placeholder="请输入邮箱地址" type="email" />
           </Form.Item>
           <Form.Item
             name="sex"
             label={t('players.account.sex', '性别')}
             initialValue="M"
           >
-            <Input />
+            <Select
+              options={Object.entries(sexMappings).map(([value, label]) => ({
+                value,
+                label: t(label, label),
+              }))}
+            />
           </Form.Item>
         </Form>
       </Modal>
