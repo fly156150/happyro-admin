@@ -56,6 +56,59 @@ final class ImportNpcsTest extends TestCase
         $this->assertDatabaseHas('game_npcs', ['npc_key' => 'prontera:1:1:Ghost', 'image_available' => false]);
     }
 
+    public function test_empty_catalog_removes_previously_imported_npcs(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'happyro-npcs-');
+        $payload = [
+            'schema' => 'happyro-npc-catalog/v1',
+            'version' => 'kro-test',
+            'entries' => [$this->npc('prontera:1:1:Guide', '向导')],
+        ];
+        $service = app(ImportNpcsService::class);
+
+        try {
+            file_put_contents($file, json_encode($payload, JSON_THROW_ON_ERROR));
+            $service->import($file);
+            $payload['entries'] = [];
+            file_put_contents($file, json_encode($payload, JSON_THROW_ON_ERROR));
+            $result = $service->import($file);
+
+            $this->assertSame(0, $result['imported']);
+            $this->assertSame(1, $result['deleted']);
+            $this->assertDatabaseCount('game_npcs', 0);
+        } finally {
+            unlink($file);
+        }
+    }
+
+    public function test_missing_entries_does_not_remove_existing_npcs(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'happyro-npcs-');
+        $payload = [
+            'schema' => 'happyro-npc-catalog/v1',
+            'version' => 'kro-test',
+            'entries' => [$this->npc('prontera:1:1:Guide', '向导')],
+        ];
+        $service = app(ImportNpcsService::class);
+
+        try {
+            file_put_contents($file, json_encode($payload, JSON_THROW_ON_ERROR));
+            $service->import($file);
+            unset($payload['entries']);
+            file_put_contents($file, json_encode($payload, JSON_THROW_ON_ERROR));
+
+            try {
+                $service->import($file);
+                $this->fail('Missing entries must not be treated as an empty catalog');
+            } catch (\RuntimeException $exception) {
+                $this->assertStringContainsString('Unsupported NPC catalog', $exception->getMessage());
+            }
+            $this->assertDatabaseCount('game_npcs', 1);
+        } finally {
+            unlink($file);
+        }
+    }
+
     /** @param list<array<string, mixed>> $npcs */
     private function snapshot(array $npcs, string $hash = 'hash1'): NpcCatalogSnapshot
     {

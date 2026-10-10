@@ -9,6 +9,7 @@ use App\Data\GameServer\GameServerCommandType;
 use App\Exceptions\GameServerGatewayException;
 use App\Http\Requests\Operations\SubmitGameServerCommandRequest;
 use App\Services\GameServer\ExecuteGameServerCommandService;
+use App\Services\GameServer\ReadCharacterSnapshotService;
 use App\Services\GameServer\SubmitGameServerCommandService;
 use App\Support\GameServerErrorMessage;
 use Illuminate\Http\JsonResponse;
@@ -37,10 +38,13 @@ final class GameServerCommandController
         return response()->json(['data' => ['values' => $this->gateway->battleConfig()], 'success' => true]);
     }
 
-    public function characterSnapshot(int $characterId): JsonResponse
+    public function characterSnapshot(int $characterId, ReadCharacterSnapshotService $snapshots): JsonResponse
     {
         try {
-            return response()->json(['data' => $this->gateway->characterSnapshot($characterId), 'success' => true]);
+            $snapshot = $snapshots->read($characterId);
+            abort_if($snapshot === null, 404);
+
+            return response()->json(['data' => $snapshot, 'success' => true]);
         } catch (GameServerGatewayException $exception) {
             return response()->json(['error' => [
                 'code' => $exception->errorCode,

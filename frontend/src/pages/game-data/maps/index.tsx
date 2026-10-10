@@ -4,8 +4,7 @@ import {
   type ProColumns,
   ProTable,
 } from '@ant-design/pro-components';
-import { useIntl, useAccess } from '@umijs/max';
-import CharacterNavigationModal from '@/components/CharacterNavigationModal';
+import { useAccess, useIntl } from '@umijs/max';
 import {
   Alert,
   Button,
@@ -18,8 +17,10 @@ import {
   Tag,
 } from 'antd';
 import { useEffect, useState } from 'react';
+import CharacterNavigationModal from '@/components/CharacterNavigationModal';
 import type { GameDataNpc } from '@/pages/game-data/npcs/npcCatalog';
 import { listMapNpcs } from '@/pages/game-data/npcs/service';
+import styles from './index.less';
 import { listMaps, type MapRow } from './service';
 
 function MapPreview({ row, large = false }: { row: MapRow; large?: boolean }) {
@@ -190,9 +191,10 @@ export default function Maps() {
               defaultMessage: '详情',
             })}
           </Button>
-          {access.canGameControl && access.canViewPlayers && (
+          {access.canGameControl && access.canViewPlayers && row.supported && (
             <CharacterNavigationModal
               map={row.map}
+              mapName={row.name_zh_cn}
               name={row.name_zh_cn || row.map}
             />
           )}
@@ -254,6 +256,7 @@ function MapDetails({
   loading: boolean;
 }) {
   const intl = useIntl();
+  const access = useAccess();
   return (
     <Space orientation="vertical" size={20} style={{ width: '100%' }}>
       <MapPreview row={map} large />
@@ -300,45 +303,57 @@ function MapDetails({
         {loading ? (
           <Skeleton active paragraph={{ rows: 4 }} title={false} />
         ) : npcs.length ? (
-          <Space orientation="vertical" size={8} style={{ width: '100%' }}>
+          <div className={styles.npcList}>
             {npcs.map((npc) => (
-              <div
-                key={npc.id}
-                style={{
-                  display: 'flex',
-                  gap: 12,
-                  alignItems: 'center',
-                  padding: '8px 0',
-                  borderBottom: '1px solid #f0f0f0',
-                }}
-              >
-                {npc.image ? (
-                  <Image
-                    src={npc.image}
-                    alt={npc.display_name}
-                    width={40}
-                    height={40}
-                    style={{
-                      objectFit: 'contain',
-                      imageRendering: 'pixelated',
-                    }}
-                  />
-                ) : (
-                  <Empty
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    description={false}
-                    styles={{ root: { margin: 0 } }}
-                  />
-                )}
-                <div>
-                  <div>{npc.display_name || npc.name}</div>
-                  <div style={{ color: '#8c8c8c' }}>
-                    {npc.x}, {npc.y}
+              <div key={npc.id} className={styles.npcRow}>
+                <div className={styles.npcImage}>
+                  {npc.image ? (
+                    <Image
+                      src={npc.image}
+                      alt={npc.display_name}
+                      width={40}
+                      height={40}
+                      style={{
+                        objectFit: 'contain',
+                        imageRendering: 'pixelated',
+                      }}
+                    />
+                  ) : (
+                    <span
+                      role="img"
+                      className={styles.npcPlaceholder}
+                      aria-label="暂无 NPC 图片"
+                    >
+                      —
+                    </span>
+                  )}
+                </div>
+                <div className={styles.npcInfo}>
+                  <div className={styles.npcName}>
+                    {npc.display_name || npc.name}
+                  </div>
+                  <div className={styles.npcCoordinates}>
+                    坐标 · {npc.x}, {npc.y}
                   </div>
                 </div>
+                {access.canGameControl &&
+                  access.canViewPlayers &&
+                  npc.game_visible &&
+                  npc.navigation && (
+                    <div className={styles.npcActions}>
+                      <CharacterNavigationModal
+                        map={npc.map}
+                        mapName={map.name_zh_cn}
+                        name={npc.display_name || npc.name}
+                        x={npc.x}
+                        y={npc.y}
+                        npcClass={npc.navigation.class}
+                      />
+                    </div>
+                  )}
               </div>
             ))}
-          </Space>
+          </div>
         ) : (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}

@@ -3,6 +3,7 @@
 namespace Tests\Feature\GameServer;
 
 use App\Contracts\GameServer\GameServerGateway;
+use App\Contracts\Players\PlayerCharacterRepository;
 use App\Data\GameServer\GameServerCommandResult;
 use App\Exceptions\GameServerGatewayException;
 use App\Models\Role;
@@ -158,6 +159,71 @@ final class GameServerCommandControllerTest extends TestCase
 
         $this->actingAs(User::factory()->create())->getJson('/api/operations/game-control/characters/42')
             ->assertForbidden();
+    }
+
+    public function test_offline_character_snapshot_returns_saved_values_without_an_error(): void
+    {
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('characterSnapshot')->with(42)->once()
+            ->andThrow(new GameServerGatewayException('character_offline', 'Offline'));
+        $this->app->instance(GameServerGateway::class, $gateway);
+        $characters = Mockery::mock(PlayerCharacterRepository::class);
+        $characters->expects('find')->with(42)->once()->andReturn([
+            'char_id' => 42, 'class' => 7, 'base_level' => 99, 'str' => 50,
+            'status_point' => 48, 'skill_point' => 10,
+            'last_map' => 'prontera', 'last_x' => 150, 'last_y' => 180, 'online' => 1,
+        ]);
+        $this->app->instance(PlayerCharacterRepository::class, $characters);
+
+        $this->actingAs($this->superAdmin())->getJson('/api/operations/game-control/characters/42')
+            ->assertOk()->assertJsonPath('data.online', false)
+            ->assertJsonPath('data.job_id', 7)->assertJsonPath('data.status_points', 48)
+            ->assertJsonPath('data.skill_points', 10)->assertJsonPath('data.str', 50)
+            ->assertJsonPath('data.map', 'prontera');
+    }
+
+    public function test_missing_offline_character_returns_not_found(): void
+    {
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('characterSnapshot')->with(42)->once()
+            ->andThrow(new GameServerGatewayException('character_offline', 'Offline'));
+        $this->app->instance(GameServerGateway::class, $gateway);
+        $characters = Mockery::mock(PlayerCharacterRepository::class);
+        $characters->expects('find')->with(42)->once()->andReturnNull();
+        $this->app->instance(PlayerCharacterRepository::class, $characters);
+
+        $this->actingAs($this->superAdmin())->getJson('/api/operations/game-control/characters/42')
+            ->assertNotFound();
+    }
+
+    public function test_snapshot_does_not_hide_gateway_failures_as_saved_data(): void
+    {
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('characterSnapshot')->with(42)->once()
+            ->andThrow(new GameServerGatewayException('connection_failed', 'Unavailable'));
+        $this->app->instance(GameServerGateway::class, $gateway);
+        $characters = Mockery::mock(PlayerCharacterRepository::class);
+        $characters->shouldNotReceive('find');
+        $this->app->instance(PlayerCharacterRepository::class, $characters);
+
+        $this->actingAs($this->superAdmin())->getJson('/api/operations/game-control/characters/42')
+            ->assertStatus(502)->assertJsonPath('error.code', 'connection_failed');
+    }
+
+    public function test_modifying_an_offline_character_still_returns_conflict(): void
+    {
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('execute')->once()
+            ->andThrow(new GameServerGatewayException('character_offline', 'Offline'));
+        $this->app->instance(GameServerGateway::class, $gateway);
+
+        $this->actingAs($this->superAdmin())->postJson('/api/operations/game-control/commands', [
+            'idempotency_key' => 'offline-points', 'type' => 'character.points.update',
+            'target' => ['type' => 'character', 'id' => '42'], 'payload' => ['status_points' => 0],
+        ])->assertConflict()->assertJsonPath('error.code', 'character_offline');
+        $this->assertDatabaseHas('game_server_commands', [
+            'idempotency_key' => 'offline-points', 'status' => 'failed',
+        ]);
     }
 
     public function test_operator_can_teleport_to_a_live_npc_using_the_shared_gateway(): void

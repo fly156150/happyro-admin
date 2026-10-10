@@ -1,0 +1,66 @@
+.npcList {
+  width: 100%;
+  container-type: inline-size;
+}
+
+.npcRow {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgb(128 128 128 / 18%);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.npcImage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: rgb(128 128 128 / 6%);
+}
+
+.npcPlaceholder {
+  opacity: 0.45;
+}
+
+.npcInfo {
+  min-width: 0;
+}
+
+.npcName {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.npcCoordinates {
+  margin-top: 4px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.65;
+}
+
+.npcActions {
+  justify-self: end;
+  white-space: nowrap;
+}
+
+@container (max-width: 400px) {
+  .npcRow {
+    grid-template-columns: 48px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 8px;
+  }
+
+  .npcActions {
+    grid-column: 2;
+    justify-self: start;
+    margin-left: -7px;
+  }
+}

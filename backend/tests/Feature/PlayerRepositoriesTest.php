@@ -77,6 +77,26 @@ final class PlayerRepositoriesTest extends TestCase
             ->assertJsonPath('data.0.username', 'alice');
     }
 
+    public function test_character_details_include_map_translation_and_fourth_job_attributes(): void
+    {
+        DB::connection('game')->table('login')->insert(['account_id' => 1, 'userid' => 'alice', 'email' => 'alice@example.com', 'sex' => 'F', 'group_id' => 0, 'state' => 0]);
+        $traits = ['pow' => 100, 'sta' => 80, 'wis' => 60, 'spl' => 40, 'con' => 20, 'crt' => 0, 'trait_point' => 15, 'ap' => 0, 'max_ap' => 200];
+        DB::connection('game')->table('char')->insert([
+            'char_id' => 10, 'account_id' => 1, 'name' => 'Dragon', 'class' => 4252,
+            'base_level' => 220, 'job_level' => 40, 'online' => 0, 'last_map' => 'wolfvill', ...$traits,
+        ]);
+
+        $response = $this->actingAs($this->superAdmin())->getJson('/api/players/characters/10')
+            ->assertOk()->assertJsonPath('data.last_map', 'wolfvill')->assertJsonPath('data.last_map_name', '灰狼村');
+        foreach ($traits as $field => $value) {
+            $response->assertJsonPath('data.'.$field, $value);
+        }
+        DB::connection('game')->table('char')->where('char_id', 10)->update(['last_map' => 'unknown_map']);
+        $this->getJson('/api/players/characters/10')->assertOk()
+            ->assertJsonPath('data.last_map', 'unknown_map')->assertJsonPath('data.last_map_name', null);
+        $this->getJson('/api/players/characters/999')->assertNotFound();
+    }
+
     public function test_item_grant_searches_require_authentication_and_a_target(): void
     {
         $this->getJson('/api/operations/item-grant-items?target=Apple')->assertUnauthorized();
@@ -151,6 +171,9 @@ final class PlayerRepositoriesTest extends TestCase
             $table->integer('class');
             $table->integer('base_level');
             $table->integer('job_level');
+            foreach (['base_exp', 'job_exp', 'zeny', 'str', 'agi', 'vit', 'int', 'dex', 'luk', 'max_hp', 'hp', 'max_sp', 'sp', 'status_point', 'skill_point', 'pow', 'sta', 'wis', 'spl', 'con', 'crt', 'trait_point', 'ap', 'max_ap', 'last_x', 'last_y'] as $field) {
+                $table->integer($field)->default(0);
+            }
             $table->string('last_map')->nullable();
             $table->integer('online');
             $table->dateTime('last_login')->nullable();

@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Players;
 
 use App\Contracts\Players\PlayerCharacterRepository;
+use App\Services\GameData\WorldDataService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class PlayerCharacterController
 {
-    public function __construct(private readonly PlayerCharacterRepository $characters) {}
+    public function __construct(
+        private readonly PlayerCharacterRepository $characters,
+        private readonly WorldDataService $world,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -31,7 +35,7 @@ final class PlayerCharacterController
         }
 
         return $character
-            ? response()->json(['data' => $character])
+            ? response()->json(['data' => [...$character, 'last_map_name' => $this->world->mapName((string) $character['last_map'])]])
             : response()->json(['message' => __('messages.character_not_found')], 404);
     }
 }

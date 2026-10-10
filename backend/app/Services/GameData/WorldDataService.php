@@ -17,6 +17,13 @@ final class WorldDataService
 
     public function __construct(private readonly CacheRepository $cache) {}
 
+    public function mapName(string $map): ?string
+    {
+        $entries = array_column($this->json($this->path('map-catalog.json'))['entries'] ?? [], null, 'map');
+
+        return $entries[$map]['name'] ?? $this->json($this->path('map-names.zh-CN.json'))[$map] ?? null;
+    }
+
     /**
      * Search the map catalog. Paginated because this feeds a browsable table.
      *

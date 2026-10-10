@@ -4,9 +4,10 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { useAccess, useIntl } from '@umijs/max';
-import { Descriptions, Drawer, Tag } from 'antd';
+import { Drawer, Tag } from 'antd';
 import { useState } from 'react';
 import CharacterMaintenanceModal from '@/components/CharacterMaintenanceModal';
+import CharacterDetails from '@/components/CharacterDetails';
 import { jobMappings } from '@/data/game/jobs';
 import { mapMappings } from '@/data/game/maps';
 import { getCharacter, listCharacters } from '@/services/players/queries';
@@ -103,71 +104,18 @@ export default function Characters() {
       />
       <Drawer
         title={
-          detail
-            ? `${t('players.character.detail', '角色详情')} · ${String(detail.name)}`
-            : ''
+          <span style={{ fontWeight: 400 }}>
+            {detail
+              ? `${t('players.character.detail', '角色详情')} · ${String(detail.name)}`
+              : ''}
+          </span>
         }
         open={Boolean(detail)}
         onClose={() => setDetail(null)}
-        size="default"
+        size={760}
+        styles={{ wrapper: { maxWidth: '100vw' } }}
       >
-        {detail && (
-          <Descriptions column={1} size="small">
-            {[
-              'char_id',
-              'account_id',
-              'username',
-              'class',
-              'base_level',
-              'job_level',
-              'base_exp',
-              'job_exp',
-              'zeny',
-              'str',
-              'agi',
-              'vit',
-              'int',
-              'dex',
-              'luk',
-              'hp',
-              'max_hp',
-              'sp',
-              'max_sp',
-              'status_point',
-              'skill_point',
-              'last_map',
-              'last_x',
-              'last_y',
-              'online',
-              'last_login',
-            ].map((key) => (
-              <Descriptions.Item
-                key={key}
-                label={t(`players.character.detail.${key}`, key)}
-              >
-                {key === 'class'
-                  ? t(
-                      jobMappings[Number(detail[key])] ?? 'players.job.unknown',
-                      '其他职业',
-                    )
-                  : key === 'last_map'
-                    ? t(
-                        mapMappings[String(detail[key])] ??
-                          'players.map.unknown',
-                        String(detail[key] ?? '-'),
-                      )
-                    : key === 'online'
-                      ? t(
-                          Number(detail[key]) === 1
-                            ? 'players.character.online'
-                            : 'players.character.offline',
-                          Number(detail[key]) === 1 ? '在线' : '离线',
-                        )
-                      : String(detail[key] ?? '-')}
-              </Descriptions.Item>
-            ))}
-          </Descriptions>
-        )}
+        {detail && <CharacterDetails character={detail} />}
       </Drawer>
     </PageContainer>
   );

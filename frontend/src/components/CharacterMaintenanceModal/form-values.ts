@@ -3,7 +3,7 @@ import type { CharacterSnapshot } from '@/services/operations/game-control';
 export const actionFields = {
   job: ['job_id'],
   progression: ['base_level', 'job_level'],
-  skillPoints: ['skill_points'],
+  points: ['status_points', 'skill_points'],
   stats: ['str', 'agi', 'vit', 'int', 'dex', 'luk'],
   statsReset: [],
   traits: ['pow', 'sta', 'wis', 'spl', 'con', 'crt'],
@@ -14,6 +14,39 @@ export const actionFields = {
 } as const;
 
 export type MaintenanceAction = keyof typeof actionFields;
+
+export const commandTypes: Record<MaintenanceAction, string> = {
+  job: 'character.progression.update',
+  points: 'character.points.update',
+  progression: 'character.progression.update',
+  stats: 'character.stats.update',
+  statsReset: 'character.stats.reset',
+  traits: 'character.traits.update',
+  traitsReset: 'character.traits.reset',
+  skillsLearnAll: 'character.skills.learn_all',
+  skills: 'character.skills.reset',
+  vitals: 'character.vitals.restore',
+};
+
+export function changedCharacterValues(
+  action: MaintenanceAction,
+  values: Record<string, number>,
+  character: CharacterSnapshot,
+) {
+  const original = characterFormValues(action, character);
+  return Object.fromEntries(
+    actionFields[action]
+      .filter(
+        (field) =>
+          values[field] !== undefined && values[field] !== original[field],
+      )
+      .map((field) => [field, values[field]]),
+  );
+}
+
+export function fieldMinimum(action: MaintenanceAction) {
+  return action === 'points' || action === 'traits' ? 0 : 1;
+}
 
 export function jobChangePayload(jobId: number, character: CharacterSnapshot) {
   const job = character.jobs?.find((entry) => entry.id === jobId);
@@ -63,5 +96,6 @@ export function fieldMaximum(
   if (field === 'base_level') return character?.max_base_level;
   if (field === 'job_level') return character?.max_job_level;
   if (field === 'skill_points') return character?.max_skill_points;
+  if (field === 'status_points') return character?.max_status_points;
   return undefined;
 }

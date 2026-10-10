@@ -1,11 +1,13 @@
 import { request } from '@umijs/max';
 
 export type CharacterSnapshot = Record<string, unknown> & {
+  online?: boolean;
   max_base_level?: number;
   max_job_level?: number;
   max_skill_points?: number;
+  max_status_points?: number;
   max_stats?: Record<string, number>;
-  jobs?: { id: number; max_base_level: number; max_job_level: number }[];
+  jobs?: { id: number; max_base_level: number; max_job_level: number; traits?: boolean }[];
   traits?: {
     enabled: boolean;
     values: Record<string, number>;

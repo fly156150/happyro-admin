@@ -20,7 +20,7 @@ final class JsonNpcSnapshotReader implements NpcSnapshotReader
             throw new RuntimeException("Invalid NPC catalog: {$path}", previous: $exception);
         }
         if (! is_array($payload) || ($payload['schema'] ?? null) !== 'happyro-npc-catalog/v1'
-            || ! is_array($payload['entries'] ?? null) || $payload['entries'] === []) {
+            || ! is_array($payload['entries'] ?? null)) {
             throw new RuntimeException("Unsupported NPC catalog: {$path}");
         }
         $version = $payload['version'] ?? null;

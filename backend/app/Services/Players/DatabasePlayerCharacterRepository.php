@@ -18,6 +18,8 @@ final class DatabasePlayerCharacterRepository implements PlayerCharacterReposito
                 'characters.base_level', 'characters.job_level', 'characters.base_exp', 'characters.job_exp', 'characters.zeny',
                 'characters.str', 'characters.agi', 'characters.vit', 'characters.int', 'characters.dex', 'characters.luk',
                 'characters.max_hp', 'characters.hp', 'characters.max_sp', 'characters.sp', 'characters.status_point', 'characters.skill_point',
+                'characters.pow', 'characters.sta', 'characters.wis', 'characters.spl', 'characters.con', 'characters.crt',
+                'characters.trait_point', 'characters.ap', 'characters.max_ap',
                 'characters.last_map', 'characters.last_x', 'characters.last_y', 'characters.online', 'characters.last_login',
             ])->first();
 

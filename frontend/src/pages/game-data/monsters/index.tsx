@@ -8,6 +8,7 @@ import { useAccess, useIntl } from '@umijs/max';
 import { Button, Descriptions, Drawer, Empty, Space, Tag } from 'antd';
 import { useMemo, useState } from 'react';
 import MonsterSpawnModal from '@/components/MonsterSpawnModal';
+import MonsterLocations from '@/components/MonsterLocations';
 import {
   MONSTER_ELEMENTS,
   MONSTER_KINDS,
@@ -136,7 +137,7 @@ export default function Monsters() {
         ),
       },
     ],
-    [intl.locale],
+    [intl.locale, access.canGameControl, access.canViewPlayers],
   );
   return (
     <PageContainer title={t('gameData.monsters.title', '魔物图鉴')}>
@@ -287,6 +288,7 @@ function MonsterDetails({
           </Descriptions.Item>
         )}
       </Descriptions>
+      <MonsterLocations monsterId={monster.Id} />
     </Space>
   );
 }

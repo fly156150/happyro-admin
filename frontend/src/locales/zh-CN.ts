@@ -1,3 +1,4 @@
+import monsterSpawnMaps from './zh-CN/monster-spawn-maps.json';
 import characterFields from './zh-CN/character-fields';
 import component from './zh-CN/component';
 import globalHeader from './zh-CN/globalHeader';
@@ -9,6 +10,8 @@ import settingDrawer from './zh-CN/settingDrawer';
 import settings from './zh-CN/settings';
 
 export default {
+  ...monsterSpawnMaps,
+  'players.map.airplane': '飞空艇',
   'settings.gameData.title': '游戏资料',
   'settings.gameData.loadFailed': '游戏资料设置加载失败',
   'settings.gameData.saved': '游戏资料设置已保存',
@@ -85,12 +88,21 @@ export default {
   'players.character.skillsReset': '重置技能',
   'players.character.vitalsRestore': '恢复状态',
   'players.character.maintainSuccess': '操作已提交',
-  'players.character.skillsResetConfirm': '将重置该角色的技能点。',
+  'players.character.skillsResetConfirm':
+    '重置该角色已学习的技能，并返还技能点。',
   'players.character.vitalsRestoreConfirm': '将恢复该角色的生命、SP 和 AP。',
   'players.character.field.base_level': '基础等级',
   'players.character.field.job_level': '职业等级',
   'players.character.field.job_id': '职业',
   'players.character.field.skill_points': '技能点',
+  'players.character.field.status_points': '素质点',
+  'players.job.group.first': '一转',
+  'players.job.group.second': '二转',
+  'players.job.group.third': '三转',
+  'players.job.group.fourth': '四转',
+  'players.job.group.novice': '初心者',
+  'players.job.group.expanded': '扩展职业',
+  'players.job.group.other': '其它',
   'players.character.field.str': '力量',
   'players.character.field.pow': '力量 POW',
   'players.character.field.sta': '耐力 STA',

@@ -1,10 +1,11 @@
-import {
-  PageContainer,
-  ProTable,
-  type ProColumns,
-  type ActionType,
-} from '@ant-design/pro-components';
 import { CheckCircleOutlined, EyeOutlined } from '@ant-design/icons';
+import {
+  type ActionType,
+  PageContainer,
+  type ProColumns,
+  ProTable,
+} from '@ant-design/pro-components';
+import { useAccess, useIntl } from '@umijs/max';
 import {
   Button,
   Descriptions,
@@ -15,9 +16,8 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { useIntl, useAccess } from '@umijs/max';
-import CharacterNavigationModal from '@/components/CharacterNavigationModal';
 import { useEffect, useRef, useState } from 'react';
+import CharacterNavigationModal from '@/components/CharacterNavigationModal';
 import type { GameDataNpc, NpcVisibility } from './npcCatalog';
 import { listNpcs } from './service';
 
@@ -201,15 +201,19 @@ export default function Npcs() {
               defaultMessage: '详情',
             })}
           </Button>
-          {access.canGameControl && access.canViewPlayers && row.navigation && (
-            <CharacterNavigationModal
-              map={row.map}
-              name={row.display_name || row.name}
-              x={row.x}
-              y={row.y}
-              npcClass={row.navigation.class}
-            />
-          )}
+          {access.canGameControl &&
+            access.canViewPlayers &&
+            row.game_visible &&
+            row.navigation && (
+              <CharacterNavigationModal
+                map={row.map}
+                mapName={row.map_name_zh_cn}
+                name={row.display_name || row.name}
+                x={row.x}
+                y={row.y}
+                npcClass={row.navigation.class}
+              />
+            )}
         </Space>
       ),
     },

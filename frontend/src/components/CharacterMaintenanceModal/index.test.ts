@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  changedCharacterValues,
   characterFormValues,
+  commandTypes,
   fieldMaximum,
+  fieldMinimum,
   jobChangePayload,
   mergeCharacterResult,
 } from './form-values';
@@ -57,9 +60,39 @@ describe('characterFormValues', () => {
   });
 
   it('keeps skill point zero as a valid value', () => {
-    expect(characterFormValues('skillPoints', { skill_points: 0 })).toEqual({
+    expect(
+      characterFormValues('points', { status_points: 0, skill_points: 0 }),
+    ).toEqual({
+      status_points: 0,
       skill_points: 0,
     });
+  });
+
+  it('uses the shared points command and live limits for both kinds of points', () => {
+    const snapshot = {
+      status_points: 48,
+      skill_points: 10,
+      max_status_points: 2147483647,
+      max_skill_points: 32767,
+    };
+    expect(commandTypes.points).toBe('character.points.update');
+    expect(fieldMinimum('points')).toBe(0);
+    expect(fieldMaximum('points', 'status_points', snapshot)).toBe(2147483647);
+    expect(fieldMaximum('points', 'skill_points', snapshot)).toBe(32767);
+    expect(
+      changedCharacterValues(
+        'points',
+        { status_points: 0, skill_points: 10, str: 99 },
+        snapshot,
+      ),
+    ).toEqual({ status_points: 0 });
+    expect(
+      changedCharacterValues(
+        'points',
+        { status_points: 48, skill_points: 10 },
+        snapshot,
+      ),
+    ).toEqual({});
   });
 
   it('keeps command results as the next form snapshot', () => {

@@ -1,0 +1,50 @@
+.wrapper {
+  overflow: hidden;
+  border: 1px solid;
+  border-radius: 8px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 13px;
+
+  th,
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid;
+    text-align: left;
+    overflow-wrap: anywhere;
+    vertical-align: middle;
+  }
+
+  th {
+    font-weight: 400;
+  }
+
+  td {
+    font-variant-numeric: tabular-nums;
+    font-weight: 400;
+  }
+
+  .section {
+    padding: 10px 14px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+  }
+
+  tbody:last-child tr:last-child th,
+  tbody:last-child tr:last-child td {
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 575px) {
+  .table {
+    th,
+    td {
+      padding: 9px 8px;
+    }
+  }
+}
