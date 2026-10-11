@@ -1,14 +1,16 @@
 # 架构
 
-Admin 读取静态游戏资料和 MariaDB 中的玩家数据，并把改变世界状态的命令交给 Server 的 Game Control。
+Admin 采用 Laravel API 与 Ant Design Pro 前端，账户、权限、审计与游戏资料位于 `happyro_admin`；玩家查询使用独立 game 连接，不把管理员账号混入玩家 login 表。
 
 ```text
-frontend :8000
-  → backend :18081
-       ├── happyro_admin     管理员、角色、权限、审计
-       ├── happyro           玩家查询
-       ├── resources/game-data   物品 / 魔物 / 地图 / NPC JSON
-       └── Game Control      map-server
+浏览器 → Admin 前端／反向代理 → Laravel
+                               ├── happyro_admin：权限、审计、资料投影、配置版本
+                               ├── game / game_log：玩家及登录日志查询
+                               └── web-server HTTP → Unix Socket → map-server 主线程
 ```
 
-后端按 Laravel 分层：控制器只做 HTTP，用例在 Service，数据访问在 Repository，外部依赖可 Mock。前端目录与一级菜单对齐。产品结构见 [product/README.md](product/README.md)。
+版本化 JSON 是导入源；物品、魔物、NPC 导入 MariaDB 后由 Repository 查询。图片通过配置的资源根或对应图片接口提供，不在 HTTP 请求中解析 GRF。地图元数据及资料差异见[游戏资料](product/game-data.md)。
+
+管理员 HTTP 接口使用 Session／Sanctum；游戏内冒险工具经 Gateway 同源代理，使用独立的游戏会话校验。两种入口共用用例，不共用管理员登录凭据。
+
+控制器负责协议转换，Service 负责用例，Contract 与 Repository／Gateway 隔离外部依赖；在线角色与世界状态最终由 map-server 主线程修改。目录规范见[产品索引](product/README.md)。

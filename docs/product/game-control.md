@@ -2,7 +2,7 @@
 
 ## 状态
 
-核心通道与当前业务命令已完成，生产密钥管理待实现
+当前通道与业务命令已实现；部署密钥生成和注入由根仓库管理，轮换与跨主机方案另行验证。
 
 ## 目标
 
@@ -33,7 +33,7 @@ map-server 主线程
 
 ## 内部命令通道
 
-生产部署中 web-server 与 map-server 位于同一台主机，内部通道使用 Unix Domain Socket，不经过 Nginx，也不复用对外 HTTP 端口。Socket 文件放在运行时目录，权限仅允许 HappyRO 服务账号访问；systemd 负责创建运行目录和清理旧 socket。
+配套部署中 web-server 与 map-server 共享内部 Socket，内部通道使用 Unix Domain Socket，不经过 Nginx，也不复用对外 HTTP 端口。Socket 文件放在运行时目录，权限仅允许 HappyRO 服务账号访问；systemd 负责创建运行目录和清理旧 socket。
 
 服务端仓库提供 `deploy/systemd/happyro-*.service` 物理部署模板。安装后应按 login -> char -> map -> web 顺序启用；map 服务使用 `RuntimeDirectory=happyro` 创建 Socket 目录，web 服务依赖 map 服务但不重复创建目录。模板不会自动启用，安装前必须核对运行用户、绝对路径、数据库服务名和配置文件中的实际 import 链。
 
@@ -49,36 +49,7 @@ map-server 配置键为 `game_control_socket`，默认空值表示关闭。启�
 4. 验证命令状态、幂等重放、离线目标拒绝、非法参数拒绝和召唤自动清理；最后检查服务日志不包含密钥和完整敏感 payload。
 5. 任一项失败立即关闭 Game Control、删除运行时 Socket，并恢复最近一次稳定二进制；不得在旧进程上以 `404` 或空能力列表作为新协议验收结论。
 
-在测试环境切换完成前，运行中的服务曾是旧二进制且配置关闭；切换后的实际结果见下方“测试环境真实验收”。
-
-### 隔离协议验收
-
-在不影响现有服务的临时目录中使用新构建的 web-server，并将端口改为 `18889`、启用 Game Control、配置测试密钥后，已验证：
-
-- 未携带 Bearer 凭据的能力请求返回 `401 unauthorized`。
-- 携带合法凭据但未启动 map-server Socket 的请求返回 `503 map_server_unavailable`。
-- 携带合法凭据并由临时 Unix Socket 返回有效 map-server 响应时，能力请求返回 `200`，且保留协议版本和命令列表。
-- Game Control 开启但清空 Socket 配置时，web-server 在启动阶段以错误退出，并输出缺少 Socket 路径的诊断。
-
-隔离验收确认了 HTTP 鉴权、协议路由、Unix Socket 成功转发和 map-server 不可用时的错误映射；角色修改、技能重置、状态恢复和魔物召唤另已在下方真实游戏进程验收。
-
-验收时必须同时检查 `conf/web_athena.conf` 及其 `import` 链中的最终值；rAthena 配置按读取顺序覆盖，同名键在后读取的文件中生效。备用实例曾因 `conf/import/web_conf.txt` 覆盖端口而未按主配置启动，这类覆盖必须在启动日志和端口探测中确认。
-
-rAthena 进程会将工作目录切换到可执行文件所在目录，因此物理部署时必须让二进制与 `conf/`、`db/` 等运行时目录保持同一安装根；仅替换二进制而保留另一目录的配置不会生效。
-
-### 测试环境真实验收
-
-测试环境已在保留 login-server 和 char-server 的前提下切换新 map-server 与 web-server，并启用 `/run/happyro/map-control.sock`：
-
-- map-server 成功加载 1265 张地图并连接现有 char-server。
-- `GET /game-control/v1/capabilities` 返回 `200`，包含角色维护、技能重置、状态恢复、魔物召唤和倍率修改命令。
-- `GET /game-control/v1/battle-config` 返回 `200`，成功回读 8 个白名单倍率的当前值（初始均为 `100`）。
-- 使用数据库中离线角色 `char_id=150000` 提交等级修改命令，返回 `409 character_offline`，没有执行离线修改。
-- 通过真实浏览器登录后台，在“游戏设置”页面提交不变倍率，后台 API、web-server、map-server 和实际值回读均返回成功，页面显示保存成功。
-
-在线角色操作已使用 Robrowser 测试账号 `autotest` 实际验证。角色 `150001` 连接到当前 map-server 后，等级更新、属性更新、技能重置、生命值恢复和角色附近魔物召唤均返回成功；召唤响应包含实体 ID、地图和实际坐标。另以离线角色验证了上述命令会返回 `character_offline`，不会修改离线数据库记录。启动日志另有若干中文名称超过 rAthena 字段长度的告警，服务会截断名称；这属于资料长度问题，不影响本次 Game Control 通道启动。
-
-测试环境还验证了共享权限要求：Laravel 运行用户能够访问权限为 `0660` 的 Socket，并能原子写入 `conf/import/battle_conf.txt`。物理部署模板由 map-server 使用 `UMask=0007` 创建组可访问 Socket，admin backend 使用 `SupplementaryGroups=happyro` 访问 Socket 和配置文件。未执行新增迁移时页面会因缺少版本表失败，部署必须先执行 admin 仓库的 `php artisan migrate --force`。
+配置按 import 读取顺序覆盖，必须核对最终监听地址、Socket 和密钥。rAthena 将工作目录切换到二进制所在目录，物理部署时二进制与 conf、db 必须属于同一运行根。Admin 使用配套数据库迁移与共享配置权限，见[部署](../deployment.md)。
 
 - web-server 每个请求只提交一个结构化命令，并等待有限时间获取结果。
 - map-server 接收线程只负责解析信封并投递到主线程队列，不能直接触碰角色或地图对象。
@@ -204,7 +175,7 @@ pending -> running -> succeeded
 
 ## 安全
 
-- 控制入口默认关闭，只允许 loopback 监听，并要求至少 32 字节的运行时密钥。当前实现使用 loopback HTTP；若跨主机部署，必须在受信任的 TLS 终止层后再开放，不能直接暴露 web-server 端口。
+- 控制入口默认关闭，只在受控内部网络监听，并要求至少 32 字节的运行时密钥。原生部署通常使用 loopback HTTP，Docker 使用内部服务网络；若跨主机部署，必须在受信任的 TLS 终止层后再开放，不能直接暴露 web-server 端口。
 - 密钥只从部署环境注入，不写入仓库、日志、审计 metadata 或异常消息。
 - 写请求不自动重试；只有服务端确认支持幂等重放时才允许重试。
 - 请求、响应和异常日志不得输出 Authorization、完整 payload 中的秘密或数据库凭据。
@@ -221,23 +192,3 @@ pending -> running -> succeeded
 战斗倍率不接受通用运营命令入口提交，只能通过受 `settings.manage` 保护的 `PUT /api/settings/game-settings` 应用。
 
 控制器只负责请求转换和响应，命令构造、持久化、网关通信和状态流转分别由 FormRequest、DTO、Repository、Gateway 和 Service 完成。HTTP、CLI 或后台任务接入新入口时必须复用同一组 Service，不能在控制器中复制游戏业务逻辑。
-
-## 实现顺序（目标与当前状态）
-
-1. 在 map-server 增加 Unix Socket 控制通道，将请求安全地投递到主线程队列。（已完成）
-2. 在 map-server 注册命令处理器和能力清单。（已完成）
-3. 在 web-server 增加转发和结果查询，能力发现只读实际注册表。（已完成）
-4. 实现角色详情只读查询及成长、属性、技能和状态用例。（基础列表和维护入口已完成）
-5. 实现基于在线测试角色附近合法格子的魔物一次性召唤。（命令和页面入口已完成）
-6. 实现受白名单约束的经验/掉落配置草稿、应用、回读和回滚。（已完成；测试环境真实保存链路已验收）
-
-每一步先完成 Contract、Service、协议测试和失败路径测试，再接入页面。涉及 map-server 的能力必须补充真实运行服务验收。
-
-## 实现记录
-
-- 已完成 Laravel 命令 DTO、状态机、幂等持久化和 HTTP Gateway。
-- 已增加命令提交路由 Feature 测试，覆盖 FormRequest、权限、幂等持久化和成功状态转换。
-- 已统一魔物召唤持续时间字段为 `duration_seconds`，并在 map-server 对非对象 payload 明确拒绝，避免静默使用默认值。
-- map-server 对角色成长、属性、魔物召唤和状态恢复执行严格字段白名单校验，未知字段统一拒绝。
-- 已完成 web-server 默认关闭的能力发现端点。
-- map-server 已实现 Unix Socket 控制通道和角色、召唤、倍率命令；默认配置仍关闭，测试环境真实通道和在线角色操作均已验收。

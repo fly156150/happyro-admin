@@ -2,7 +2,7 @@
 
 ## 状态
 
-开发中
+当前已提供受控设置的读取、应用、回读及修改记录；开放键以 GameServerSettingRegistry 为准。
 
 ## 子菜单
 
@@ -48,36 +48,18 @@
 - Game Control 当前由 loopback HTTP 转发到同机 Unix Socket；跨主机生产部署必须增加受信任的 TLS 终止和网络访问控制。
 - HTTP 控制器、CLI 命令和队列任务只负责输入转换并调用相同 Service。
 - 配置来源以 HappyRO Server 的 `conf/battle/exp.conf`、`conf/battle/drops.conf` 和 `conf/import/battle_conf.txt` 为准，后台保留参数注册表副本并记录来源。
-- 第一阶段只开放经验和常用掉率，不建立任意配置文件编辑器。
+- 开放项包括经验、掉率及已登记的地图传送／召唤等规则，以注册表为准，不建立任意配置文件编辑器。
 
 计划权限拆分为 `settings.game-data.manage`、`settings.game-settings.view` 和 `settings.game-settings.manage`，不继续使用一个覆盖全部设置的宽泛权限。
 
-## 实现记录
+## 当前接口与权限
 
-- 已完成游戏资料版本设置。
-- 已完成 Game Control 命令类型、严格状态流转、幂等提交、执行结果和失败信息的后台持久化基础。
-- 已建立 game_server_settings 和 game_server_setting_revisions 表，保存当前值和不可变版本基础。
-- 已增加配置版本 Repository 和创建 Service，版本号按服务器在事务中递增并支持依赖注入。
-- 已增加 GameServerSettingRegistry，集中定义允许的倍率键、范围、单位和来源文件，并覆盖未知键测试。
-- 已增加可注入的配置管理区块写入器，只更新 HAPPYRO ADMIN 管理区块并使用临时文件原子替换。
-- 已增加配置准备 Service，在写入前完成注册表校验并创建草稿版本。
-- 配置版本 Repository 已限制 draft 只能转换为 applied 或 failed，并记录应用时间。
-- 配置写入器已支持读取和原子恢复完整配置快照，为应用失败回滚保留原始内容。
-- 已增加配置应用 Service，串联快照、草稿版本、配置写入、Game Control 执行、实际值回读和 applied/failed 状态；失败时恢复旧快照。
-- 已增加当前配置 Repository，成功回读后幂等更新 `game_server_settings` 投影，按服务器和配置键保持唯一。
-- 已增加当前配置投影的数据库级幂等测试。
-- 已增加受保护的 battle_config.read 回读接口，用于确认 map-server 实际运行值。
-- Laravel Gateway 已提供 battleConfig() 和 /api/operations/game-control/battle-config，配置页面可读取实际值。
-- 命令执行已区分明确失败与结果不确定：网络超时或服务端 5xx 进入 `indeterminate`，不得自动重试产生副作用；使用原命令 ID 和幂等键确认或重试。
-- 已增加 `GET/PUT /api/settings/game-settings`，返回服务端实际值、注册表定义并应用倍率变更。
-- 已增加 `/settings/game-settings` 页面，参数字段由 API 注册表动态生成，提交时可填写修改备注。
-- 配置应用成功必须通过 map-server 回读校验；失败会恢复配置快照并将版本标记为 failed。
-- 配置 API 的 FormRequest 会先按同一注册表校验未知键和取值范围，输入错误返回 422，Service 层仍保留二次校验。
-- 已增加游戏设置 API 的读取、权限和非法参数 Feature 测试。
-- 已增加配置修改记录页面：游戏设置版本展示倍率修改值、备注、操作者及应用状态，游戏资料记录展示客户端与服务端版本变更前后值。
+`GET/PUT /api/settings/game-settings` 读取及应用设置，`GET /api/settings/game-settings/history` 查询修改记录；资料版本与历史使用 game-data 路由。当前均由 `settings.manage` 保护，细分权限仍属待办。
+
+请求层与 Service 同时校验注册表键和范围。命令结果不确定时保留 indeterminate，不自动重试产生副作用；配置应用成功需回读 map-server，失败恢复文件快照并标记失败。
 
 ## 待办
 
-- 建立生产密钥生成、注入、轮换和安全传输方案。
+- 完善密钥轮换与跨主机传输验收；现有生成和注入见[部署](../deployment.md)。
 - 增加配置版本显式回滚入口。
 - 将 `settings.manage` 进一步拆分为游戏资料和游戏设置的查看、管理权限。
