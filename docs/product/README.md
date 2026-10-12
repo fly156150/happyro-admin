@@ -1,23 +1,16 @@
 # 产品文档
 
-本目录记录 HappyRO Admin 的产品规划、功能设计和项目进度。
-
-## 文档结构
-
-- `progress.md`：项目总体进度。
-- `features/`：单个功能的设计、实现记录和待办事项。
-
-每个功能使用一个 Markdown 文件，保持设计和实现记录在同一处。
+本目录维护当前能力、权限边界与未完成事项，不重复保存实施顺序和阶段进度。
 
 ## 功能文档
 
-- [用户管理](features/user-management.md)：玩家账号、角色查询和角色维护。
-- [游戏资料](features/game-data.md)：物品、魔物、NPC 和地图等只读资料。
-- [运营管理](features/operations-management.md)：物品发放和运行中世界操作。
-- [系统设置](features/system-settings.md)：资料版本和游戏服务器参数。
-- [Game Control](features/game-control.md)：后台命令协议、进程边界、幂等和安全约束。
+- [用户管理](user-management.md)：玩家账号、角色查询和角色维护。
+- [游戏资料](game-data.md)：物品、魔物、NPC 和地图等只读资料。
+- [运营管理](operations-management.md)：物品发放和运行中世界操作。
+- [系统设置](system-settings.md)：资料版本和游戏服务器参数。
+- [Game Control](game-control.md)：后台命令协议、进程边界、幂等和安全约束。
 
-## 目标代码结构
+## 代码职责
 
 后端继续遵循 Laravel 的入口、用例、契约和基础设施分层，并按业务域组织：
 
@@ -48,3 +41,10 @@ frontend/src/pages/
 ```
 
 角色维护收敛在 `players/characters` 的详情页面中，不为等级、属性和技能分别创建侧栏菜单。魔物召唤放在 `operations/monster-spawns`，游戏参数放在 `settings/game-settings`。
+
+## 待完善事项
+
+- 角色维护、魔物召唤和设置权限仍可进一步按业务拆分；具体差异见各功能页。
+- 技能详情、审计查询、高风险操作原因及配置显式回滚入口仍需完善。
+- 真机／在线状态、失败回滚、幂等与真实消耗需针对最终部署验收；旧测试数量不证明当前版本通过。
+- 密钥轮换与跨主机控制通道单独设计和验证；基础 Docker 密钥生成与注入已实现。

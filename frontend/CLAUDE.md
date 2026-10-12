@@ -1,4 +1,4 @@
-# CLAUDE.md
+# HappyRO Admin 前端代理说明
 
 ## Project
 
@@ -6,7 +6,7 @@ Ant Design Pro — React enterprise boilerplate on Umi Max v4, antd v6, ProCompo
 
 ## Commands
 
-`npm start` (dev+mock), `npm run dev` (no mock), `npm run build` (utoopack), `npm run lint` (Biome+tsc), `npm run test` (Jest), `npx antd lint ./src` (antd-specific checks).
+`npm start` (no mock), `npm run dev` (no mock), `npm run build` (utoopack), `npm run lint` (Biome+tsc), `npm run test` (Vitest), `npx antd lint ./src` (antd-specific checks).
 
 Other: `npm run openapi` (regenerate `src/services/`), `npm run simple` (**irreversible** — commit first), `npm run biome` (auto-fix), `npm run tsc` (type-check only).
 
@@ -26,7 +26,7 @@ Other: `npm run openapi` (regenerate `src/services/`), `npm run simple` (**irrev
 
 **Convention files** (`src/`): `app.tsx` (runtime config + `getInitialState`), `access.ts` (permissions), `global.tsx` (side effects), `loading.tsx`, `typings.d.ts`.
 
-**Auth**: `getInitialState()` → `GET /api/currentUser`; 401 → redirect login. `access.ts`: `canAdmin = currentUser.access === 'admin'`. Mock creds: `admin`/`ant.design` or `user`/`ant.design`.
+**Auth**: `src/services/auth/` connects to Laravel Session/Sanctum. HappyRO permissions come from currentUser.permissions and are checked in access.ts and the backend. Upstream mock credentials and generated /api/currentUser examples are not production authentication.
 
 **State**: `useModel('filename')` for global hooks (`src/models/`). `useModel('@@initialState')` for currentUser/settings. ProTable `request` prop for most data loading. `@tanstack/react-query` for complex server state.
 
