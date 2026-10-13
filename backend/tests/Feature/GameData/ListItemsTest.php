@@ -5,7 +5,6 @@ namespace Tests\Feature\GameData;
 use App\Contracts\GameData\ItemAssetRepository;
 use App\Contracts\GameData\ItemViewBuilder;
 use App\Models\GameDataCatalog;
-use App\Models\GameDataSetting;
 use App\Models\GameItem;
 use App\Models\GameItemSource;
 use App\Models\Role;
@@ -21,7 +20,7 @@ final class ListItemsTest extends TestCase
     {
         $client = GameDataCatalog::factory()->create(['source' => 'client', 'ruleset' => 'client', 'source_version' => 'kro-20211105']);
         $server = GameDataCatalog::factory()->create(['source' => 'server', 'ruleset' => 'renewal', 'source_version' => 'server123']);
-        GameDataSetting::query()->whereKey(1)->update(['client_version' => 'kro-20211105', 'server_version' => 'server123']);
+        config(['happyro.game_data.default_client_version' => 'kro-20211105', 'happyro.game_data.default_server_version' => 'server123']);
         $this->source($client, 501, [
             'name_zh_cn' => '客户端红药',
             'name_en_us' => 'Red Potion',
@@ -57,7 +56,7 @@ final class ListItemsTest extends TestCase
     {
         $client = GameDataCatalog::factory()->create(['source' => 'client', 'ruleset' => 'client', 'source_version' => 'client1']);
         $server = GameDataCatalog::factory()->create(['source' => 'server', 'ruleset' => 'renewal', 'source_version' => 'server1']);
-        GameDataSetting::query()->whereKey(1)->update(['client_version' => 'client1', 'server_version' => 'server1']);
+        config(['happyro.game_data.default_client_version' => 'client1', 'happyro.game_data.default_server_version' => 'server1']);
         $this->source($client, 501, ['name_zh_cn' => '特别红药', 'name_en_us' => 'Red Potion']);
         $this->source($server, 501, ['name_zh_cn' => '红色药水', 'name_en_us' => 'Red Potion', 'item_type' => 'Healing']);
         app(ItemViewBuilder::class)->rebuildAll();
@@ -78,6 +77,36 @@ final class ListItemsTest extends TestCase
         $this->actingAs($this->superAdmin())
             ->getJson('/api/game-data/items?range=invalid')
             ->assertUnprocessable();
+    }
+
+    public function test_subtypes_follow_catalog_range_and_type_without_search_or_pagination(): void
+    {
+        $client = GameDataCatalog::factory()->create(['source' => 'client', 'ruleset' => 'client', 'source_version' => 'client1']);
+        $server = GameDataCatalog::factory()->create(['source' => 'server', 'ruleset' => 'renewal', 'source_version' => 'server1']);
+        config(['happyro.game_data.default_client_version' => 'client1', 'happyro.game_data.default_server_version' => 'server1']);
+        foreach ([501 => 'Dagger', 502 => 'Bow', 503 => 'Dagger', 504 => null, 505 => ''] as $id => $subtype) {
+            $this->source($client, $id, ['name_zh_cn' => "物品{$id}"]);
+            $this->source($server, $id, ['item_type' => 'Weapon', 'item_subtype' => $subtype]);
+        }
+        $this->source($server, 506, ['item_type' => 'Weapon', 'item_subtype' => 'Rifle']);
+        $this->source($client, 507, ['name_zh_cn' => '衣服']);
+        $this->source($server, 507, ['item_type' => 'Armor', 'item_subtype' => 'Armor']);
+        app(ItemViewBuilder::class)->rebuildAll();
+        $this->withoutAssets();
+        $this->actingAs($this->superAdmin());
+
+        $this->getJson('/api/game-data/items?range=client&type=Weapon&perPage=1')
+            ->assertOk()->assertJsonPath('subtypes', ['Bow', 'Dagger']);
+        $this->getJson('/api/game-data/items?range=client&type=Weapon&subtype=Dagger&query=absent')
+            ->assertOk()->assertJsonPath('total', 0)->assertJsonPath('subtypes', ['Bow', 'Dagger']);
+        $this->getJson('/api/game-data/items?range=server&type=Weapon')
+            ->assertOk()->assertJsonPath('subtypes', ['Bow', 'Dagger', 'Rifle']);
+        $this->getJson('/api/game-data/items?range=client&type=Armor')
+            ->assertOk()->assertJsonPath('subtypes', ['Armor']);
+        $this->getJson('/api/game-data/items?range=client&type=Healing')
+            ->assertOk()->assertJsonPath('subtypes', []);
+        $this->getJson('/api/game-data/items?range=client')
+            ->assertOk()->assertJsonPath('subtypes', []);
     }
 
     private function withoutAssets(): void

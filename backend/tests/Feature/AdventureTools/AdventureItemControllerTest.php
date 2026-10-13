@@ -53,11 +53,11 @@ final class AdventureItemControllerTest extends TestCase
     {
         $items = Mockery::mock(ItemRepository::class);
         $items->expects('search')->with(Mockery::on(fn (ItemQuery $query): bool => $query->range === 'client' && $query->query === '红药'))
-            ->andReturn(['data' => [$this->item()], 'total' => 1]);
+            ->andReturn(['data' => [$this->item()], 'total' => 1, 'subtypes' => []]);
         $this->app->instance(ItemRepository::class, $items);
 
         $this->withHeaders($this->headers())->getJson('/api/adventure-tools/items?query=红药')
-            ->assertOk()->assertJsonPath('total', 1)->assertJsonPath('data.0.names.zh-CN', '红色药水');
+            ->assertOk()->assertJsonPath('total', 1)->assertJsonPath('subtypes', [])->assertJsonPath('data.0.names.zh-CN', '红色药水');
     }
 
     public function test_everyone_policy_grants_only_to_authenticated_character_inventory(): void

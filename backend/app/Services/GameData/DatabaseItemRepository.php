@@ -15,9 +15,14 @@ final class DatabaseItemRepository implements ItemRepository
 
     public function search(ItemQuery $query): array
     {
-        $builder = $this->query($query->range)
+        $base = $this->query($query->range)
+            ->when($query->type, fn (Builder $items, string $value): Builder => $items->where('item_type', $value));
+        $subtypes = $query->type
+            ? (clone $base)->whereNotNull('item_subtype')->where('item_subtype', '!=', '')
+                ->distinct()->orderBy('item_subtype')->pluck('item_subtype')->all()
+            : [];
+        $builder = $base
             ->when($query->query, fn (Builder $items, string $value): Builder => $this->matching($items, $value))
-            ->when($query->type, fn (Builder $items, string $value): Builder => $items->where('item_type', $value))
             ->when($query->subtype, fn (Builder $items, string $value): Builder => $items->where('item_subtype', $value));
         $total = (clone $builder)->count();
         $records = $builder
@@ -26,7 +31,7 @@ final class DatabaseItemRepository implements ItemRepository
             ->forPage($query->page, $query->perPage)
             ->get();
 
-        return ['data' => $records->map($this->payload(...))->all(), 'total' => $total];
+        return ['data' => $records->map($this->payload(...))->all(), 'total' => $total, 'subtypes' => $subtypes];
     }
 
     public function find(int $itemId, string $range): ?array
