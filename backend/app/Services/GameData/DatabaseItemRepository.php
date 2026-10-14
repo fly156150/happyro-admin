@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 final class DatabaseItemRepository implements ItemRepository
 {
-    public function __construct(private readonly GameDataSettingRepository $settings) {}
+    public function __construct(private readonly GameDataSettingRepository $settings, private readonly DatabaseItemDropRepository $drops) {}
 
     public function search(ItemQuery $query): array
     {
@@ -21,6 +21,9 @@ final class DatabaseItemRepository implements ItemRepository
             ? (clone $base)->whereNotNull('item_subtype')->where('item_subtype', '!=', '')
                 ->distinct()->orderBy('item_subtype')->pluck('item_subtype')->all()
             : [];
+        if ($query->dropKind !== 'all') {
+            $base->whereIn('aegis_name', $this->drops->query()->where('monsters.kind', $query->dropKind)->select('drops.item_aegis_name'));
+        }
         $builder = $base
             ->when($query->query, fn (Builder $items, string $value): Builder => $this->matching($items, $value))
             ->when($query->subtype, fn (Builder $items, string $value): Builder => $items->where('item_subtype', $value));
@@ -41,7 +44,7 @@ final class DatabaseItemRepository implements ItemRepository
             ->where('item_id', $itemId)
             ->first();
 
-        return $record ? $this->payload($record) : null;
+        return $record ? [...$this->payload($record), 'dropSources' => $this->drops->sources($record->aegis_name)] : null;
     }
 
     private function query(string $range): Builder

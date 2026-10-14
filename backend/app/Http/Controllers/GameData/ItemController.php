@@ -27,6 +27,7 @@ final class ItemController
             $data['range'] ?? 'client',
             $data['page'] ?? 1,
             $data['perPage'] ?? 20,
+            $data['dropKind'] ?? 'all',
         ));
         $result['data'] = array_map($this->withAssetUrls(...), $result['data']);
 

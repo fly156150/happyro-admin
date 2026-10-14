@@ -7,6 +7,7 @@ use App\Data\GameData\MonsterCatalogSnapshot;
 use App\Data\GameData\MonsterKind;
 use App\Models\GameDataCatalog;
 use App\Models\GameMonster;
+use App\Services\GameData\DatabaseMonsterDropIndex;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -14,7 +15,7 @@ use RuntimeException;
 
 final readonly class DatabaseMonsterCatalogRepository implements MonsterCatalogRepository
 {
-    public function __construct(private DatabaseManager $database) {}
+    public function __construct(private DatabaseManager $database, private DatabaseMonsterDropIndex $drops) {}
 
     public function replace(MonsterCatalogSnapshot $snapshot): array
     {
@@ -45,6 +46,7 @@ final readonly class DatabaseMonsterCatalogRepository implements MonsterCatalogR
         }
         $deleted = GameMonster::query()->where('game_data_catalog_id', $catalog->id)
             ->where('sync_token', '!=', $token)->delete();
+        $this->drops->rebuild($catalog->id);
         $catalog->update([
             'content_hash' => $snapshot->contentHash, 'record_count' => count($snapshot->monsters),
             'source_metadata' => $snapshot->metadata, 'imported_at' => $now,
