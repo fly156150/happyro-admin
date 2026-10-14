@@ -28,6 +28,7 @@ export type ItemGrantTarget = {
 export type ItemGrantItem = {
   item_id: number;
   aegis_name?: string;
+  type?: string | null;
   names: Record<string, string>;
 };
 

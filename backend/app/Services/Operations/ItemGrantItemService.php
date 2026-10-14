@@ -11,7 +11,7 @@ final class ItemGrantItemService
 
     public function __construct(private readonly ItemRepository $items) {}
 
-    /** @return list<array{item_id: int, aegis_name: string|null, names: array<string, string>}> */
+    /** @return list<array{item_id: int, aegis_name: string|null, names: array<string, string>, type: string|null}> */
     public function search(string $target): array
     {
         $result = $this->items->search(new ItemQuery(
@@ -27,6 +27,7 @@ final class ItemGrantItemService
             'item_id' => (int) $item['Id'],
             'aegis_name' => $item['AegisName'] ?? null,
             'names' => $item['names'],
+            'type' => $item['Type'] ?? null,
         ], $result['data']);
     }
 }

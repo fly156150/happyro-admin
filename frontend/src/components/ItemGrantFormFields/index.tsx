@@ -7,19 +7,22 @@ import {
   ProFormTextArea,
 } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
-import { Select } from 'antd';
+import { Form, Select } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import CharacterGrantTargetField from '@/components/CharacterGrantTargetField';
 import { searchItemGrantItems } from '@/services/operations/item-grants';
+import { mailTextRule } from './validation';
 
 type Props = {
   itemId?: number;
+  itemType?: string;
   onItemChange?: (itemId?: number) => void;
 };
 
 type SelectOption = {
   label: string;
   value: number;
+  type?: string | null;
 };
 
 function useRemoteOptions(loader: (target: string) => Promise<SelectOption[]>) {
@@ -60,8 +63,20 @@ function useRemoteOptions(loader: (target: string) => Promise<SelectOption[]>) {
   return { loading, options, search };
 }
 
-export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
+export default function ItemGrantFormFields({
+  itemId,
+  itemType,
+  onItemChange,
+}: Props) {
   const intl = useIntl();
+  const selectedId = Form.useWatch('item_id');
+  const [selected, setSelected] = useState<SelectOption>();
+  const isPetEgg =
+    (itemId !== undefined
+      ? itemType
+      : selected?.value === selectedId
+        ? selected?.type
+        : undefined) === 'PetEgg';
   const t = (id: string, fallback: string) =>
     intl.formatMessage({ id, defaultMessage: fallback });
   const loadItems = useCallback(
@@ -74,6 +89,7 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
           item.aegis_name ||
           '未命名物品',
         value: item.item_id,
+        type: item.type,
       }));
     },
     [intl.locale],
@@ -95,7 +111,10 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
               onSearch: itemOptions.search,
             }}
             loading={itemOptions.loading}
-            onChange={onItemChange}
+            onChange={(value, option) => {
+              setSelected(Array.isArray(option) ? undefined : option);
+              onItemChange?.(value);
+            }}
             options={itemOptions.options}
             placeholder={t(
               'operations.itemGrants.itemPlaceholder',
@@ -119,6 +138,16 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
         label={t('operations.itemGrants.delivery', '发放方式')}
         initialValue="mail"
         radioType="button"
+        dependencies={['item_id']}
+        rules={[
+          {
+            validator: async (_rule, value) => {
+              if (isPetEgg && value === 'inventory')
+                throw new Error('宠物蛋仅支持邮件发放，每次 1 个。');
+            },
+          },
+        ]}
+        extra={isPetEgg ? '宠物蛋仅支持邮件发放，每次 1 个。' : undefined}
         options={[
           {
             label: t('operations.itemGrants.delivery.mail', '邮件'),
@@ -127,6 +156,7 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
           {
             label: t('operations.itemGrants.delivery.inventory', '背包'),
             value: 'inventory',
+            disabled: isPetEgg,
           },
         ]}
       />
@@ -134,10 +164,14 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
         name="amount"
         label={t('operations.itemGrants.amount', '数量')}
         min={1}
-        max={30000}
+        max={isPetEgg ? 1 : 30000}
         fieldProps={{ precision: 0 }}
         initialValue={1}
-        rules={[{ required: true }]}
+        dependencies={['item_id']}
+        rules={[
+          { required: true },
+          { type: 'number', min: 1, max: isPetEgg ? 1 : 30000 },
+        ]}
       />
       <ProFormDependency name={['delivery']}>
         {({ delivery }) =>
@@ -157,7 +191,7 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
                   'operations.itemGrants.defaultTitle',
                   '物品发放',
                 )}
-                rules={[{ required: true, max: 45 }]}
+                rules={[{ required: true }, mailTextRule(39, '邮件标题')]}
               />
               <ProFormTextArea
                 name="message"
@@ -167,7 +201,7 @@ export default function ItemGrantFormFields({ itemId, onItemChange }: Props) {
                   '管理员向你发放了物品。',
                 )}
                 fieldProps={{ autoSize: { minRows: 3, maxRows: 6 } }}
-                rules={[{ required: true, max: 500 }]}
+                rules={[{ required: true }, mailTextRule(499, '邮件内容')]}
               />
             </>
           )

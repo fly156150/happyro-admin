@@ -11,6 +11,7 @@ use App\Exceptions\ItemNotFoundException;
 use App\Models\User;
 use App\Services\GameServer\ExecuteGameServerCommandService;
 use App\Services\GameServer\SubmitGameServerCommandService;
+use Illuminate\Validation\ValidationException;
 
 final class GrantCharacterInventoryItemService
 {
@@ -27,6 +28,10 @@ final class GrantCharacterInventoryItemService
         $item = $this->items->find($data['item_id'], 'server');
         if (! $item) {
             throw new ItemNotFoundException($data['item_id']);
+        }
+
+        if (($item['Type'] ?? null) === 'PetEgg') {
+            throw ValidationException::withMessages(['delivery' => '宠物蛋仅支持邮件发放，每次 1 个。']);
         }
 
         $submission = $this->submit->submit(new GameServerCommandRequest(

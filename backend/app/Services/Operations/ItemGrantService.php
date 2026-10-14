@@ -11,6 +11,8 @@ use App\Exceptions\ItemGrantConflictException;
 use App\Exceptions\ItemNotFoundException;
 use App\Models\ItemGrantRecord;
 use App\Models\User;
+use App\Rules\GameMailText;
+use Illuminate\Validation\ValidationException;
 
 final class ItemGrantService
 {
@@ -32,11 +34,26 @@ final class ItemGrantService
         if ($existing) {
             return $this->replay($existing, $requestHash);
         }
-        if (! $this->items->find(
-            (int) $data['item_id'],
-            'server',
-        )) {
+        $item = $this->items->find((int) $data['item_id'], 'server');
+        if (! $item) {
             throw new ItemNotFoundException((int) $data['item_id']);
+        }
+        if (($item['Type'] ?? null) === 'PetEgg' && (int) $data['amount'] !== 1) {
+            throw ValidationException::withMessages(['amount' => '宠物蛋邮件每次只能发放 1 个。']);
+        }
+        // Source: happyro-server/src/map/itemdb.cpp::isStackable/inventorySlotNeeded;
+        // PACKETVER=20211103 allows five attachments (src/common/mmo.hpp).
+        $separateAttachments = in_array($item['Type'] ?? null, ['Weapon', 'Armor', 'PetEgg', 'PetArmor', 'ShadowGear'], true)
+            || ($item['Flags']['UniqueId'] ?? false) === true;
+        if ($separateAttachments && (int) $data['amount'] > 5) {
+            throw ValidationException::withMessages(['amount' => '此物品每封邮件最多发放 5 件，请分批发放。']);
+        }
+        $attachmentAmounts = $separateAttachments ? array_fill(0, (int) $data['amount'], 1) : [(int) $data['amount']];
+        $sender = $operator->username ?? $operator->name ?? 'admin';
+        foreach (['title' => [39, '邮件标题'], 'message' => [499, '邮件内容'], 'send_name' => [23, '发件人名称']] as $field => [$maximum, $label]) {
+            (new GameMailText($maximum, $label))->validate($field, $field === 'send_name' ? $sender : $data[$field], function (string $message) use ($field): void {
+                throw ValidationException::withMessages([$field => $message]);
+            });
         }
         $record = $this->records->createPending(
             $data['idempotency_key'],
@@ -46,7 +63,7 @@ final class ItemGrantService
             return $this->replay($record, $requestHash);
         }
         try {
-            $mailId = $this->grants->mail($data + ['send_name' => $operator->username ?? $operator->name ?? 'admin']);
+            $mailId = $this->grants->mail([...$data, 'send_name' => $sender, 'attachment_amounts' => $attachmentAmounts]);
             $this->records->markSent($record, $mailId);
         } catch (\Throwable $exception) {
             $this->records->markFailed($record, 'item_grant_failed');
