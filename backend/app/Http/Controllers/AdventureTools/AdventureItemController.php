@@ -39,6 +39,7 @@ final class AdventureItemController
             'client',
             $data['page'] ?? 1,
             $data['perPage'] ?? 30,
+            $data['dropKind'] ?? 'all',
         ));
         $result['data'] = array_map($this->withAssets(...), $result['data']);
 

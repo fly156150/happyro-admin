@@ -17,6 +17,7 @@ final class ListAdventureItemsRequest extends FormRequest
             'query' => ['nullable', 'string', 'max:100'],
             'type' => ['nullable', 'string', 'max:32'],
             'subtype' => ['nullable', 'string', 'max:32'],
+            'dropKind' => ['nullable', 'in:all,normal,mvp,mini'],
             'page' => ['nullable', 'integer', 'min:1'],
             'perPage' => ['nullable', 'integer', 'min:1', 'max:50'],
         ];

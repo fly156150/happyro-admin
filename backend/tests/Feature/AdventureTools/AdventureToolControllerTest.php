@@ -106,6 +106,51 @@ final class AdventureToolControllerTest extends TestCase
         ]);
     }
 
+    public function test_normal_players_can_read_allocation_limits_without_maintenance_permission(): void
+    {
+        $this->createSession(groupId: 0);
+        $limits = ['base' => ['str' => 32767], 'traits' => ['pow' => 110]];
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('characterSnapshot')->once()->with(150002)->andReturn(
+            $this->snapshot() + ['allocation_limits' => $limits],
+        );
+        $gateway->expects('battleConfig')->once()->andReturn(['game_tools_character_maintenance_policy' => 1]);
+        $gateway->shouldNotReceive('execute');
+        $this->app->instance(GameServerGateway::class, $gateway);
+
+        $this->withHeaders($this->headers())->getJson('/api/adventure-tools/character/allocation-limits')
+            ->assertOk()->assertExactJson(['data' => $limits]);
+        $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
+            'idempotency_key' => 'b4f1a99d-51d9-4b64-a45c-450e19567e91',
+            'type' => 'character.stats.update',
+            'payload' => ['str' => 20],
+        ])->assertForbidden();
+    }
+
+    public function test_allocation_limits_require_an_authenticated_online_owned_character(): void
+    {
+        $this->getJson('/api/adventure-tools/character/allocation-limits')->assertUnauthorized();
+        $this->createSession(groupId: 0, online: false);
+        $this->withHeaders($this->headers())->getJson('/api/adventure-tools/character/allocation-limits')->assertUnauthorized();
+        DB::connection('game')->table('char')->where('char_id', 150002)->update([
+            'account_id' => 2000002,
+            'online' => 1,
+        ]);
+        $this->withHeaders($this->headers())->getJson('/api/adventure-tools/character/allocation-limits')->assertUnauthorized();
+    }
+
+    public function test_allocation_limits_report_an_unavailable_game_server(): void
+    {
+        $this->createSession(groupId: 0);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('characterSnapshot')->once()->with(150002)
+            ->andThrow(new GameServerGatewayException('map_server_unavailable', '地图服务不可用'));
+        $this->app->instance(GameServerGateway::class, $gateway);
+
+        $this->withHeaders($this->headers())->getJson('/api/adventure-tools/character/allocation-limits')
+            ->assertServiceUnavailable()->assertJsonPath('error.code', 'map_server_unavailable');
+    }
+
     public function test_admin_policy_uses_the_configured_game_group(): void
     {
         $this->createSession(groupId: 0);

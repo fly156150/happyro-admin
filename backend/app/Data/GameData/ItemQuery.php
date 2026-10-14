@@ -11,5 +11,6 @@ final readonly class ItemQuery
         public string $range,
         public int $page,
         public int $perPage,
+        public string $dropKind = 'all',
     ) {}
 }

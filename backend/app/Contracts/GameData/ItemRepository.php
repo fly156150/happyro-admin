@@ -6,7 +6,7 @@ use App\Data\GameData\ItemQuery;
 
 interface ItemRepository
 {
-    /** @return array{data: list<array<string, mixed>>, total: int} */
+    /** @return array{data: list<array<string, mixed>>, total: int, subtypes: list<string>} */
     public function search(ItemQuery $query): array;
 
     /** @return array<string, mixed>|null */
