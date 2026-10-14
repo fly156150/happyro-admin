@@ -8,15 +8,9 @@ import {
 import { useAccess, useIntl } from '@umijs/max';
 import { Button, Descriptions, Drawer, Tag } from 'antd';
 import type { RefObject } from 'react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import ItemGrantModal from '@/components/ItemGrantModal';
-import {
-  ARMOR_SLOT_CODES,
-  CARD_SUBTYPE_CODES,
-  ITEM_TYPE_CODES,
-  SUBTYPE_FILTER_TYPES,
-  WEAPON_SUBTYPE_CODES,
-} from '@/data/game/item-types';
+import { ITEM_TYPE_CODES } from '@/data/game/item-types';
 import {
   type GameDataItem,
   getItem,
@@ -25,6 +19,7 @@ import {
   listItems,
 } from '@/services/game-data/items';
 import { toPlainRagnarokText } from '@/utils/format';
+import ItemDropSources from './ItemDropSources';
 
 type Translate = (id: string, fallback: string) => string;
 
@@ -33,31 +28,13 @@ type ItemColumnsOptions = {
   formRef: RefObject<ProFormInstance | undefined>;
   locale: string;
   selectedItemType?: string;
+  availableSubtypes: string[];
   setDetail: (item: GameDataItem) => void;
   t: Translate;
 };
 
 function itemTypeLabel(type: string | undefined, t: Translate): string {
   return type ? t(`gameData.item.type.${type.toLowerCase()}`, type) : '-';
-}
-
-function hasSubtypeFilter(type: string | undefined): boolean {
-  return SUBTYPE_FILTER_TYPES.includes(
-    type as (typeof SUBTYPE_FILTER_TYPES)[number],
-  );
-}
-
-function subtypeCodes(type: string | undefined): readonly string[] {
-  if (type === 'Weapon') {
-    return WEAPON_SUBTYPE_CODES;
-  }
-  if (type === 'Armor') {
-    return ARMOR_SLOT_CODES;
-  }
-  if (type === 'Card') {
-    return CARD_SUBTYPE_CODES;
-  }
-  return [];
 }
 
 function subtypeMessageId(type: string | undefined, subtype: string): string {
@@ -95,6 +72,7 @@ function useItemColumns({
   formRef,
   locale,
   selectedItemType,
+  availableSubtypes,
   setDetail,
   t,
 }: ItemColumnsOptions) {
@@ -158,14 +136,14 @@ function useItemColumns({
         ),
         render: (_, row) => itemTypeLabel(row.Type, t),
       },
-      ...(hasSubtypeFilter(selectedItemType)
+      ...(availableSubtypes.length > 0
         ? [
             {
               title: t('gameData.item.subtype', '子类'),
               dataIndex: 'subtype',
               hideInTable: true,
               valueEnum: Object.fromEntries(
-                subtypeCodes(selectedItemType).map((subtype) => [
+                availableSubtypes.map((subtype) => [
                   subtype,
                   subtypeLabel(subtype, selectedItemType, t),
                 ]),
@@ -173,6 +151,18 @@ function useItemColumns({
             },
           ]
         : []),
+      {
+        title: '掉落来源',
+        dataIndex: 'dropKind',
+        hideInTable: true,
+        initialValue: 'all',
+        valueEnum: {
+          all: '全部来源',
+          normal: '普通魔物',
+          mvp: 'MVP',
+          mini: 'Mini',
+        },
+      },
       {
         title: t('gameData.item.weight', '重量'),
         dataIndex: 'Weight',
@@ -209,6 +199,7 @@ function useItemColumns({
             {canGrantItems && (
               <ItemGrantModal
                 itemId={row.Id}
+                itemType={row.Type}
                 itemName={itemName(row, locale)}
               />
             )}
@@ -226,7 +217,7 @@ function useItemColumns({
         ),
       },
     ],
-    [canGrantItems, locale, selectedItemType],
+    [canGrantItems, locale, selectedItemType, availableSubtypes],
   );
 }
 
@@ -236,6 +227,29 @@ export default function Items() {
   const formRef = useRef<ProFormInstance | undefined>(undefined);
   const [detail, setDetail] = useState<GameDataItem>();
   const [selectedItemType, setSelectedItemType] = useState<string>();
+  const [selectedRange, setSelectedRange] = useState('client');
+  const [availableSubtypes, setAvailableSubtypes] = useState<string[]>([]);
+  useEffect(() => {
+    let active = true;
+    setAvailableSubtypes([]);
+    if (selectedItemType) {
+      listItems({
+        type: selectedItemType,
+        range: selectedRange,
+        current: 1,
+        pageSize: 1,
+      })
+        .then((result) => {
+          if (active) setAvailableSubtypes(result.subtypes);
+        })
+        .catch(() => {
+          /* Shared request handler presents API failures. */
+        });
+    }
+    return () => {
+      active = false;
+    };
+  }, [selectedItemType, selectedRange]);
   const t = (id: string, fallback: string) =>
     intl.formatMessage({ id, defaultMessage: fallback });
   const locale = intl.locale;
@@ -245,6 +259,7 @@ export default function Items() {
     formRef,
     locale,
     selectedItemType,
+    availableSubtypes,
     setDetail,
     t,
   });
@@ -258,11 +273,19 @@ export default function Items() {
         search={{ defaultCollapsed: false }}
         form={{
           onValuesChange: (changedValues) => {
+            if ('range' in changedValues) {
+              setSelectedRange(changedValues.range || 'client');
+              formRef.current?.setFieldValue('subtype', undefined);
+            }
             if ('type' in changedValues) {
               setSelectedItemType(changedValues.type);
               formRef.current?.setFieldValue('subtype', undefined);
             }
           },
+        }}
+        onReset={() => {
+          setSelectedItemType(undefined);
+          setSelectedRange('client');
         }}
         request={async (params) => {
           const result = await listItems(params);
@@ -345,6 +368,7 @@ function ItemDetails({
           {item.Script || '-'}
         </Descriptions.Item>
       </Descriptions>
+      <ItemDropSources sources={item.dropSources ?? []} />
     </>
   );
 }
