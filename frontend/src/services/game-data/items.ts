@@ -2,6 +2,7 @@ import { request } from '@umijs/max';
 
 export type GameDataItem = {
   Id: number;
+  dropSources?: ItemDropSource[];
   icon?: string;
   illustration?: string;
   AegisName?: string;
@@ -22,12 +23,21 @@ export type GameDataItem = {
   serverVersion?: string;
 };
 
+export type ItemDropSource = {
+  id: number;
+  name: string;
+  kind: 'normal' | 'mini' | 'mvp';
+  level: number;
+  drops: { method: 'normal' | 'mvp_reward'; rate: number; count: number }[];
+};
+
 export type ItemDataRange = 'client' | 'server' | 'all';
 
 export type ItemQuery = {
   query?: string;
   type?: string;
   subtype?: string;
+  dropKind?: 'all' | 'normal' | 'mvp' | 'mini';
   range?: ItemDataRange;
 };
 
@@ -37,7 +47,7 @@ export function itemName(item: GameDataItem, locale: string): string {
 
 export async function listItems(params: Record<string, unknown>) {
   const { current, pageSize, ...filters } = params;
-  return request<{ data: GameDataItem[]; total: number }>('/api/game-data/items', { params: { ...filters, page: current, perPage: pageSize } });
+  return request<{ data: GameDataItem[]; total: number; subtypes: string[] }>('/api/game-data/items', { params: { ...filters, page: current, perPage: pageSize } });
 }
 
 export async function getItem(id: number, query: ItemQuery) {
