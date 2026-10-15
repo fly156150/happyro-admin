@@ -16,6 +16,7 @@ Route::prefix('adventure-tools')->middleware('game.session')->group(function ():
     Route::middleware('throttle:adventure-tools-read')->group(function (): void {
         Route::get('/bootstrap', [AdventureToolController::class, 'bootstrap']);
         Route::get('/character', [AdventureToolController::class, 'character']);
+        Route::get('/character/allocation-limits', [AdventureToolController::class, 'allocationLimits']);
         Route::get('/game-settings', [AdventureToolController::class, 'gameSettings']);
         Route::get('/items', [AdventureItemController::class, 'index']);
         Route::get('/items/{itemId}', [AdventureItemController::class, 'show'])->whereNumber('itemId');

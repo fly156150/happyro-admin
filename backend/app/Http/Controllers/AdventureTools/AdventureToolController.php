@@ -59,6 +59,18 @@ final class AdventureToolController extends Controller
         }
     }
 
+    public function allocationLimits(Request $request): JsonResponse
+    {
+        $principal = $this->principal($request);
+        try {
+            $snapshot = $this->gateway->characterSnapshot($principal->characterId);
+
+            return response()->json(['data' => $snapshot['allocation_limits']]);
+        } catch (GameServerGatewayException $exception) {
+            return $this->gatewayError($exception);
+        }
+    }
+
     public function maintain(RunCharacterMaintenanceRequest $request): JsonResponse
     {
         $principal = $this->principal($request);
