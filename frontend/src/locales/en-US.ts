@@ -8,6 +8,11 @@ import settingDrawer from './en-US/settingDrawer';
 import settings from './en-US/settings';
 
 export default {
+  'settings.gameSettings.tab.refinement': 'Equipment refinement',
+  'settings.gameSettings.key.refine_chance_rate':
+    'Refinement success multiplier',
+  'settings.gameSettings.key.refine_always_success':
+    'Guaranteed refinement success',
   'settings.gameData.title': 'Game data',
   'settings.gameData.loadFailed': 'Failed to load game data settings',
   'settings.gameData.saved': 'Game data settings saved',
