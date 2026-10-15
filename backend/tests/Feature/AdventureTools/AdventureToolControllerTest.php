@@ -275,7 +275,7 @@ final class AdventureToolControllerTest extends TestCase
         ]);
     }
 
-    public function test_updates_both_point_balances_in_one_command_for_the_authenticated_character(): void
+    public function test_updates_all_point_balances_in_one_command_for_the_authenticated_character(): void
     {
         $this->createSession(groupId: 0);
         $gateway = Mockery::mock(GameServerGateway::class);
@@ -283,17 +283,17 @@ final class AdventureToolControllerTest extends TestCase
         $gateway->expects('execute')->once()->with(Mockery::on(
             fn ($command) => $command->type->value === 'character.points.update'
                 && $command->targetId === '150002'
-                && $command->payload === ['skill_points' => 10, 'status_points' => 20],
-        ))->andReturn(new GameServerCommandResult(['skill_points' => 10, 'status_points' => 20]));
+                && $command->payload === ['skill_points' => 10, 'status_points' => 20, 'trait_points' => 30],
+        ))->andReturn(new GameServerCommandResult(['skill_points' => 10, 'status_points' => 20, 'trait_points' => 30]));
         $gateway->expects('characterSnapshot')->once()->with(150002)->andReturn([
-            ...$this->snapshot(), 'skill_points' => 10, 'status_points' => 20,
+            ...$this->snapshot(), 'skill_points' => 10, 'status_points' => 20, 'traits' => ['enabled' => true, 'points' => 30],
         ]);
         $this->app->instance(GameServerGateway::class, $gateway);
 
         $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
             'idempotency_key' => 'points-1', 'type' => 'character.points.update',
-            'payload' => ['skill_points' => 10, 'status_points' => 20],
-        ])->assertOk()->assertJsonPath('data.skill_points', 10)->assertJsonPath('data.status_points', 20);
+            'payload' => ['skill_points' => 10, 'status_points' => 20, 'trait_points' => 30],
+        ])->assertOk()->assertJsonPath('data.skill_points', 10)->assertJsonPath('data.status_points', 20)->assertJsonPath('data.traits.points', 30);
 
         $this->assertDatabaseHas('game_server_commands', [
             'idempotency_key' => 'points-1', 'type' => 'character.points.update', 'status' => 'succeeded',
@@ -307,7 +307,7 @@ final class AdventureToolControllerTest extends TestCase
         $gateway->shouldNotReceive('execute');
         $this->app->instance(GameServerGateway::class, $gateway);
 
-        foreach ([[], ['status_points' => -1], ['status_points' => 2147483648], ['skill_points' => 32768], ['status_points' => 2, 'base_level' => 10]] as $payload) {
+        foreach ([[], ['trait_points' => -1], ['trait_points' => 2147483648], ['status_points' => -1], ['status_points' => 2147483648], ['skill_points' => 32768], ['status_points' => 2, 'base_level' => 10]] as $payload) {
             $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
                 'idempotency_key' => 'points-invalid', 'type' => 'character.points.update', 'payload' => $payload,
             ])->assertUnprocessable();
