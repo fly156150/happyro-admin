@@ -8,10 +8,11 @@ import { createIdempotencyKey } from '@/utils/idempotency';
 
 type Props = {
   itemId: number;
+  itemType?: string;
   itemName: string;
 };
 
-export default function ItemGrantModal({ itemId, itemName }: Props) {
+export default function ItemGrantModal({ itemId, itemName, itemType }: Props) {
   const intl = useIntl();
   const { message } = App.useApp();
   const t = (id: string, fallback: string) =>
@@ -72,7 +73,7 @@ export default function ItemGrantModal({ itemId, itemName }: Props) {
           styles={{ image: { objectFit: 'contain' } }}
         />
       </div>
-      <ItemGrantFormFields itemId={itemId} />
+      <ItemGrantFormFields itemId={itemId} itemType={itemType} />
     </ModalForm>
   );
 }

@@ -20,6 +20,7 @@ final class ItemGrantItemServiceTest extends TestCase
             ->andReturn(['data' => [[
                 'Id' => 512,
                 'AegisName' => 'Apple',
+                'Type' => 'Healing',
                 'names' => ['zh-CN' => '苹果', 'en-US' => 'Apple'],
             ]], 'total' => 1]);
 
@@ -27,6 +28,7 @@ final class ItemGrantItemServiceTest extends TestCase
             'item_id' => 512,
             'aegis_name' => 'Apple',
             'names' => ['zh-CN' => '苹果', 'en-US' => 'Apple'],
+            'type' => 'Healing',
         ]], (new ItemGrantItemService($items))->search('苹果'));
     }
 }
