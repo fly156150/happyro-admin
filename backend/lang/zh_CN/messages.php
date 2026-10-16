@@ -1,6 +1,14 @@
 <?php
 
 return [
+    'riding_busy' => '当前状态无法操作，请结束对话、交易或仓库等操作后重试',
+    'riding_job_required' => '当前职业无法使用此功能',
+    'riding_skill_required' => '请先学习对应的骑乘或手推车技能',
+    'riding_conflict' => '请先解除当前坐骑',
+    'riding_insufficient_zeny' => 'Zeny 不足',
+    'riding_state_changed' => '骑乘状态已变化，请重新选择',
+    'riding_quote_changed' => '租用费用已变化，请重新确认',
+
     'player_database_unconfigured' => '玩家数据库尚未配置',
     'player_account_not_found' => '玩家账号不存在',
     'item_not_found' => '物品不存在',

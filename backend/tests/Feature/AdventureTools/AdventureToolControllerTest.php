@@ -396,6 +396,75 @@ final class AdventureToolControllerTest extends TestCase
         $this->assertDatabaseMissing('game_server_commands', ['idempotency_key' => 'traits-forbidden']);
     }
 
+    public function test_riding_command_targets_authenticated_character_and_replays_without_double_execution(): void
+    {
+        $this->createSession(groupId: 0);
+        $payload = ['kind' => 'cart', 'enabled' => true, 'fee' => 800, 'ticket' => false];
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('battleConfig')->twice()->andReturn(['game_tools_character_maintenance_policy' => 2]);
+        $gateway->expects('execute')->once()->with(Mockery::on(
+            fn ($command) => $command->type->value === 'character.riding.update'
+                && $command->targetId === '150002' && $command->payload === $payload,
+        ))->andReturn(new GameServerCommandResult(['char_id' => 150002]));
+        $gateway->expects('characterSnapshot')->twice()->with(150002)->andReturn(
+            $this->snapshot() + ['riding' => [['kind' => 'cart', 'active' => true]]],
+        );
+        $this->app->instance(GameServerGateway::class, $gateway);
+        $request = ['idempotency_key' => 'riding-once', 'type' => 'character.riding.update', 'payload' => $payload];
+        for ($i = 0; $i < 2; $i++) {
+            $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', $request)
+                ->assertOk()->assertJsonPath('data.riding.0.active', true);
+        }
+        $this->assertDatabaseHas('game_server_commands', [
+            'idempotency_key' => 'riding-once', 'target_id' => '150002', 'requested_game_account_id' => 2000001,
+        ]);
+        $this->assertDatabaseCount('game_server_commands', 1);
+    }
+
+    public function test_riding_rejects_invalid_parameters_with_422(): void
+    {
+        $this->createSession(groupId: 0);
+        $valid = ['kind' => 'cart', 'enabled' => true, 'fee' => 800, 'ticket' => false];
+        foreach ([['kind', 'unknown'], ['enabled', 'true'], ['enabled', 1], ['fee', -1], ['fee', 3501], ['fee', 0.5], ['ticket', 'false']] as [$key, $value]) {
+            $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
+                'idempotency_key' => 'invalid-riding', 'type' => 'character.riding.update',
+                'payload' => array_replace($valid, [$key => $value]),
+            ])->assertUnprocessable()->assertJsonValidationErrors('payload.'.$key);
+        }
+        $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
+            'idempotency_key' => 'invalid-riding', 'type' => 'character.riding.update', 'payload' => [],
+        ])->assertUnprocessable()->assertJsonValidationErrors(['payload.kind', 'payload.enabled', 'payload.fee', 'payload.ticket']);
+        $this->assertDatabaseCount('game_server_commands', 0);
+    }
+
+    public function test_riding_respects_character_maintenance_permission_with_403(): void
+    {
+        $this->createSession(groupId: 0);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('battleConfig')->once()->andReturn(['game_tools_character_maintenance_policy' => 1]);
+        $gateway->shouldNotReceive('execute');
+        $this->app->instance(GameServerGateway::class, $gateway);
+        $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
+            'idempotency_key' => 'forbidden-riding', 'type' => 'character.riding.update',
+            'payload' => ['kind' => 'cart', 'enabled' => true, 'fee' => 800, 'ticket' => false],
+        ])->assertForbidden();
+        $this->assertDatabaseCount('game_server_commands', 0);
+    }
+
+    public function test_riding_returns_translated_stale_quote_error_with_409(): void
+    {
+        $this->createSession(groupId: 0);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('battleConfig')->once()->andReturn(['game_tools_character_maintenance_policy' => 2]);
+        $gateway->expects('execute')->once()->andThrow(new GameServerGatewayException('riding_quote_changed', 'Quote changed'));
+        $this->app->instance(GameServerGateway::class, $gateway);
+        $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
+            'idempotency_key' => 'stale-riding', 'type' => 'character.riding.update',
+            'payload' => ['kind' => 'cart', 'enabled' => true, 'fee' => 0, 'ticket' => true],
+        ])->assertStatus(409)->assertJsonPath('error.code', 'riding_quote_changed')
+            ->assertJsonPath('error.message', '租用费用已变化，请重新确认');
+    }
+
     private function createSession(int $groupId, bool $online = true): void
     {
         DB::connection('game')->table('login')->insert([

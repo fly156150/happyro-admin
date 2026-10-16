@@ -16,6 +16,16 @@ final class CharacterMaintenancePayload
             default => [],
         };
 
+        if ($type === 'character.riding.update') {
+            return [
+                'payload' => ['required', 'array:kind,enabled,fee,ticket'],
+                'payload.kind' => ['required', 'string', 'in:cart,peco,dragon,gryphon,mado'],
+                'payload.enabled' => ['required', 'boolean:strict'],
+                'payload.fee' => ['required', 'integer', 'between:0,3500'],
+                'payload.ticket' => ['required', 'boolean:strict'],
+            ];
+        }
+
         if ($type === 'character.vitals.restore') {
             return [
                 'payload' => ['present', 'array:vitals'],
