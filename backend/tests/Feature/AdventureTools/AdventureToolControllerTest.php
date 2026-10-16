@@ -421,6 +421,32 @@ final class AdventureToolControllerTest extends TestCase
         $this->assertDatabaseCount('game_server_commands', 1);
     }
 
+    public function test_riding_accepts_companions_and_crusader_mounts(): void
+    {
+        $this->createSession(groupId: 0);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('battleConfig')->times(6)->andReturn(['game_tools_character_maintenance_policy' => 2]);
+        foreach (['falcon' => 2500, 'warg' => 0, 'warg_rider' => 0, 'hawk' => 0, 'peco' => 3500, 'gryphon' => 0] as $kind => $fee) {
+            $payload = ['kind' => $kind, 'enabled' => true, 'fee' => $fee, 'ticket' => false];
+            $gateway->expects('execute')->once()->with(Mockery::on(
+                fn ($command) => $command->type->value === 'character.riding.update'
+                    && $command->targetId === '150002' && $command->payload === $payload,
+            ))->andReturn(new GameServerCommandResult(['char_id' => 150002]));
+            $gateway->expects('characterSnapshot')->once()->with(150002)->andReturn(
+                $this->snapshot() + ['riding' => [['kind' => $kind, 'active' => true]]],
+            );
+        }
+        $this->app->instance(GameServerGateway::class, $gateway);
+        foreach (['falcon' => 2500, 'warg' => 0, 'warg_rider' => 0, 'hawk' => 0, 'peco' => 3500, 'gryphon' => 0] as $kind => $fee) {
+            $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
+                'idempotency_key' => 'riding-'.$kind, 'type' => 'character.riding.update',
+                'payload' => ['kind' => $kind, 'enabled' => true, 'fee' => $fee, 'ticket' => false],
+            ])->assertOk()->assertJsonPath('data.riding.0.kind', $kind)
+                ->assertJsonPath('data.riding.0.active', true);
+        }
+        $this->assertDatabaseCount('game_server_commands', 6);
+    }
+
     public function test_riding_rejects_invalid_parameters_with_422(): void
     {
         $this->createSession(groupId: 0);

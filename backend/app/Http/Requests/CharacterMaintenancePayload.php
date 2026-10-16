@@ -19,7 +19,7 @@ final class CharacterMaintenancePayload
         if ($type === 'character.riding.update') {
             return [
                 'payload' => ['required', 'array:kind,enabled,fee,ticket'],
-                'payload.kind' => ['required', 'string', 'in:cart,peco,dragon,gryphon,mado'],
+                'payload.kind' => ['required', 'string', 'in:cart,peco,dragon,gryphon,mado,falcon,warg,warg_rider,hawk'],
                 'payload.enabled' => ['required', 'boolean:strict'],
                 'payload.fee' => ['required', 'integer', 'between:0,3500'],
                 'payload.ticket' => ['required', 'boolean:strict'],

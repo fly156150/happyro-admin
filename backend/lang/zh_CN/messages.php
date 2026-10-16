@@ -1,9 +1,15 @@
 <?php
 
 return [
+    'riding_dismount_warg' => '请先从战狼上下骑',
+    'riding_warg_required' => '请先召唤战狼',
+    'riding_falcon_conflict' => '请先召回战狼',
+    'riding_warg_conflict' => '请先解除猎鹰',
+    'riding_skill_busy' => '请等待当前技能动作结束后重试',
+    'riding_skill_failed' => '操作未完成，请检查 SP、所需道具及技能使用条件',
     'riding_busy' => '当前状态无法操作，请结束对话、交易或仓库等操作后重试',
     'riding_job_required' => '当前职业无法使用此功能',
-    'riding_skill_required' => '请先学习对应的骑乘或手推车技能',
+    'riding_skill_required' => '请先学习对应的职业技能',
     'riding_conflict' => '请先解除当前坐骑',
     'riding_insufficient_zeny' => 'Zeny 不足',
     'riding_state_changed' => '骑乘状态已变化，请重新选择',
