@@ -17,6 +17,48 @@ final class GameServerSettingControllerTest extends TestCase
 {
     use LazilyRefreshDatabase;
 
+    public function test_applies_and_reads_shared_refinement_settings(): void
+    {
+        $this->actingAs($this->superAdmin());
+        $changes = ['refine_chance_rate' => 250, 'refine_always_success' => 1];
+        $writer = Mockery::mock(GameServerConfigWriter::class);
+        $writer->expects('snapshot')->once()->andReturn('old config');
+        $writer->expects('write')->once()->with($changes);
+        $this->app->instance(GameServerConfigWriter::class, $writer);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('execute')->once()->with(Mockery::on(
+            fn ($command) => array_column($command->payload['changes'], 'value', 'key') == $changes,
+        ))->andReturn(new GameServerCommandResult(['changes' => []]));
+        $gateway->expects('battleConfig')->twice()->andReturn($changes + ['game_tools_game_settings_policy' => 2]);
+        $this->app->instance(GameServerGateway::class, $gateway);
+
+        $this->putJson('/api/settings/game-settings', ['changes' => $changes])
+            ->assertOk()->assertJsonPath('data.status', 'applied');
+
+        foreach ($changes as $key => $value) {
+            $this->assertDatabaseHas('game_server_settings', ['setting_key' => $key, 'actual_value' => $value]);
+        }
+        $this->getJson('/api/settings/game-settings')->assertOk()
+            ->assertJsonPath('data.values.refine_chance_rate', 250)
+            ->assertJsonPath('data.values.refine_always_success', 1)
+            ->assertJsonPath('data.definitions.refine_chance_rate.maximum', 1000000)
+            ->assertJsonPath('data.definitions.refine_always_success.unit', 'boolean');
+    }
+
+    public function test_rejects_invalid_refinement_settings_before_writing(): void
+    {
+        $this->actingAs($this->superAdmin());
+        $writer = Mockery::mock(GameServerConfigWriter::class);
+        $writer->shouldNotReceive('write');
+        $this->app->instance(GameServerConfigWriter::class, $writer);
+        foreach (['refine_chance_rate' => [-1, 1000001, 2.5], 'refine_always_success' => [-1, 2]] as $key => $values) {
+            foreach ($values as $value) {
+                $this->putJson('/api/settings/game-settings', ['changes' => [$key => $value]])
+                    ->assertUnprocessable()->assertJsonValidationErrors("changes.$key");
+            }
+        }
+    }
+
     public function test_applies_independent_normal_mini_and_mvp_drop_rates(): void
     {
         $this->actingAs($this->superAdmin());

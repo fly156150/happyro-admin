@@ -6,7 +6,7 @@ import {
   ProFormRadio,
 } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
-import { App, Card, Spin, Tabs } from 'antd';
+import { App, Card, Form, Spin, Tabs } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import {
   type GameSettingDefinition,
@@ -79,8 +79,12 @@ function displayValues(settings: GameSettings): Record<string, number> {
 }
 
 function rangePlaceholder(definition: GameSettingDefinition): string {
-  const minimum = formatDisplayNumber(toDisplayValue(definition.minimum, definition));
-  const maximum = formatDisplayNumber(toDisplayValue(definition.maximum, definition));
+  const minimum = formatDisplayNumber(
+    toDisplayValue(definition.minimum, definition),
+  );
+  const maximum = formatDisplayNumber(
+    toDisplayValue(definition.maximum, definition),
+  );
   return `${minimum} - ${maximum}`;
 }
 
@@ -159,6 +163,11 @@ export default function GameSettingsPage() {
                   children: <DropRateSettings settings={settings} t={t} />,
                 },
                 {
+                  key: 'refinement',
+                  label: t('settings.gameSettings.tab.refinement', '装备精炼'),
+                  children: <RefinementSettings settings={settings} t={t} />,
+                },
+                {
                   key: 'navigation',
                   label: t('settings.gameSettings.tab.navigation', '地图传送'),
                   children: <NavigationSettings settings={settings} t={t} />,
@@ -175,7 +184,6 @@ export default function GameSettingsPage() {
                 },
               ]}
             />
-
           </ProForm>
         )}
       </Card>
@@ -215,15 +223,24 @@ function DropRateSettings({
 }) {
   return (
     <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', minWidth: 600, borderCollapse: 'collapse' }}>
+      <table
+        style={{ width: '100%', minWidth: 600, borderCollapse: 'collapse' }}
+      >
         <thead>
           <tr>
             <th scope="col" style={{ textAlign: 'left', padding: 8 }}>
               {t('settings.gameSettings.dropType', '物品类型')}
             </th>
             {dropCategories.map((category) => (
-              <th key={category.key} scope="col" style={{ textAlign: 'left', padding: 8 }}>
-                {t(`settings.gameSettings.dropCategory.${category.key}`, category.label)}
+              <th
+                key={category.key}
+                scope="col"
+                style={{ textAlign: 'left', padding: 8 }}
+              >
+                {t(
+                  `settings.gameSettings.dropCategory.${category.key}`,
+                  category.label,
+                )}
               </th>
             ))}
           </tr>
@@ -231,14 +248,22 @@ function DropRateSettings({
         <tbody>
           {normalDropRateKeys.map((baseKey) => (
             <tr key={baseKey}>
-              <th scope="row" style={{ textAlign: 'left', padding: 8, fontWeight: 'normal' }}>
+              <th
+                scope="row"
+                style={{ textAlign: 'left', padding: 8, fontWeight: 'normal' }}
+              >
                 {ruleLabel(baseKey, t)}
               </th>
               {dropCategories.map(({ suffix }) => {
                 const key = `${baseKey}${suffix}`;
                 return (
                   <td key={key} style={{ padding: 8 }}>
-                    <RateField name={key} definition={settings.definitions[key]} t={t} compact />
+                    <RateField
+                      name={key}
+                      definition={settings.definitions[key]}
+                      t={t}
+                      compact
+                    />
                   </td>
                 );
               })}
@@ -250,22 +275,52 @@ function DropRateSettings({
   );
 }
 
+function RefinementSettings({
+  settings,
+  t,
+}: {
+  settings: GameSettings;
+  t: Translate;
+}) {
+  const guaranteed = Form.useWatch('refine_always_success');
+  return (
+    <>
+      <RateField
+        name="refine_chance_rate"
+        definition={settings.definitions.refine_chance_rate}
+        t={t}
+        disabled={Number(guaranteed) === 1}
+      />
+      <ProFormRadio.Group
+        name="refine_always_success"
+        label={ruleLabel('refine_always_success', t)}
+        radioType="button"
+        options={BinaryOptions({ t })}
+        rules={[{ required: true }]}
+      />
+    </>
+  );
+}
+
 function RateField({
   name,
   definition,
   t,
   compact = false,
+  disabled = false,
 }: {
   name: string;
   definition: GameSettingDefinition;
   t: Translate;
   compact?: boolean;
+  disabled?: boolean;
 }) {
   const minimum = toDisplayValue(definition.minimum, definition);
   const maximum = toDisplayValue(definition.maximum, definition);
   return (
     <ProFormDigit
       name={name}
+      disabled={disabled}
       label={compact ? undefined : ruleLabel(name, t)}
       formItemProps={compact ? { style: { marginBottom: 0 } } : undefined}
       fieldProps={{
@@ -275,7 +330,6 @@ function RateField({
         step: 0.01,
         formatter: (value, info) =>
           info.userTyping ? info.input : formatDisplayNumber(value),
-
       }}
       addonAfter={t('settings.gameSettings.unit.times', '倍')}
       width={compact ? undefined : 'md'}
@@ -352,7 +406,12 @@ function NavigationSettings({
       <ProFormDigit
         name="navigation_teleport_cooldown"
         label={ruleLabel('navigation_teleport_cooldown', t)}
-        fieldProps={{ precision: 0, placeholder: rangePlaceholder(settings.definitions.navigation_teleport_cooldown) }}
+        fieldProps={{
+          precision: 0,
+          placeholder: rangePlaceholder(
+            settings.definitions.navigation_teleport_cooldown,
+          ),
+        }}
         addonAfter={t('settings.gameSettings.unit.seconds', '秒')}
         width="md"
         rules={rangeRules(
@@ -398,7 +457,10 @@ function MonsterSpawnSettings({
           key={key}
           name={key}
           label={ruleLabel(key, t)}
-          fieldProps={{ precision: 0, placeholder: rangePlaceholder(settings.definitions[key]) }}
+          fieldProps={{
+            precision: 0,
+            placeholder: rangePlaceholder(settings.definitions[key]),
+          }}
           addonAfter={t('settings.gameSettings.unit.seconds', '秒')}
           width="md"
           rules={rangeRules(

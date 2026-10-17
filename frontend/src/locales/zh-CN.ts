@@ -1,15 +1,18 @@
-import monsterSpawnMaps from './zh-CN/monster-spawn-maps.json';
 import characterFields from './zh-CN/character-fields';
 import component from './zh-CN/component';
 import globalHeader from './zh-CN/globalHeader';
 import jobOptions from './zh-CN/job-options';
 import menu from './zh-CN/menu';
+import monsterSpawnMaps from './zh-CN/monster-spawn-maps.json';
 import network from './zh-CN/network';
 import pages from './zh-CN/pages';
 import settingDrawer from './zh-CN/settingDrawer';
 import settings from './zh-CN/settings';
 
 export default {
+  'settings.gameSettings.tab.refinement': '装备精炼',
+  'settings.gameSettings.key.refine_chance_rate': '精炼成功率倍率',
+  'settings.gameSettings.key.refine_always_success': '精炼必定成功',
   ...monsterSpawnMaps,
   'players.map.airplane': '飞空艇',
   'settings.gameData.title': '游戏资料',
