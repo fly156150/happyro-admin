@@ -5,10 +5,10 @@
 ## 功能文档
 
 - [用户管理](user-management.md)：玩家账号、角色查询和角色维护。
-- [游戏资料](game-data.md)：物品、魔物、NPC 和地图等只读资料。
+- [游戏资料](game-data.md)：只读查询语义；[导入流水线](game-data-pipeline.md)：来源、图片、存储和导入。
 - [运营管理](operations-management.md)：物品发放和运行中世界操作。
 - [系统设置](system-settings.md)：资料版本和游戏服务器参数。
-- [Game Control](game-control.md)：后台命令协议、进程边界、幂等和安全约束。
+- [Game Control](game-control.md)：进程边界、幂等和安全；[命令契约](game-control-commands.md)：payload 与响应。
 
 ## 代码职责
 
@@ -16,16 +16,16 @@
 
 ```text
 backend/app/
-├── Contracts/{Players,GameData,GameServer,GameSettings,Operations}
-├── Data/{Players,GameData,GameSettings,Operations}
-├── Services/{Players,GameData,GameSettings,Operations}
-├── Infrastructure/{Persistence,GameServer,Configuration}
+├── Contracts/{Auth,Players,GameData,GameServer,Operations}
+├── Data/{Auth,Players,GameData,GameServer,Operations}
+├── Services/{Auth,Players,GameData,GameServer,Operations,AdventureTools}
+├── Infrastructure/{Persistence,GameServer}
 └── Http/{Controllers,Requests,Resources}
 ```
 
 - `Services` 保存可由 HTTP、CLI 和队列复用的业务用例。
 - `Contracts` 定义 Repository、游戏服务控制和配置输出端口，所有外部依赖必须可替换、可 Mock。
-- `Infrastructure` 保存 MariaDB、rAthena Game Control 和文件配置实现，不把基础设施细节写进 Service。
+- `Infrastructure` 保存 Game Control、配置文件与部分持久化适配器；部分已有数据库 Repository 仍在 `Services/` 下，不能把理想分层当作当前目录事实。新增逻辑遵循可注入、可替换的契约。
 - 控制器只负责认证授权、请求转换和响应转换。
 
 Game Control 的 HTTP 接入点只负责认证、能力发现和命令转发；角色状态与地图实体的最终读写必须在 map-server 线程中执行。web-server 不能直接模拟 map-server 内存状态，也不能通过 SQL 代替运行时命令。

@@ -28,7 +28,7 @@
 3. 校验完整配置后原子替换管理区块。
 4. 通过私有 Game Control API 请求 map-server 在主线程调用白名单 `battle_set_value` 更新运行时参数。
 5. 回读实际值并记录应用状态；失败时保留旧的已应用版本。
-6. 允许从历史版本创建新草稿并重新应用，不直接篡改历史记录。
+6. 历史版本保留用于查询；显式从历史版本回滚的产品入口尚未实现，见下方待办。
 
 不得直接覆盖 HappyRO Server 的 `conf/battle/*.conf` 基线文件，也不得只修改数据库而不生成可供重启恢复的服务端配置。部署或 map-server 重启后必须继续加载最后一次成功应用的版本。
 
@@ -50,7 +50,7 @@
 - 配置来源以 HappyRO Server 的 `conf/battle/exp.conf`、`conf/battle/drops.conf` 和 `conf/import/battle_conf.txt` 为准，后台保留参数注册表副本并记录来源。
 - 开放项包括经验、掉率及已登记的地图传送／召唤等规则，以注册表为准，不建立任意配置文件编辑器。
 
-计划权限拆分为 `settings.game-data.manage`、`settings.game-settings.view` 和 `settings.game-settings.manage`，不继续使用一个覆盖全部设置的宽泛权限。
+权限细分仍是计划，当前实际使用 `settings.manage`；不要按拟定权限配置生产账号。
 
 ## 当前接口与权限
 
