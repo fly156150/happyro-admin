@@ -491,6 +491,56 @@ final class AdventureToolControllerTest extends TestCase
             ->assertJsonPath('error.message', '租用费用已变化，请重新确认');
     }
 
+    public function test_riding_appearance_targets_current_character_and_is_idempotent(): void
+    {
+        $this->createSession(groupId: 0);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('battleConfig')->twice()->andReturn(['game_tools_character_maintenance_policy' => 2]);
+        $gateway->expects('execute')->once()->with(Mockery::on(
+            fn ($command) => $command->type->value === 'character.riding.appearance'
+                && $command->targetId === '150002' && $command->payload === ['appearance' => 1],
+        ))->andReturn(new GameServerCommandResult(['char_id' => 150002]));
+        $gateway->expects('characterSnapshot')->twice()->with(150002)->andReturn(
+            $this->snapshot() + ['riding' => [['kind' => 'dragon', 'appearance' => 1]]],
+        );
+        $this->app->instance(GameServerGateway::class, $gateway);
+        $request = ['idempotency_key' => 'appearance-once', 'type' => 'character.riding.appearance', 'payload' => ['appearance' => 1]];
+
+        for ($i = 0; $i < 2; $i++) {
+            $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', $request)
+                ->assertOk()->assertJsonPath('data.riding.0.appearance', 1);
+        }
+        $this->assertDatabaseHas('game_server_commands', ['idempotency_key' => 'appearance-once', 'target_id' => '150002']);
+        $this->assertDatabaseCount('game_server_commands', 1);
+    }
+
+    public function test_riding_appearance_rejects_invalid_options_and_extra_fields(): void
+    {
+        $this->createSession(groupId: 0);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->shouldNotReceive('execute');
+        $this->app->instance(GameServerGateway::class, $gateway);
+        foreach ([[], ['appearance' => -1], ['appearance' => 7], ['appearance' => 1.5], ['appearance' => '1'], ['appearance' => true], ['appearance' => 1, 'job' => 7]] as $payload) {
+            $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
+                'idempotency_key' => 'invalid-appearance', 'type' => 'character.riding.appearance', 'payload' => $payload,
+            ])->assertUnprocessable();
+        }
+        $this->assertDatabaseCount('game_server_commands', 0);
+    }
+
+    public function test_riding_appearance_respects_maintenance_permission(): void
+    {
+        $this->createSession(groupId: 0);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('battleConfig')->once()->andReturn(['game_tools_character_maintenance_policy' => 1]);
+        $gateway->shouldNotReceive('execute');
+        $this->app->instance(GameServerGateway::class, $gateway);
+        $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
+            'idempotency_key' => 'forbidden-appearance', 'type' => 'character.riding.appearance', 'payload' => ['appearance' => 1],
+        ])->assertForbidden();
+        $this->assertDatabaseCount('game_server_commands', 0);
+    }
+
     private function createSession(int $groupId, bool $online = true): void
     {
         DB::connection('game')->table('login')->insert([

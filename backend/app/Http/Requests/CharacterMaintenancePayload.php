@@ -16,6 +16,13 @@ final class CharacterMaintenancePayload
             default => [],
         };
 
+        if ($type === 'character.riding.appearance') {
+            return [
+                'payload' => ['required', 'array:appearance'],
+                'payload.appearance' => ['required', 'integer:strict', 'between:0,6'],
+            ];
+        }
+
         if ($type === 'character.riding.update') {
             return [
                 'payload' => ['required', 'array:kind,enabled,fee,ticket'],
