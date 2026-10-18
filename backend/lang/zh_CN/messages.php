@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'appearance_busy' => '当前状态无法切换职业外观，请结束对话、交易或仓库等操作后重试',
+    'appearance_job_required' => '当前职业、阶段或性别无法使用此职业外观',
     'character_progression_busy' => '请先结束 NPC 对话，再修改职业或等级',
     'riding_dismount_warg' => '请先从战狼上下骑',
     'riding_warg_required' => '请先召唤战狼',

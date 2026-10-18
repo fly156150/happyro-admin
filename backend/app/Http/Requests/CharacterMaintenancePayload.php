@@ -2,9 +2,12 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\In;
+
 final class CharacterMaintenancePayload
 {
-    /** @return array<string, array<int, string>> */
+    /** @return array<string, array<int, string|In>> */
     public static function rules(string $type): array
     {
         $fields = match ($type) {
@@ -19,7 +22,7 @@ final class CharacterMaintenancePayload
         if ($type === 'character.appearance.update') {
             return [
                 'payload' => ['required', 'array:appearance'],
-                'payload.appearance' => ['required', 'integer:strict', 'between:0,6'],
+                'payload.appearance' => ['required', 'integer:strict', Rule::in(config('character_appearance.ids'))],
             ];
         }
 

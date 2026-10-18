@@ -6,11 +6,14 @@ use App\Contracts\GameServer\GameServerConfigWriter;
 use App\Contracts\GameServer\GameServerGateway;
 use App\Data\GameServer\GameServerCommandResult;
 use App\Exceptions\GameServerGatewayException;
+use App\Http\Requests\CharacterMaintenancePayload;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
 use Mockery;
+use PHPUnit\Framework\Attributes\TestWith;
 use Tests\TestCase;
 
 final class AdventureToolControllerTest extends TestCase
@@ -516,14 +519,14 @@ final class AdventureToolControllerTest extends TestCase
                 && $command->targetId === '150002' && $command->payload === ['appearance' => 1],
         ))->andReturn(new GameServerCommandResult(['char_id' => 150002]));
         $gateway->expects('characterSnapshot')->twice()->with(150002)->andReturn(
-            $this->snapshot() + ['riding' => [['kind' => 'dragon', 'appearance' => 1]]],
+            $this->snapshot() + ['characterAppearance' => ['current' => 1, 'options' => [['id' => 0, 'name' => '默认外观'], ['id' => 1, 'name' => '骑士']], 'reason' => '']],
         );
         $this->app->instance(GameServerGateway::class, $gateway);
         $request = ['idempotency_key' => 'appearance-once', 'type' => 'character.appearance.update', 'payload' => ['appearance' => 1]];
 
         for ($i = 0; $i < 2; $i++) {
             $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', $request)
-                ->assertOk()->assertJsonPath('data.riding.0.appearance', 1);
+                ->assertOk()->assertJsonPath('data.characterAppearance.current', 1);
         }
         $this->assertDatabaseHas('game_server_commands', ['idempotency_key' => 'appearance-once', 'target_id' => '150002']);
         $this->assertDatabaseCount('game_server_commands', 1);
@@ -535,12 +538,63 @@ final class AdventureToolControllerTest extends TestCase
         $gateway = Mockery::mock(GameServerGateway::class);
         $gateway->shouldNotReceive('execute');
         $this->app->instance(GameServerGateway::class, $gateway);
-        foreach ([[], ['appearance' => -1], ['appearance' => 7], ['appearance' => 1.5], ['appearance' => '1'], ['appearance' => true], ['appearance' => 1, 'job' => 7]] as $payload) {
+        foreach ([[], ['appearance' => -1], ['appearance' => 40], ['appearance' => 65536], ['appearance' => 4294967297], ['appearance' => 1.5], ['appearance' => '1'], ['appearance' => true], ['appearance' => 1, 'job' => 7]] as $payload) {
             $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
                 'idempotency_key' => 'invalid-appearance', 'type' => 'character.appearance.update', 'payload' => $payload,
             ])->assertUnprocessable();
         }
         $this->assertDatabaseCount('game_server_commands', 0);
+    }
+
+    public function test_character_appearance_validation_uses_known_options_instead_of_a_numeric_range(): void
+    {
+        foreach (range(0, 39) as $choice) {
+            $validator = Validator::make(
+                ['payload' => ['appearance' => $choice]],
+                CharacterMaintenancePayload::rules('character.appearance.update'),
+            );
+            $this->assertTrue($validator->passes(), "Configured appearance {$choice} should reach server qualification");
+        }
+        config(['character_appearance.ids' => [0, 10, 39]]);
+        $validator = Validator::make(
+            ['payload' => ['appearance' => 11]],
+            CharacterMaintenancePayload::rules('character.appearance.update'),
+        );
+        $this->assertTrue($validator->fails());
+        $this->assertTrue($validator->errors()->has('payload.appearance'));
+    }
+
+    public function test_character_appearance_allows_ordinary_job_options_without_riding(): void
+    {
+        $this->createSession(groupId: 0);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('battleConfig')->once()->andReturn(['game_tools_character_maintenance_policy' => 2]);
+        $gateway->expects('execute')->once()->with(Mockery::on(
+            fn ($command) => $command->type->value === 'character.appearance.update'
+                && $command->targetId === '150002' && $command->payload === ['appearance' => 10],
+        ))->andReturn(new GameServerCommandResult(['char_id' => 150002]));
+        $gateway->expects('characterSnapshot')->once()->with(150002)->andReturn(
+            $this->snapshot() + ['riding' => [], 'characterAppearance' => ['current' => 10, 'options' => [['id' => 0], ['id' => 10]], 'reason' => '']],
+        );
+        $this->app->instance(GameServerGateway::class, $gateway);
+        $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
+            'idempotency_key' => 'ordinary-appearance', 'type' => 'character.appearance.update', 'payload' => ['appearance' => 10],
+        ])->assertOk()->assertJsonPath('data.characterAppearance.current', 10)->assertJsonPath('data.riding', []);
+    }
+
+    #[TestWith(['appearance_job_required', '当前职业、阶段或性别无法使用此职业外观'])]
+    #[TestWith(['appearance_busy', '当前状态无法切换职业外观，请结束对话、交易或仓库等操作后重试'])]
+    public function test_character_appearance_preserves_server_errors_as_409(string $code, string $message): void
+    {
+        $this->createSession(groupId: 0);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('battleConfig')->once()->andReturn(['game_tools_character_maintenance_policy' => 2]);
+        $gateway->expects('execute')->once()->andThrow(new GameServerGatewayException($code, 'Rejected by map server'));
+        $gateway->shouldNotReceive('characterSnapshot');
+        $this->app->instance(GameServerGateway::class, $gateway);
+        $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
+            'idempotency_key' => $code, 'type' => 'character.appearance.update', 'payload' => ['appearance' => 39],
+        ])->assertStatus(409)->assertJsonPath('error.code', $code)->assertJsonPath('error.message', $message);
     }
 
     public function test_character_appearance_respects_maintenance_permission(): void
