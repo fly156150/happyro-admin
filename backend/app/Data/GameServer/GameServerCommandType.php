@@ -16,7 +16,7 @@ enum GameServerCommandType: string
     case CharacterTraitsReset = 'character.traits.reset';
     case CharacterSkillsReset = 'character.skills.reset';
     case CharacterSkillsLearnAll = 'character.skills.learn_all';
-    case CharacterRidingAppearance = 'character.riding.appearance';
+    case CharacterAppearanceUpdate = 'character.appearance.update';
     case CharacterRidingUpdate = 'character.riding.update';
     case CharacterVitalsRestore = 'character.vitals.restore';
     case CharacterInventoryItemGrant = 'character.inventory.item_grant';
@@ -31,7 +31,7 @@ enum GameServerCommandType: string
             self::CharacterProgressionUpdate, self::CharacterSkillPointsUpdate, self::CharacterPointsUpdate,
             self::CharacterStatsUpdate, self::CharacterStatsReset,
             self::CharacterTraitsUpdate, self::CharacterTraitsReset,
-            self::CharacterSkillsReset, self::CharacterSkillsLearnAll, self::CharacterVitalsRestore, self::CharacterRidingUpdate, self::CharacterRidingAppearance,
+            self::CharacterSkillsReset, self::CharacterSkillsLearnAll, self::CharacterVitalsRestore, self::CharacterRidingUpdate, self::CharacterAppearanceUpdate,
         ]);
     }
 }
