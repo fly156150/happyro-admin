@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'character_progression_busy' => '请先结束 NPC 对话，再修改职业或等级',
     'riding_dismount_warg' => '请先从战狼上下骑',
     'riding_warg_required' => '请先召唤战狼',
     'riding_falcon_conflict' => '请先召回战狼',

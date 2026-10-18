@@ -140,7 +140,7 @@ final class AdventureToolController extends Controller
     private function gatewayError(GameServerGatewayException $exception): JsonResponse
     {
         $status = match (true) {
-            str_starts_with($exception->errorCode, 'riding_') || in_array($exception->errorCode, ['character_offline', 'reset_failed'], true) => 409,
+            str_starts_with($exception->errorCode, 'riding_') || in_array($exception->errorCode, ['character_offline', 'reset_failed', 'character_progression_busy'], true) => 409,
             in_array($exception->errorCode, ['unavailable', 'map_server_unavailable'], true) => 503,
             default => 502,
         };

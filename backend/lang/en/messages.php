@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'character_progression_busy' => '请先结束 NPC 对话，再修改职业或等级',
     'player_database_unconfigured' => '玩家数据库尚未配置',
     'player_account_not_found' => '玩家账号不存在',
     'item_not_found' => '物品不存在',

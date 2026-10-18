@@ -477,6 +477,21 @@ final class AdventureToolControllerTest extends TestCase
         $this->assertDatabaseCount('game_server_commands', 0);
     }
 
+    public function test_progression_during_npc_dialogue_returns_translated_error_with_409(): void
+    {
+        $this->createSession(groupId: 0);
+        $gateway = Mockery::mock(GameServerGateway::class);
+        $gateway->expects('battleConfig')->once()->andReturn(['game_tools_character_maintenance_policy' => 2]);
+        $gateway->expects('execute')->once()->andThrow(new GameServerGatewayException('character_progression_busy', 'NPC dialogue active'));
+        $gateway->shouldNotReceive('characterSnapshot');
+        $this->app->instance(GameServerGateway::class, $gateway);
+        $this->withHeaders($this->headers())->postJson('/api/adventure-tools/character/commands', [
+            'idempotency_key' => 'npc-progression-busy', 'type' => 'character.progression.update',
+            'payload' => ['job_id' => 4],
+        ])->assertStatus(409)->assertJsonPath('error.code', 'character_progression_busy')
+            ->assertJsonPath('error.message', '请先结束 NPC 对话，再修改职业或等级');
+    }
+
     public function test_riding_returns_translated_stale_quote_error_with_409(): void
     {
         $this->createSession(groupId: 0);
