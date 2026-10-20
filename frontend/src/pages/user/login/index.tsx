@@ -7,8 +7,8 @@ import {
 import { Helmet, useModel } from '@umijs/max';
 import { Alert, App } from 'antd';
 import { createStyles } from 'antd-style';
-import React, { startTransition, useState } from 'react';
-import { login } from '@/services/auth/index';
+import React, { startTransition, useEffect, useState } from 'react';
+import { login, loginConfiguration } from '@/services/auth/index';
 import Settings from '../../../../config/defaultSettings';
 
 const getSafeRedirectUrl = (redirect: string | null): string => {
@@ -50,6 +50,42 @@ const useStyles = createStyles(({ token }) => ({
       "url('https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/V-_oS6r-i7wAAAAAAAAAAAAAFl94AQBr')",
     backgroundSize: '100% 100%',
   },
+  subtitle: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 14,
+    textAlign: 'center',
+  },
+  credentials: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: '6px 12px',
+    padding: '8px 14px',
+    border: `1px solid ${token.colorBorderSecondary}`,
+    borderRadius: 10,
+    background: token.colorFillQuaternary,
+    color: token.colorTextSecondary,
+    fontSize: 12,
+    lineHeight: '20px',
+  },
+  credential: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    whiteSpace: 'nowrap',
+    code: {
+      padding: '0 6px',
+      borderRadius: 4,
+      background: token.colorBgContainer,
+      color: token.colorText,
+      fontSize: 12,
+      fontWeight: 500,
+      fontFamily: token.fontFamilyCode,
+    },
+  },
   content: {
     display: 'flex',
     flex: 1,
@@ -59,10 +95,30 @@ const useStyles = createStyles(({ token }) => ({
     '.ant-pro-form-login-container': {
       justifyContent: 'center',
     },
+    '.ant-pro-form-login-desc': {
+      marginBlock: '12px 24px',
+      lineHeight: '24px',
+    },
   },
 }));
 
 const Login: React.FC = () => {
+  const [showDefaultCredentials, setShowDefaultCredentials] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    loginConfiguration()
+      .then((configuration) => {
+        if (active) setShowDefaultCredentials(configuration.showDefaultCredentials);
+      })
+      .catch(() => {
+        // The optional hint must not prevent signing in when configuration fails.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const [error, setError] = useState<string>();
   const { initialState, setInitialState } = useModel('@@initialState');
   const { styles } = useStyles();
@@ -113,7 +169,20 @@ const Login: React.FC = () => {
           contentStyle={{ minWidth: 280, maxWidth: '75vw' }}
           logo={<img alt="HappyRO" src="/images/ro-poring-1.webp" />}
           title="HappyRO"
-          subTitle="《仙境传说 Online》管理后台"
+          subTitle={
+            <div className={styles.subtitle}>
+              <div>《仙境传说 Online》管理后台</div>
+              {showDefaultCredentials && (
+                <div className={styles.credentials}>
+                  <span className={styles.credential}>
+                    账号密码：<code>admin</code>
+                    <span>/</span>
+                    <code>admin</code>
+                  </span>
+                </div>
+              )}
+            </div>
+          }
           initialValues={{ remember: true }}
           onFinish={handleSubmit}
         >
