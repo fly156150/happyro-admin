@@ -31,6 +31,16 @@
 - `character.skills.reset` payload 必须为空对象，服务端执行完整技能重置并返回返还点数。
 - `character.vitals.restore` payload 可选 `{"vitals": ["hp", "sp", "ap"]}`，缺省表示恢复全部；服务端按上限裁剪。
 
+### 职业外观与骑乘
+
+`character.appearance.update` 只接受 `{"appearance": 0}` 形状的 payload，0 表示默认外观；其它值必须来自 `config/character_appearance.php` 生成的 ID 白名单。请求校验位于 `CharacterMaintenancePayload.php`，map-server 继续按真实职业、阶段、性别及忙碌状态校验。
+
+外观快照独立使用 `characterAppearance`，包含当前选择、允许选项和不可操作原因，不依附骑乘快照。修改只影响外观，不改变职业、属性和技能；客户端、服务端及 Admin 的生成配置必须同步。
+
+`character.riding.update` 只接受 `kind`、`enabled`、`fee`、`ticket`。`kind` 支持 cart、peco、dragon、gryphon、mado、falcon、warg、warg_rider、hawk；费用与资格仍由服务器核验，客户端提交值不作为扣费权威。
+
+产品规则及配置来源见根仓库[职业外观](../../../../docs/development/character-appearance/README.md)。NPC 对话期间修改职业或等级会被拒绝，应先结束对话。
+
 ### 魔物召唤
 
 `monster.spawn` 使用在线角色作为位置锚点：
