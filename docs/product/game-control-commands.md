@@ -33,7 +33,7 @@
 
 ### 职业外观与骑乘
 
-`character.appearance.update` 只接受 `{"appearance": 0}` 形状的 payload，0 表示默认外观；其它值必须来自 `config/character_appearance.php` 生成的 ID 白名单。请求校验位于 `CharacterMaintenancePayload.php`，map-server 继续按真实职业、阶段、性别及忙碌状态校验。
+`character.appearance.update` 只接受 `{"appearance": 0}` 形状的 payload，0 表示默认外观；其它值必须来自 `happyro-api/internal/catalog/appearance.go` 生成的 ID 白名单。请求校验位于 `happyro-api/internal/game/validation.go`，map-server 继续按真实职业、阶段、性别及忙碌状态校验。
 
 外观快照独立使用 `characterAppearance`，包含当前选择、允许选项和不可操作原因，不依附骑乘快照。修改只影响外观，不改变职业、属性和技能；客户端、服务端及 Admin 的生成配置必须同步。
 
@@ -56,12 +56,14 @@
 `battle_config.apply` 只接收注册表键值，不接收文件路径或文本：
 
 ```json
-{"changes": [{"key": "base_exp_rate", "value": 100}, {"key": "item_rate_common", "value": 100}]}
+{"instance_id": "地图服返回的实例标识", "expected_revision": 0, "changes": [{"key": "base_exp_rate", "value": 100}, {"key": "item_rate_common", "value": 100}]}
 ```
 
-服务端先校验全部键值，任一键失败则整体拒绝并恢复已修改值；成功后返回变更前值和变更后值。Laravel 保存配置版本并回读实际值，失败时恢复配置文件快照。
+服务端先校验全部键值，任一键失败则整体拒绝并恢复已修改值；成功后返回变更前值和变更后值。Go 先保存配置修订并原子发布文件，再持久化实例和预期版本并提交命令，成功后回读实际值。失败时保留修订供管理员继续确认，不盲目回滚文件。
+
+`battle_config.fence` 只接受 `instance_id` 与 `expected_revision`，在地图线程上推进版本而不改变设置。恢复流程利用原命令凭据或版本屏障确认结果，屏障与原命令只能有一个通过同一版本校验。实例不符或版本过期返回 409。
 
 ### 统一响应
 
-成功响应包含 `data.result`，Laravel 命令记录补充命令 ID、状态和时间。失败响应使用稳定错误码，例如 `character_offline`、`invalid_parameter`、`no_spawn_cell`、`unsupported_command`、`configuration_conflict`；错误消息用于展示时必须经过多语言映射，不能把服务端英文原文直接输出到页面。
+成功响应包含 `data.result`，Go 命令记录补充命令 ID、状态和时间。失败响应使用稳定错误码，例如 `character_offline`、`invalid_parameter`、`no_spawn_cell`、`unsupported_command`、`configuration_conflict`；错误消息用于展示时必须经过多语言映射，不能把服务端英文原文直接输出到页面。
 
