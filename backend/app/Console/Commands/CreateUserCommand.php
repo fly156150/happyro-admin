@@ -7,6 +7,7 @@ use App\Data\Auth\CreateUserData;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Config\Repository;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -17,28 +18,41 @@ class CreateUserCommand extends Command
         {--name= : 显示名称}
         {--password= : 登录密码；省略时安全提示输入}
         {--role=super_admin : super_admin、administrator、operator 或 auditor}
+        {--initial : 仅在管理库无账号时使用环境配置创建初始管理员}
         {--ensure : 已存在时更新密码、名称和角色}
         {--no-color : 禁用 ANSI 颜色}';
 
     protected $description = 'Create an internal GM user';
 
-    public function __construct(private readonly UserProvisioner $users)
+    public function __construct(private readonly UserProvisioner $users, private readonly Repository $config)
     {
         parent::__construct();
     }
 
     public function handle(): int
     {
-        if (! $this->argument('username')) {
+        if (! $this->argument('username') && ! $this->option('initial')) {
             $this->renderUsage();
 
             return self::SUCCESS;
         }
 
-        $password = $this->option('password') ?: $this->secret('请输入密码');
+        $initial = (bool) $this->option('initial');
+        if ($initial && ($this->argument('username') !== null || $this->option('password') !== null || $this->option('name') !== null || $this->option('ensure') || $this->option('role') !== 'super_admin')) {
+            $this->error('--initial 仅使用环境配置，不能与用户参数组合。');
+
+            return self::FAILURE;
+        }
+        if ($initial && User::query()->exists()) {
+            $this->info('管理库已有账号，跳过初始管理员创建。');
+
+            return self::SUCCESS;
+        }
+        $username = $initial ? $this->config->get('happyro.initial_username') : $this->argument('username');
+        $password = $initial ? $this->config->get('happyro.initial_password') : ($this->option('password') ?: $this->secret('请输入密码'));
         $input = [
-            'username' => mb_strtolower(trim((string) $this->argument('username'))),
-            'name' => trim((string) ($this->option('name') ?: $this->argument('username'))),
+            'username' => mb_strtolower(trim((string) $username)),
+            'name' => trim((string) ($this->option('name') ?: $username)),
             'password' => $password,
             'role' => $this->option('role'),
         ];
@@ -98,6 +112,7 @@ class CreateUserCommand extends Command
         $this->output->writeln($style('1;33', '常用例子'));
         $this->output->writeln($style('36', '  php artisan gm:user:create admin --name="管理员"'));
         $this->output->writeln($style('36', '  php artisan gm:user:create auditor --role=auditor --no-color'));
+        $this->output->writeln($style('36', '  php artisan gm:user:create --initial --no-interaction --no-color'));
         $this->output->writeln('');
     }
 

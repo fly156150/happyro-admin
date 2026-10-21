@@ -20,6 +20,7 @@ Route::get('/', function () {
 });
 
 Route::prefix('api/auth')->group(function () {
+    Route::get('/configuration', [SessionController::class, 'configuration']);
     Route::post('/login', [SessionController::class, 'store']);
 
     Route::middleware('auth:sanctum')->group(function () {

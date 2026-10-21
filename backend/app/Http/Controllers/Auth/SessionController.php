@@ -8,6 +8,7 @@ use App\Data\Auth\LoginStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\Auth\CurrentUserResource;
+use Illuminate\Contracts\Config\Repository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -15,6 +16,15 @@ use Illuminate\Http\Response;
 class SessionController extends Controller
 {
     public function __construct(private readonly AuthenticationService $authentication) {}
+
+    public function configuration(Repository $config): JsonResponse
+    {
+        return response()->json([
+            'showDefaultCredentials' => (bool) $config->get('happyro.show_default_credentials')
+                && $config->get('happyro.initial_username') === 'admin'
+                && $config->get('happyro.initial_password') === 'admin',
+        ])->header('Cache-Control', 'no-store');
+    }
 
     public function store(LoginRequest $request): JsonResponse
     {

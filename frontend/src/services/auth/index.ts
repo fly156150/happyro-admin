@@ -10,6 +10,13 @@ export type LoginResult = {
   status: 'ok';
 };
 
+export async function loginConfiguration() {
+  return request<{ showDefaultCredentials: boolean }>('/api/auth/configuration', {
+    method: 'GET',
+    skipErrorHandler: true,
+  });
+}
+
 export async function login(credentials: LoginCredentials) {
   return request<LoginResult>('/api/auth/login', {
     method: 'POST',

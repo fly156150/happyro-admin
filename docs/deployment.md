@@ -22,3 +22,15 @@ Laravel 经 HTTP 调用 web-server，不直接连接 map-server Socket；共享�
 - 更新后核对健康检查、管理员登录、资料查询、能力发现与配置回读；测试角色操作和有消耗业务单独验收。
 
 不在此维护特定机器的账号、旧包目录、测试角色 ID 或“当前进程已升级”记录。
+
+### 登录页初始凭据提示
+
+`SHOW_DEFAULT_CREDENTIALS=true` 显示“账号密码：admin / admin”，默认关闭；设置 `false` 隐藏。开关仅控制文案，不修改实际账号或密码。Docker 部署在部署目录 `.env` 修改后运行 `docker compose up -d --no-deps --force-recreate admin`，无需重新构建镜像。直接部署 Laravel 时修改后清除或重新生成配置缓存。
+
+### 初始管理员账号
+
+部署目录 `.env` 中的 `ADMIN_INITIAL_USERNAME` 和 `ADMIN_INITIAL_PASSWORD` 指定初始管理员，默认均为 `admin`。首次初始化只在管理库没有任何账号时创建超级管理员；已有账号时直接跳过，不覆盖密码、角色或状态。修改变量不会重置已有账号。用户名沿用小写字母、数字、下划线、点及短横线规则，密码为 5–255 个字符。
+
+使用自定义账号或密码时，登录页隐藏默认凭据提示，即使 `SHOW_DEFAULT_CREDENTIALS=true`；公开配置接口不返回自定义凭据。直接部署使用 `php artisan gm:user:create --initial --no-interaction --no-color`。
+
+提示是固定的 `admin/admin` 文案，不读取真实密码。初始化配置仍为默认值但实际密码已经修改时，应设置 `SHOW_DEFAULT_CREDENTIALS=false` 隐藏提示。
