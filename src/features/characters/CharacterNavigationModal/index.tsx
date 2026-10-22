@@ -143,7 +143,8 @@ export default function CharacterNavigationModal({
                     const response = await listCharacters({
                       current: 1,
                       pageSize: 20,
-                      username: value,
+                      query: value,
+                      onlineOnly: true,
                     });
                     if (id !== searchId.current) return;
                     setOptions(

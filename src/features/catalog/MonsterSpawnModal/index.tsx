@@ -123,7 +123,8 @@ export default function MonsterSpawnModal({ monsterId, monsterName }: Props) {
                     const result = await listCharacters({
                       current: 1,
                       pageSize: 20,
-                      username: value,
+                      query: value,
+                      onlineOnly: true,
                     });
                     if (currentSearch !== searchId.current) return;
                     setTargets(

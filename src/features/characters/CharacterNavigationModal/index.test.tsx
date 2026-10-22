@@ -81,9 +81,15 @@ it('selects an online character and sends the NPC identity with fixed coordinate
   ).toBeInTheDocument();
   expect(screen.queryByRole('combobox', { name: '操作' })).toBeNull();
   fireEvent.change(screen.getByRole('combobox', { name: '在线目标角色' }), {
-    target: { value: 'tester' },
+    target: { value: '测试在线角色' },
   });
   fireEvent.click(await screen.findByText('测试在线角色 · tester'));
+  expect(listCharacters).toHaveBeenCalledWith({
+    current: 1,
+    pageSize: 20,
+    query: '测试在线角色',
+    onlineOnly: true,
+  });
   expect(screen.queryByText('离线角色 · tester')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: '确认传送' }));
   await waitFor(() =>
