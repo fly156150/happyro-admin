@@ -23,7 +23,7 @@
 ## 实现方案
 
 - 魔物召唤是 map-server 的运行时操作，不写玩家数据库或 `happyro_admin` 资料表。
-- Laravel 当前复用命令提交、持久化和执行 Service，通过可 Mock 的 `GameServerGateway` 调用私有 Game Control API。
+- Go 当前复用命令提交、持久化和执行 Service，通过可 Mock 的 `gamecontrol.Gateway` 调用私有 Game Control API。
 - Game Control API 解析目标角色的实时位置，检查角色在线、地图已加载、附近存在可行走格子、魔物 ID、数量上限和清理时间。
 - 默认使用一次性生成，不建立永久刷新点；需要永久刷新时必须作为另一项配置功能单独设计。
 - 接口只接受结构化的 `monster.spawn` 命令，不暴露 rAthena 任意脚本或控制台执行能力。

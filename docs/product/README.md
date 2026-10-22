@@ -12,35 +12,19 @@
 
 ## 代码职责
 
-后端继续遵循 Laravel 的入口、用例、契约和基础设施分层，并按业务域组织：
+管理前端位于本仓库，后端由独立 happyro-api 提供。HTTP 与 CLI 复用后端领域服务；管理员与玩家入口分别认证，共享账号、角色、资料、奖励和游戏控制服务。
 
 ```text
-backend/app/
-├── Contracts/{Auth,Players,GameData,GameServer,Operations}
-├── Data/{Auth,Players,GameData,GameServer,Operations}
-├── Services/{Auth,Players,GameData,GameServer,Operations,AdventureTools}
-├── Infrastructure/{Persistence,GameServer}
-└── Http/{Controllers,Requests,Resources}
+src/
+├── pages/       # 路由页面：accounts、characters、catalog、rewards、settings、login
+├── features/    # 角色维护、奖励发放与资料业务组件
+├── api/         # 按业务域组织的 HTTP 调用和类型
+└── data/game/   # 有来源记录的前端游戏映射
 ```
 
-- `Services` 保存可由 HTTP、CLI 和队列复用的业务用例。
-- `Contracts` 定义 Repository、游戏服务控制和配置输出端口，所有外部依赖必须可替换、可 Mock。
-- `Infrastructure` 保存 Game Control、配置文件与部分持久化适配器；部分已有数据库 Repository 仍在 `Services/` 下，不能把理想分层当作当前目录事实。新增逻辑遵循可注入、可替换的契约。
-- 控制器只负责认证授权、请求转换和响应转换。
+角色维护位于 characters 详情页，魔物召唤位于 rewards，游戏参数位于 settings。目录名称按业务职责组织，浏览器 URL 由 config/routes.ts 定义。
 
-Game Control 的 HTTP 接入点只负责认证、能力发现和命令转发；角色状态与地图实体的最终读写必须在 map-server 线程中执行。web-server 不能直接模拟 map-server 内存状态，也不能通过 SQL 代替运行时命令。
-
-前端目录与一级菜单一致：
-
-```text
-frontend/src/pages/
-├── game-data/
-├── players/
-├── operations/
-└── settings/
-```
-
-角色维护收敛在 `players/characters` 的详情页面中，不为等级、属性和技能分别创建侧栏菜单。魔物召唤放在 `operations/monster-spawns`，游戏参数放在 `settings/game-settings`。
+Game Control 的 HTTP 接入点负责认证、能力发现和命令转发；角色状态与地图实体的最终读写必须在 map-server 线程中执行，不通过 SQL 代替在线状态命令。
 
 ## 待完善事项
 

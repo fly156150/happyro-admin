@@ -1,10 +1,11 @@
 # HappyRO Admin 代理说明
 
-本仓库是 HappyRO Web 栈的内部游戏管理后台，采用单仓库双应用结构：
+本仓库是 HappyRO 管理前端，采用 React、Umi 和 Ant Design。Go API 独立位于 happyro-api 仓库。
 
-- `backend/`：Laravel API
-- `frontend/`：Ant Design Pro 前端
-- `deploy/`：本机物理部署配置
+- `src/pages/`：路由页面
+- `src/features/`：业务组件与逻辑
+- `src/api/`：接口调用
+- `deploy/`：前端部署配置
 
 子目录中的 `AGENTS.md` 在对应范围内继续生效；本文件规定整个仓库共同遵守的规则。
 
@@ -24,7 +25,7 @@
 
 ## 代码实现规范
 
-- 默认按当前最佳实践实现，遵循 Laravel 的设计原则和项目既有架构。
+- 默认按当前最佳实践实现，遵循 TypeScript strict、组件职责分离和项目既有架构。
 - 单个源代码文件原则上不得超过 800 行；单个函数或方法原则上不得超过 150 行。超过上限时，必须在代码评审或提交说明中解释原因，并优先拆分职责。
 - 代码必须通过依赖注入组织协作关系，业务依赖不得在类内部硬编码实例化。
 - 业务组件、Service、Repository、外部适配器和基础设施依赖必须可替换、可 Mock，并能编写独立单元测试。
@@ -44,14 +45,14 @@
 
 - 职业、地图、物品、状态等业务映射必须以 HappyRO 项目已有的代码或资源为准，禁止凭经验新增可能不一致的名称或 ID。
 - 外部 HappyRO 项目的映射在 `happyro-admin` 中必须保留一份冗余副本；副本需要记录来源文件，更新时同步核对来源并在 changelog 中说明变更。
-- 映射数据必须放在独立的数据目录中，与页面、控制器和业务逻辑分离；当前前端映射统一放在 `frontend/src/data/game/`，多语言名称放在国际化资源中，映射表只保存稳定的 ID、代码和翻译键。
+- 映射数据必须放在独立的数据目录中，与页面、控制器和业务逻辑分离；当前前端映射统一放在 `src/data/game/`，多语言名称放在国际化资源中，映射表只保存稳定的 ID、代码和翻译键。
 
 ## 本机前端部署与验收
 
 - 本机 `8000` 端口的前端必须由 `happyro-admin-frontend.service` 唯一管理，禁止使用 `root`、`nohup` 或其他手工后台进程长期运行 Umi；手工进程可能在退出终端后继续占用端口，使 systemd 新进程无法接管并持续提供旧 bundle。
 - 前端改动未生效时，先使用 `ss -ltnp 'sport = :8000'` 核对监听进程，再使用 `systemctl status happyro-admin-frontend.service` 核对该进程是否属于服务的 cgroup；不得只根据 Umi 的 `Compiled` 日志判断部署成功。
 - 发现孤立 Umi 进程时，只终止已核实的进程或进程组，然后执行 `systemctl restart happyro-admin-frontend.service`；禁止使用可能误伤其他 Node.js 服务的宽泛 `pkill node`。
-- 前端构建、检查和代码生成命令应使用 `happyro-admin` 服务用户执行，避免 `root` 生成该用户不可写的文件。服务出现 `EACCES` 时，重点检查 `.git/config` 的组读取权限，以及 `frontend/src/.umi/`、`frontend/node_modules/.cache/`、`frontend/node_modules/umi_open_api/` 等生成目录的属主和写权限；只修复已确认异常的文件或生成目录，不得无差别修改整个仓库权限。
+- 前端构建、检查和代码生成命令应使用 `happyro-admin` 服务用户执行，避免 `root` 生成该用户不可写的文件。服务出现 `EACCES` 时，重点检查 `.git/config` 的组读取权限，以及 `src/.umi/`、`node_modules/.cache/`、`node_modules/umi_open_api/` 等生成目录的属主和写权限；只修复已确认异常的文件或生成目录，不得无差别修改整个仓库权限。
 - 恢复服务后，必须同时确认服务状态为 `active`、`8000` 已由服务进程监听、`journalctl -u happyro-admin-frontend.service` 没有新的启动错误，并通过真实浏览器验证目标文案、布局和交互。浏览器仍显示旧内容时，再检查 Service Worker 和缓存，并执行强制刷新；不得用强制刷新掩盖端口被旧进程占用的问题。
 
 ## Changelog
@@ -59,4 +60,67 @@
 - 项目变更必须在本仓库的 `changelog/` 目录记录，并与实际变更保持一致。
 - 日志路径固定为 `changelog/<年>/<月>/YYYY-MM-DD.md`，同一天的修改追加到同一个文件。
 - 日期日志按变更性质使用 `Added`、`Changed`、`Fixed`、`Documentation` 等英文二级标题分类，不得使用无分类的平铺列表。
-- 每条记录按归属以 `` `[admin]` ``、`` `[backend]` `` 或 `` `[frontend]` `` 标记：跨应用和仓库级变更使用 `` `[admin]` ``，Laravel 后端使用 `` `[backend]` ``，Ant Design Pro 前端使用 `` `[frontend]` ``。
+- 每条记录按归属以 `` `[admin]` ``、`` `[backend]` `` 或 `` `[frontend]` `` 标记：跨应用和仓库级变更使用 `` `[admin]` ``，Go 后端使用 `` `[backend]` ``，Ant Design Pro 前端使用 `` `[frontend]` ``。
+
+# HappyRO Admin 前端代理说明
+
+## Project
+
+Ant Design Pro — React enterprise boilerplate on Umi Max v4, antd v6, ProComponents v3.
+
+## Commands
+
+`npm start` (no mock), `npm run dev` (no mock), `npm run build` (utoopack), `npm run lint` (Biome+tsc), `npm run test` (Vitest), `npx antd lint ./src` (antd-specific checks).
+
+Other: `npm run simple` (**irreversible** — commit first), `npm run biome` (auto-fix), `npm run tsc` (type-check only).
+
+## Critical Rules
+
+- 接口类型与调用统一放在 `src/api/`，不引入模板的示例接口。
+- **Biome only** — no ESLint, no Prettier. Both `npm run lint` and `npx antd lint ./src` must pass before commit
+- **Always `npx antd info <Component>` before writing antd code** — don't guess APIs from memory
+- **`npm run simple` is irreversible** — always commit/branch first
+- **Conventional commits** required (commitlint enforced)
+- **TypeScript strict** · **Node ≥ 22** · **`package-lock.json`** (not yarn/pnpm)
+- **`.umi` dir is auto-generated** — delete `src/.umi` and restart if dev server acts up
+
+## Architecture Essentials
+
+**Config**: `config/config.ts` (defineConfig), `config/routes.ts` (declarative routes). Route `name` → `menu.xxx` i18n key; `access` field gates visibility.
+
+**Convention files** (`src/`): `app.tsx` (runtime config + `getInitialState`), `access.ts` (permissions), `global.tsx` (side effects), `loading.tsx`, `typings.d.ts`.
+
+**Auth**: `src/api/auth/` connects to happyro-api administrator sessions with CSRF protection. HappyRO permissions come from currentUser.permissions and are checked in access.ts and the backend. Upstream mock credentials and generated /api/currentUser examples are not production authentication.
+
+**State**: `useModel('filename')` for global hooks (`src/models/`). `useModel('@@initialState')` for currentUser/settings. ProTable `request` prop for most data loading. `@tanstack/react-query` for complex server state.
+
+**Styling priority**: Tailwind CSS v4 (layout) → antd-style v4 / `createStyles` (theme tokens) → CSS Modules → Less (legacy only).
+
+**Request**: built-in `request` from `@umijs/max`, configured in `src/requestErrorConfig.ts`. Business API calls belong in `src/api/`.
+
+**i18n**: 8 locales in `src/locales/`. `useIntl().formatMessage({ id, defaultMessage })`.
+
+**Mock**: `mock/` (global) + `src/pages/**/_mock.ts` (co-located). Express-style handlers.
+
+
+
+## AI Skills
+
+This project ships with two built-in Claude Code Skills (`.claude/skills/`). If you already have these skills in your project, no installation is needed — just run them directly. To update to the latest skill definitions, run `npx skills add ant-design/ant-design-pro`.
+
+### `/pro-upgrade` — Project Upgrade
+
+Run `/pro-upgrade` in Claude Code to auto-upgrade the project to the latest Ant Design Pro version. It diffs the latest template against this project and merges framework changes while preserving business code. Works for any version gap (v5→v6, v6.x→latest, etc.).
+
+### `/antd` — Ant Design CLI
+
+Run `/antd` in Claude Code for any antd-related work. It provides access to `@ant-design/cli` with offline metadata for antd v3/v4/v5/v6. Key commands:
+
+- `npx antd info <Component>` — look up props/API before writing code (mandatory)
+- `npx antd lint ./src` — check for deprecated or problematic usage (must pass before commit)
+- `npx antd demo <Component> <demo>` — get working code examples
+- `npx antd migrate <from> <to>` — migration checklist between major versions
+
+## Page Co-location
+
+Each page dir: `index.tsx`, optional `service.ts`, `_mock.ts`, `data.d.ts`, style files. Keep page-specific code with the page.

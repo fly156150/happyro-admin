@@ -1,48 +1,33 @@
 # HappyRO Admin
 
-HappyRO 的游戏管理后台。单仓库双应用：
+HappyRO 管理前端，使用 React、Umi、Ant Design 和 TanStack Query。后端由独立的 `happyro-api` 提供。
 
-- `backend/`：Laravel 13 API
-- `frontend/`：Ant Design Pro 6.0.3
-- `deploy/systemd/`：本机 systemd 单元
+## 开发
 
-本文件是 HappyRO Admin 的入口；子应用 README 指向统一维护文档。
+要求 Node.js 22 或以上，使用 npm 和 package-lock.json。
 
-## 文档
-
-- [文档索引](docs/README.md)
-- [架构](docs/architecture.md)
-- [后端](docs/backend.md)
-- [前端](docs/frontend.md)
-- [部署](docs/deployment.md)
-- [产品](docs/product/README.md)
-
-## 本机开发地址（以实际配置为准）
-
-- 前端：http://127.0.0.1:8000
-- Laravel：http://127.0.0.1:18081
-- 健康检查：http://127.0.0.1:18081/api/health
-
-后台使用 Laravel Session 与 Sanctum Cookie 认证。管理账号存放在 `happyro_admin` 库，与玩家游戏库隔离。
-
-```bash
-cd backend
-php artisan gm:user:create admin \
-  --name="Administrator" \
-  --role=super_admin
+```sh
+npm ci
+npm start
 ```
 
-省略 `--password` 时交互式读取密码。无参数运行该命令只显示帮助。
+## 验证与构建
 
-## 常用命令
-
-```bash
-systemctl status happyro-admin-backend happyro-admin-frontend
-journalctl -u happyro-admin-backend -f
-systemctl restart happyro-admin-backend happyro-admin-frontend
-
-(cd backend && php artisan test)
-(cd frontend && npm run lint && npm run test && npm run build)
+```sh
+npm test
+npm run lint
+npx antd lint ./src
+npm run build
 ```
 
-Admin 支持 Docker 离线交付与原生开发部署；Laravel 使用独立的 `happyro_admin` 管理库。具体端口、迁移与配置见[部署](docs/deployment.md)。
+构建结果位于 `dist/`。开发代理配置位于 `config/proxy.ts`。管理员会话和权限由 API 校验；前端权限用于菜单和交互控制。
+
+## 目录
+
+- `src/pages/`：页面和路由组装。
+- `src/features/`：业务组件与逻辑。
+- `src/api/`：请求、接口类型和响应处理。
+- `src/components/`：跨业务通用组件。
+- `src/data/`：有明确来源的游戏映射。
+- `tests/`：测试支持。
+- `deploy/`：前端部署配置。

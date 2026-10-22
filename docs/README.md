@@ -1,7 +1,7 @@
 # Admin 文档
 
 - [架构](architecture.md)：数据库、资料和游戏服务边界。
-- [后端](backend.md)、[前端](frontend.md)：开发入口与检查。
+- [前端](frontend.md)：开发入口与检查。后端开发与部署说明由独立的 happyro-api 仓库维护。
 - [部署](deployment.md)：Docker／原生环境、认证、配置与升级。
 - [角色命令契约](product/game-control-commands.md)：成长、属性、职业外观、骑乘及服务端权威校验。
 - [产品与待办](product/README.md)：用户、资料、运营、设置及 Game Control。

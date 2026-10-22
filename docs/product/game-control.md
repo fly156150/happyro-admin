@@ -11,7 +11,7 @@
 ## 进程边界
 
 ```text
-happyro-admin Laravel
+happyro-api Go
         |
         | loopback HTTP（生产可由前置 TLS 终止），Bearer，幂等键
         v
@@ -55,7 +55,7 @@ map-server 配置键为 `game_control_socket`，默认空值表示关闭。启�
 - map-server 接收线程只负责解析信封并投递到主线程队列，不能直接触碰角色或地图对象。
 - map-server 主线程执行命令、生成结果和审计所需的实际状态，再通过关联命令 ID 返回。
 - 通道断开或超时统一映射为 `indeterminate`；不能因为重连而自动重复执行。
-- Unix Socket 不作为管理员认证边界；服务账号和文件权限限制连接方，HTTP 层校验命令信封，Laravel 持久化层绑定幂等键与请求指纹。
+- Unix Socket 不作为管理员认证边界；服务账号和文件权限限制连接方，HTTP 层校验命令信封，Go 持久化层绑定幂等键与请求指纹。
 
 开发环境可以提供 loopback TCP 适配器以便契约测试，但生产配置不得因为测试方便而回退到公网可达地址。跨主机部署属于独立架构变更，届时必须使用专用 TLS/mTLS 通道并重新审核密钥和网络策略。
 
@@ -82,7 +82,7 @@ map-server 配置键为 `game_control_socket`，默认空值表示关闭。启�
 - `monster.spawn`
 - `battle_config.apply`
 
-完整声明见 `backend/app/Data/GameServer/GameServerCommandType.php`，当前还包含角色快照、导航、属性／特性点、学习技能、骑乘、职业外观、背包与 Zeny 发放。不同入口使用各自白名单和权限；不能将声明的全部类型视为所有用户均可调用。能力发现只返回当前服务端已实现类型，最终资格仍由服务端校验。
+命令校验见 `happyro-api/internal/game/validation.go`，专用设置和发放入口另有业务校验，当前还包含角色快照、导航、属性／特性点、学习技能、骑乘、职业外观、背包与 Zeny 发放。不同入口使用各自白名单和权限；不能将声明的全部类型视为所有用户均可调用。能力发现只返回当前服务端已实现类型，最终资格仍由服务端校验。
 
 ## rAthena 能力映射
 
@@ -111,12 +111,12 @@ Game Control 的命令必须映射到 HappyRO Server 已有的领域函数，由
 ```text
 pending -> running -> succeeded
                     -> failed
-                    -> indeterminate -> running
+                    -> indeterminate -> succeeded / failed（有执行凭据时）
 ```
 
 - `failed` 仅表示服务端明确拒绝或明确失败。
 - `indeterminate` 表示请求超时、连接中断或服务端异常，不能确认命令是否已经产生副作用。
-- `indeterminate` 命令只能使用原命令 ID 和原幂等键查询或重试，禁止创建一个看似新的副本来绕过保护。
+- `indeterminate` 命令不会自动重新执行。设置命令可由管理员通过原执行凭据或版本屏障确认；确认旧请求已失效后，业务用例才允许创建新尝试。其它命令须遵守各自的回执与恢复约束。
 - 幂等键与请求指纹绑定；同一键携带不同目标、类型或参数必须拒绝。
 - 已完成命令不可回到 `running`，需要重新执行时必须由业务用例明确创建新的命令。
 
@@ -132,7 +132,7 @@ pending -> running -> succeeded
 - 请求、响应和异常日志不得输出 Authorization、完整 payload 中的秘密或数据库凭据。
 - 当前角色维护和魔物召唤共用 `operations.game-control` 权限；生产开放前应收敛为独立业务接口、权限、审计字段和适当的速率限制。
 
-## Laravel API
+## Go API
 
 后台 API 位于 `/api/operations/game-control`，统一使用 `operations.game-control` 权限：
 
@@ -142,4 +142,4 @@ pending -> running -> succeeded
 
 战斗倍率不接受通用运营命令入口提交，只能通过受 `settings.manage` 保护的 `PUT /api/settings/game-settings` 应用。
 
-控制器只负责请求转换和响应，命令构造、持久化、网关通信和状态流转分别由 FormRequest、DTO、Repository、Gateway 和 Service 完成。HTTP、CLI 或后台任务接入新入口时必须复用同一组 Service，不能在控制器中复制游戏业务逻辑。
+控制器只负责请求转换和响应，命令构造、持久化、网关通信和状态流转分别由 输入校验、请求结构、Repository、Gateway 和 Service 完成。HTTP、CLI 或后台任务接入新入口时必须复用同一组 Service，不能在控制器中复制游戏业务逻辑。
