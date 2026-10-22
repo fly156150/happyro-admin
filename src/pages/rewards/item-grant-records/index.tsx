@@ -14,8 +14,8 @@ export default function ItemGrantRecords() {
       <ProTable
         rowKey="id"
         search={false}
-        request={async ({ current }) => {
-          const response = await listItemGrants(current);
+        request={async ({ current, pageSize }) => {
+          const response = await listItemGrants(current, pageSize);
           return {
             data: response.data,
             total: response.meta.total,
