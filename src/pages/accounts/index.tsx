@@ -38,6 +38,7 @@ import {
 } from '@/api/accounts';
 import { sexMappings } from '@/data/game/sex';
 import AccountEmailDialog from '@/features/accounts/AccountEmailDialog';
+import { formatDateTime } from '@/utils/dateTime';
 import { createRetryableMutation } from '@/utils/retryableMutation';
 import DeletionTasks from './DeletionTasks';
 import styles from './index.less';
@@ -94,6 +95,7 @@ function accountColumns({
     {
       title: t('players.account.lastLogin', '最后登录'),
       dataIndex: 'lastlogin',
+      renderText: formatDateTime,
       search: false,
     },
     {

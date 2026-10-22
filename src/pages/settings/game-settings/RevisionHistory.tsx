@@ -8,6 +8,7 @@ import {
   resumeSettingRevision,
   type SettingRevision,
 } from '@/api/settings/game-settings';
+import { formatDateTime } from '@/utils/dateTime';
 
 export default function RevisionHistory({
   revision,
@@ -64,7 +65,7 @@ export default function RevisionHistory({
         {
           title: t('settings.revision.time', '提交时间'),
           dataIndex: 'created_at',
-          valueType: 'dateTime',
+          renderText: formatDateTime,
         },
         {
           title: t('settings.revision.actor', '操作账号'),

@@ -1,4 +1,3 @@
-import type { CurrentUser } from '@/api/auth/types';
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
@@ -6,12 +5,15 @@ import { App as AntdApp } from 'antd';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import React, { useEffect } from 'react';
+import type { CurrentUser } from '@/api/auth/types';
+import { publicConfiguration } from '@/api/publicConfig';
+import { configureTimeZone } from '@/utils/dateTime';
 
 // Initialize dayjs plugins globally
 dayjs.extend(relativeTime);
 
-import { AvatarDropdown, ErrorBoundary, OfflineBanner } from '@/components';
 import { currentUser as queryCurrentUser } from '@/api/auth/index';
+import { AvatarDropdown, ErrorBoundary, OfflineBanner } from '@/components';
 import ThemeToggle from '@/components/RightContent/ThemeToggle';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig, setRequestFeedback } from './requestErrorConfig';
@@ -27,6 +29,7 @@ export async function getInitialState(): Promise<{
   loading?: boolean;
   fetchUserInfo?: () => Promise<CurrentUser | undefined>;
 }> {
+  configureTimeZone((await publicConfiguration()).timeZone);
   const fetchUserInfo = async () => {
     try {
       const msg = await queryCurrentUser({
