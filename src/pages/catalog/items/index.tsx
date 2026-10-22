@@ -167,6 +167,8 @@ function useItemColumns({
         title: t('gameData.item.weight', '重量'),
         dataIndex: 'Weight',
         search: false,
+        // rAthena item_db stores ten units for each displayed weight unit.
+        render: (_, row) => (row.Weight ?? 0) / 10,
       },
       {
         title: t('gameData.item.price', '价格'),

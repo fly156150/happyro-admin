@@ -91,8 +91,9 @@ export default function DeletionTasks({
             : '—',
     },
     {
-      title: t('players.deletion.created', '提交时间'),
+      title: t('players.deletion.created', '提交时间（UTC）'),
       dataIndex: 'created_at',
+      renderText: (value: string) => value.replace(/\.\d+$/, ''),
     },
     {
       title: t('common.actions', '操作'),

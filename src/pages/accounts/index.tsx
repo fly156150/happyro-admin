@@ -37,6 +37,7 @@ import {
   updateAccount,
 } from '@/api/accounts';
 import { sexMappings } from '@/data/game/sex';
+import AccountEmailDialog from '@/features/accounts/AccountEmailDialog';
 import { createRetryableMutation } from '@/utils/retryableMutation';
 import DeletionTasks from './DeletionTasks';
 import styles from './index.less';
@@ -49,6 +50,7 @@ type AccountColumnsOptions = {
   canEdit: boolean;
   onDelete: (accountId: number) => void;
   onPasswordReset: (accountId: number) => void;
+  onEditEmail: (account: PlayerAccount) => void;
   onToggleState: (account: PlayerAccount, reload?: () => void) => Promise<void>;
   t: Translate;
 };
@@ -57,6 +59,7 @@ function accountColumns({
   canEdit,
   onDelete,
   onPasswordReset,
+  onEditEmail,
   onToggleState,
   t,
 }: AccountColumnsOptions): ProColumns<PlayerAccount>[] {
@@ -99,6 +102,9 @@ function accountColumns({
       hideInTable: !canEdit,
       render: (_, row, __, action) => (
         <Space>
+          <Button type="link" size="small" onClick={() => onEditEmail(row)}>
+            {t('players.account.editEmail', '修改邮箱')}
+          </Button>
           <Button
             type="link"
             size="small"
@@ -318,6 +324,7 @@ export default function Accounts() {
   const { message, modal } = App.useApp();
   const actionRef = useRef<ActionType>(null);
   const [selected, setSelected] = useState<Key[]>([]);
+  const [emailAccount, setEmailAccount] = useState<PlayerAccount>();
   const [passwordId, setPasswordId] = useState<number>();
   const [registerOpen, setRegisterOpen] = useState(false);
   const t = (id: string, fallback: string) =>
@@ -358,6 +365,7 @@ export default function Accounts() {
     t,
     onDelete: (accountId) => confirmAction('delete', [accountId]),
     onPasswordReset: setPasswordId,
+    onEditEmail: setEmailAccount,
     onToggleState: async (account, reloadTable) => {
       await updateAccount(account.account_id, { state: account.state ? 0 : 1 });
       message.success(
@@ -402,6 +410,17 @@ export default function Accounts() {
         <DeletionTasks
           revision={deletionRevision}
           onCompleted={() => reload(actionRef)}
+        />
+      )}
+      {access.canEditPlayers && emailAccount && (
+        <AccountEmailDialog
+          key={emailAccount.account_id}
+          account={emailAccount}
+          onClose={() => setEmailAccount(undefined)}
+          onSaved={() => {
+            setEmailAccount(undefined);
+            reload(actionRef);
+          }}
         />
       )}
       {access.canEditPlayers && (

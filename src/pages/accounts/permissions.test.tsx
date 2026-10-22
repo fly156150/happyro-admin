@@ -66,7 +66,7 @@ it('hides write actions, selection and deletion tasks from a read-only operator'
       <Accounts />
     </App>,
   );
-  for (const name of ['注册账号', '重置密码', '封禁', '删除']) {
+  for (const name of ['注册账号', '修改邮箱', '重置密码', '封禁', '删除']) {
     expect(screen.queryByRole('button', { name: new RegExp(name) })).toBeNull();
   }
   expect(screen.queryByRole('checkbox')).toBeNull();
@@ -80,7 +80,7 @@ it('shows account management actions to an authorized editor', () => {
       <Accounts />
     </App>,
   );
-  for (const name of ['注册账号', '重置密码', '封禁', '删除']) {
+  for (const name of ['注册账号', '修改邮箱', '重置密码', '封禁', '删除']) {
     expect(screen.getByRole('button', { name: new RegExp(name) })).toBeTruthy();
   }
   expect(screen.getByRole('checkbox')).toBeTruthy();
