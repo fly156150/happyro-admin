@@ -235,6 +235,7 @@ function AccountDialogs({
         <Form
           {...formLayout}
           form={passwordForm}
+          name="account-password-reset"
           onFinish={({ password }) =>
             passwordId && onPasswordReset(passwordId, password)
           }
@@ -258,7 +259,12 @@ function AccountDialogs({
         onOk={() => registerForm.submit()}
         afterClose={() => registerForm.resetFields()}
       >
-        <Form {...formLayout} form={registerForm} onFinish={onRegister}>
+        <Form
+          {...formLayout}
+          form={registerForm}
+          name="account-registration"
+          onFinish={onRegister}
+        >
           <Form.Item
             name="userid"
             label={t('players.account.username', '用户名')}
@@ -431,15 +437,23 @@ export default function Accounts() {
           onClosePassword={() => setPasswordId(undefined)}
           onCloseRegister={() => setRegisterOpen(false)}
           onPasswordReset={async (accountId, password) => {
-            await resetPassword(accountId, password);
-            message.success(t('players.account.passwordReset', '密码已重置'));
-            setPasswordId(undefined);
+            try {
+              await resetPassword(accountId, password);
+              message.success(t('players.account.passwordReset', '密码已重置'));
+              setPasswordId(undefined);
+            } catch {
+              // Shared request feedback reports the error; keep the form for retry.
+            }
           }}
           onRegister={async (values) => {
-            await registerAccount(values);
-            message.success(t('players.account.registered', '账号已注册'));
-            setRegisterOpen(false);
-            reload(actionRef);
+            try {
+              await registerAccount(values);
+              message.success(t('players.account.registered', '账号已注册'));
+              setRegisterOpen(false);
+              reload(actionRef);
+            } catch {
+              // Shared request feedback reports the error; keep the form for retry.
+            }
           }}
         />
       )}

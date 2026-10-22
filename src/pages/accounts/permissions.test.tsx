@@ -1,7 +1,15 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { App } from 'antd';
 import { afterEach, expect, it, vi } from 'vitest';
 import access from '@/access';
+import { registerAccount, resetPassword } from '@/api/accounts';
 import type { CurrentUser } from '@/api/auth/types';
 import Accounts from './index';
 
@@ -86,3 +94,51 @@ it('shows account management actions to an authorized editor', () => {
   expect(screen.getByRole('checkbox')).toBeTruthy();
   expect(screen.getByText('删除任务列表')).toBeTruthy();
 });
+
+for (const mode of ['register', 'password'] as const) {
+  it(`preserves the ${mode} form after an API rejection and accepts a corrected retry`, async () => {
+    state.canEditPlayers = true;
+    const send =
+      mode === 'register'
+        ? vi.mocked(registerAccount)
+        : vi.mocked(resetPassword);
+    send
+      .mockRejectedValueOnce(new Error('rejected'))
+      .mockResolvedValueOnce({} as never);
+    render(
+      <App>
+        <Accounts />
+      </App>,
+    );
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: mode === 'register' ? /注册账号/ : /重置密码/,
+      }),
+    );
+    const modal = within(screen.getByRole('dialog'));
+    if (mode === 'register') {
+      fireEvent.change(modal.getByLabelText('用户名'), {
+        target: { value: 'player_two' },
+      });
+      fireEvent.change(modal.getByLabelText('邮箱'), {
+        target: { value: 'two@example.com' },
+      });
+    }
+    fireEvent.change(modal.getByLabelText('新密码'), {
+      target: { value: 'original-secret' },
+    });
+    fireEvent.click(modal.getByRole('button', { name: 'OK' }));
+    await waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+    expect(modal.getByLabelText('新密码')).toHaveValue('original-secret');
+    fireEvent.change(modal.getByLabelText('新密码'), {
+      target: { value: 'corrected-secret' },
+    });
+    fireEvent.click(modal.getByRole('button', { name: 'OK' }));
+    await waitFor(() => expect(send).toHaveBeenCalledTimes(2));
+    expect(
+      await screen.findByText(
+        mode === 'register' ? '账号已注册' : '密码已重置',
+      ),
+    ).toBeInTheDocument();
+  });
+}

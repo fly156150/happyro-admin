@@ -25,12 +25,13 @@ export default function AccountEmailDialog({
       confirmLoading={saving}
       cancelButtonProps={{ disabled: saving }}
       closable={!saving}
-      maskClosable={!saving}
+      mask={{ closable: !saving }}
       onCancel={onClose}
       onOk={() => form.submit()}
     >
       <Form
         form={form}
+        name="account-email-edit"
         layout="vertical"
         initialValues={{ email: account.email }}
         onFinish={async ({ email }: { email: string }) => {
