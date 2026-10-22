@@ -26,7 +26,7 @@ Other: `npm run openapi` (regenerate `src/services/`), `npm run simple` (**irrev
 
 **Convention files** (`src/`): `app.tsx` (runtime config + `getInitialState`), `access.ts` (permissions), `global.tsx` (side effects), `loading.tsx`, `typings.d.ts`.
 
-**Auth**: `src/services/auth/` connects to Laravel Session/Sanctum. HappyRO permissions come from currentUser.permissions and are checked in access.ts and the backend. Upstream mock credentials and generated /api/currentUser examples are not production authentication.
+**Auth**: `src/api/auth/` connects to happyro-api administrator sessions with CSRF protection. HappyRO permissions come from currentUser.permissions and are checked in access.ts and the backend. Upstream mock credentials and generated /api/currentUser examples are not production authentication.
 
 **State**: `useModel('filename')` for global hooks (`src/models/`). `useModel('@@initialState')` for currentUser/settings. ProTable `request` prop for most data loading. `@tanstack/react-query` for complex server state.
 

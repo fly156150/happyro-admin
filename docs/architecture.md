@@ -1,6 +1,6 @@
 # 架构
 
-Admin 采用 Go API 与 Ant Design Pro 前端，账户、权限、审计与游戏资料位于 `happyro_admin`；玩家查询使用独立 game 连接，不把管理员账号混入玩家 login 表。
+Admin 仓库只维护 Ant Design Pro 前端，后端由独立的 [happyro-api](https://github.com/happyro/happyro-api) 提供，账户、权限、审计与游戏资料位于 `happyro_admin`；玩家查询使用独立 game 连接，不把管理员账号混入玩家 login 表。
 
 ```text
 浏览器 → Admin 前端／反向代理 → Go / Gin

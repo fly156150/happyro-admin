@@ -6,4 +6,4 @@
 
 开发模式使用 `npm start`，代理配置见 `config/proxy.ts`。Linux 开发服务模板见 `deploy/systemd/happyro-admin-frontend.service`，安装前核对路径、用户和端口。
 
-API 初始化、环境配置和服务安装由 happyro-api 的 `docs/deployment.md` 说明；整体 Docker 构建与离线交付由根仓库维护。
+API 初始化、环境配置和服务安装见 [happyro-api 部署说明](https://github.com/happyro/happyro-api/blob/main/docs/deployment.md)；整体 Docker 构建与离线交付由根仓库维护。

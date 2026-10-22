@@ -49,7 +49,9 @@
 
 ## 本机前端部署与验收
 
-- 本机 `8000` 端口的前端必须由 `happyro-admin-frontend.service` 唯一管理，禁止使用 `root`、`nohup` 或其他手工后台进程长期运行 Umi；手工进程可能在退出终端后继续占用端口，使 systemd 新进程无法接管并持续提供旧 bundle。
+以下 systemd 规则适用于 Linux；macOS 使用 launchd，按根仓库的[服务手册](../../docs/operations/services.md)管理，不能并行启动第二份 Umi。
+
+- Linux 本机 `8000` 端口的前端必须由 `happyro-admin-frontend.service` 唯一管理，禁止使用 `root`、`nohup` 或其他手工后台进程长期运行 Umi；手工进程可能在退出终端后继续占用端口，使 systemd 新进程无法接管并持续提供旧 bundle。
 - 前端改动未生效时，先使用 `ss -ltnp 'sport = :8000'` 核对监听进程，再使用 `systemctl status happyro-admin-frontend.service` 核对该进程是否属于服务的 cgroup；不得只根据 Umi 的 `Compiled` 日志判断部署成功。
 - 发现孤立 Umi 进程时，只终止已核实的进程或进程组，然后执行 `systemctl restart happyro-admin-frontend.service`；禁止使用可能误伤其他 Node.js 服务的宽泛 `pkill node`。
 - 前端构建、检查和代码生成命令应使用 `happyro-admin` 服务用户执行，避免 `root` 生成该用户不可写的文件。服务出现 `EACCES` 时，重点检查 `.git/config` 的组读取权限，以及 `src/.umi/`、`node_modules/.cache/`、`node_modules/umi_open_api/` 等生成目录的属主和写权限；只修复已确认异常的文件或生成目录，不得无差别修改整个仓库权限。
@@ -60,7 +62,7 @@
 - 项目变更必须在本仓库的 `changelog/` 目录记录，并与实际变更保持一致。
 - 日志路径固定为 `changelog/<年>/<月>/YYYY-MM-DD.md`，同一天的修改追加到同一个文件。
 - 日期日志按变更性质使用 `Added`、`Changed`、`Fixed`、`Documentation` 等英文二级标题分类，不得使用无分类的平铺列表。
-- 每条记录按归属以 `` `[admin]` ``、`` `[backend]` `` 或 `` `[frontend]` `` 标记：跨应用和仓库级变更使用 `` `[admin]` ``，Go 后端使用 `` `[backend]` ``，Ant Design Pro 前端使用 `` `[frontend]` ``。
+- 每条记录按归属以 `` `[admin]` ``、`` `[backend]` `` 或 `` `[frontend]` `` 标记：跨应用和仓库级变更使用 `` `[admin]` ``，Go 后端变更在独立 happyro-api 仓库记录，历史 `` `[backend]` `` 记录保留，Ant Design Pro 前端使用 `` `[frontend]` ``。
 
 # HappyRO Admin 前端代理说明
 
