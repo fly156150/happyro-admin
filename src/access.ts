@@ -17,6 +17,10 @@ export default function access(
     canGameControl:
       permissions.includes('*') ||
       permissions.includes('operations.game-control'),
+    canManageGM:
+      permissions.includes('*') ||
+      (permissions.includes('players.view') &&
+        permissions.includes('players.gm')),
     canEditPlayers:
       permissions.includes('*') ||
       (permissions.includes('players.view') &&

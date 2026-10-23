@@ -1,5 +1,12 @@
 import { request } from '@umijs/max';
 
+export function isAutoRestoredSettingError(error: unknown): boolean {
+  const response = (error as {
+    response?: { data?: { error?: { code?: string } } };
+  } | null)?.response;
+  return response?.data?.error?.code === 'settings_auto_restored';
+}
+
 export type GameSettingDefinition = {
   key: string;
   minimum: number;

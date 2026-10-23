@@ -31,3 +31,7 @@ npm run build
 - `src/data/`：有明确来源的游戏映射。
 - `tests/`：测试支持。
 - `deploy/`：前端部署配置。
+
+## 文档
+
+[文档索引](docs/README.md) · [前端开发](docs/frontend.md) · [部署](docs/deployment.md) · [游戏设置](docs/product/system-settings.md) · [Go API](https://github.com/happyro/happyro-api)

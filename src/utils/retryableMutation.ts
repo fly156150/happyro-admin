@@ -3,6 +3,7 @@ import { createIdempotencyKey } from './idempotency';
 /** Keep failed attempts identifiable until the form is unmounted. */
 export function createRetryableMutation<Payload extends object, Result>(
   send: (payload: Payload & { idempotency_key: string }) => Promise<Result>,
+  isFinalFailure?: (error: unknown) => boolean,
 ) {
   const attempts = new Map<
     string,
@@ -27,6 +28,10 @@ export function createRetryableMutation<Payload extends object, Result>(
       .then((result) => {
         attempts.delete(fingerprint);
         return result;
+      })
+      .catch((error: unknown) => {
+        if (isFinalFailure?.(error)) attempts.delete(fingerprint);
+        throw error;
       })
       .finally(() => {
         current.running = undefined;

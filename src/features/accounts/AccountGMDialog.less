@@ -1,0 +1,26 @@
+.account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  margin: 20px 0 24px;
+  border-radius: 10px;
+}
+.identity { flex: 1; min-width: 0; }
+.name { display: block; font-size: 16px; overflow-wrap: anywhere; }
+.meta { display: block; margin-top: 4px; font-size: 12px; }
+.choices { display: grid; gap: 12px; width: 100%; }
+.choice {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid;
+  border-radius: 10px;
+  transition: background 0.15s, border-color 0.15s;
+  :global(.ant-radio) { margin-top: 3px; }
+}
+.choiceTitle { display: block; font-size: 15px; font-weight: 600; }
+.description { display: block; margin-top: 5px; font-size: 13px; line-height: 1.6; }
+.scope { margin: 8px 0 16px; font-size: 13px; }

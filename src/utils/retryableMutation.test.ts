@@ -2,6 +2,21 @@ import { describe, expect, it, vi } from 'vitest';
 import { createRetryableMutation } from './retryableMutation';
 
 describe('retryable grants', () => {
+  it('discards a request key only after a definitive terminal failure', async () => {
+    const terminal = new Error('restored');
+    const send = vi.fn(async (_: { amount: number; idempotency_key: string }) => {
+      throw terminal;
+    });
+    const submit = createRetryableMutation<{ amount: number }, never>(
+      send,
+      (error) => error === terminal,
+    );
+    await expect(submit({ amount: 1 })).rejects.toThrow('restored');
+    await expect(submit({ amount: 1 })).rejects.toThrow('restored');
+    expect(send.mock.calls[0][0].idempotency_key).not.toBe(
+      send.mock.calls[1][0].idempotency_key,
+    );
+  });
   it('reuses a failed request key even after submitting different input', async () => {
     const send = vi.fn(
       async (_: { amount: number; idempotency_key: string }) => {

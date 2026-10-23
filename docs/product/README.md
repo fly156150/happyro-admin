@@ -22,7 +22,7 @@ src/
 └── data/game/   # 有来源记录的前端游戏映射
 ```
 
-角色维护位于 characters 详情页，魔物召唤位于 rewards，游戏参数位于 settings。目录名称按业务职责组织，浏览器 URL 由 config/routes.ts 定义。
+角色维护从 characters 列表的「角色属性」按钮打开六个 Tab 的弹窗，魔物召唤位于 rewards，游戏参数位于 settings。目录名称按业务职责组织，浏览器 URL 由 config/routes.ts 定义。
 
 Game Control 的 HTTP 接入点负责认证、能力发现和命令转发；角色状态与地图实体的最终读写必须在 map-server 线程中执行，不通过 SQL 代替在线状态命令。
 

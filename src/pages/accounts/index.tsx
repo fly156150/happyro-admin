@@ -3,7 +3,10 @@ import {
   DeleteOutlined,
   DisconnectOutlined,
   DownOutlined,
+  EditOutlined,
   LockOutlined,
+  MailOutlined,
+  SafetyCertificateOutlined,
   StopOutlined,
   UserAddOutlined,
 } from '@ant-design/icons';
@@ -38,6 +41,7 @@ import {
 } from '@/api/accounts';
 import { sexMappings } from '@/data/game/sex';
 import AccountEmailDialog from '@/features/accounts/AccountEmailDialog';
+import AccountGMDialog from '@/features/accounts/AccountGMDialog';
 import { formatDateTime } from '@/utils/dateTime';
 import { createRetryableMutation } from '@/utils/retryableMutation';
 import DeletionTasks from './DeletionTasks';
@@ -48,6 +52,8 @@ type AccountAction = 'delete' | 'ban' | 'unban' | 'kick';
 type Translate = (id: string, fallback: string) => string;
 
 type AccountColumnsOptions = {
+  canManageGM: boolean;
+  onEditGM: (account: PlayerAccount) => void;
   canEdit: boolean;
   onDelete: (accountId: number) => void;
   onPasswordReset: (accountId: number) => void;
@@ -57,6 +63,8 @@ type AccountColumnsOptions = {
 };
 
 function accountColumns({
+  canManageGM,
+  onEditGM,
   canEdit,
   onDelete,
   onPasswordReset,
@@ -75,7 +83,16 @@ function accountColumns({
     {
       title: t('players.account.group', '权限组'),
       dataIndex: 'group_id',
+      width: 110,
       search: false,
+      render: (_, row) =>
+        row.group_id === 99 ? (
+          <Tag color="gold">GM</Tag>
+        ) : row.group_id === 0 ? (
+          t('players.account.playerLabel', '普通玩家')
+        ) : (
+          row.group_id
+        ),
     },
     {
       title: t('players.account.status', '状态'),
@@ -101,40 +118,78 @@ function accountColumns({
     {
       title: t('common.actions', '操作'),
       valueType: 'option',
-      hideInTable: !canEdit,
+      hideInTable: !canEdit && !canManageGM,
+      width: 110,
       render: (_, row, __, action) => (
-        <Space>
-          <Button type="link" size="small" onClick={() => onEditEmail(row)}>
-            {t('players.account.editEmail', '修改邮箱')}
-          </Button>
+        <Dropdown
+          trigger={['click']}
+          placement="bottomRight"
+          menu={{
+            items: [
+              ...(canEdit
+                ? [
+                    {
+                      key: 'email',
+                      label: t('players.account.editEmail', '修改邮箱'),
+                      icon: <MailOutlined />,
+                      onClick: () => onEditEmail(row),
+                    },
+                    {
+                      key: 'password',
+                      label: t('players.account.resetPassword', '重置密码'),
+                      icon: <LockOutlined />,
+                      onClick: () => onPasswordReset(row.account_id),
+                    },
+                  ]
+                : []),
+              ...(canManageGM
+                ? [
+                    {
+                      key: 'gm',
+                      label: t('players.account.gm', '设置游戏 GM'),
+                      icon: <SafetyCertificateOutlined />,
+                      onClick: () => onEditGM(row),
+                    },
+                  ]
+                : []),
+              ...(canEdit
+                ? [
+                    { type: 'divider' as const },
+                    {
+                      key: 'state',
+                      label: row.state
+                        ? t('players.account.unban', '解禁')
+                        : t('players.account.ban', '封禁'),
+                      icon: row.state ? (
+                        <CheckCircleOutlined />
+                      ) : (
+                        <StopOutlined />
+                      ),
+                      danger: !row.state,
+                      onClick: () => {
+                        void onToggleState(row, action?.reload);
+                      },
+                    },
+                    {
+                      key: 'delete',
+                      label: t('players.account.delete', '删除账号'),
+                      icon: <DeleteOutlined />,
+                      danger: true,
+                      onClick: () => onDelete(row.account_id),
+                    },
+                  ]
+                : []),
+            ],
+          }}
+        >
           <Button
-            type="link"
             size="small"
-            icon={row.state ? <CheckCircleOutlined /> : <StopOutlined />}
-            onClick={() => onToggleState(row, action?.reload)}
+            icon={<EditOutlined />}
+            aria-label={`${row.username} 的账号操作`}
           >
-            {row.state
-              ? t('players.account.unban', '解禁')
-              : t('players.account.ban', '封禁')}
+            {t('common.actions', '操作')} <DownOutlined />
           </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<LockOutlined />}
-            onClick={() => onPasswordReset(row.account_id)}
-          >
-            {t('players.account.resetPassword', '重置密码')}
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<DeleteOutlined />}
-            danger
-            onClick={() => onDelete(row.account_id)}
-          >
-            {t('common.delete', '删除')}
-          </Button>
-        </Space>
+        </Dropdown>
       ),
     },
   ];
@@ -188,7 +243,8 @@ function AccountToolbar({
       </Button>
       <Dropdown menu={menu} disabled={!selected.length}>
         <Button icon={<DownOutlined />}>
-          {t('players.account.actions', '操作')}
+          {t('players.account.batchActions', '批量操作')}
+          {selected.length > 0 ? ` (${selected.length})` : ''}
         </Button>
       </Dropdown>
     </Space>
@@ -332,6 +388,7 @@ export default function Accounts() {
   const { message, modal } = App.useApp();
   const actionRef = useRef<ActionType>(null);
   const [selected, setSelected] = useState<Key[]>([]);
+  const [gmAccount, setGMAccount] = useState<PlayerAccount>();
   const [emailAccount, setEmailAccount] = useState<PlayerAccount>();
   const [passwordId, setPasswordId] = useState<number>();
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -369,6 +426,8 @@ export default function Accounts() {
       },
     });
   const columns = accountColumns({
+    canManageGM: access.canManageGM,
+    onEditGM: setGMAccount,
     canEdit: access.canEditPlayers,
     t,
     onDelete: (accountId) => confirmAction('delete', [accountId]),
@@ -418,6 +477,17 @@ export default function Accounts() {
         <DeletionTasks
           revision={deletionRevision}
           onCompleted={() => reload(actionRef)}
+        />
+      )}
+      {access.canManageGM && gmAccount && (
+        <AccountGMDialog
+          key={gmAccount.account_id}
+          account={gmAccount}
+          onClose={() => setGMAccount(undefined)}
+          onSaved={() => {
+            setGMAccount(undefined);
+            reload(actionRef);
+          }}
         />
       )}
       {access.canEditPlayers && emailAccount && (
