@@ -11,6 +11,11 @@ _roadhog-api-doc
 
 # misc
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
 npm-debug.log*
 yarn-error.log
 
