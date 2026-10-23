@@ -81,15 +81,22 @@ it('hides write actions, selection and deletion tasks from a read-only operator'
   expect(screen.queryByText('删除任务列表')).toBeNull();
 });
 
-it('shows account management actions to an authorized editor', () => {
+it('groups account management actions in a menu for an authorized editor', async () => {
   state.canEditPlayers = true;
   render(
     <App>
       <Accounts />
     </App>,
   );
-  for (const name of ['注册账号', '修改邮箱', '重置密码', '封禁', '删除']) {
-    expect(screen.getByRole('button', { name: new RegExp(name) })).toBeTruthy();
+  expect(screen.getByRole('button', { name: /注册账号/ })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: /修改邮箱/ })).toBeNull();
+  fireEvent.click(
+    screen.getByRole('button', { name: 'player_one 的账号操作' }),
+  );
+  for (const name of ['修改邮箱', '重置密码', '封禁', '删除']) {
+    expect(
+      await screen.findByRole('menuitem', { name: new RegExp(name) }),
+    ).toBeTruthy();
   }
   expect(screen.getByRole('checkbox')).toBeTruthy();
   expect(screen.getByText('删除任务列表')).toBeTruthy();
@@ -110,11 +117,16 @@ for (const mode of ['register', 'password'] as const) {
         <Accounts />
       </App>,
     );
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: mode === 'register' ? /注册账号/ : /重置密码/,
-      }),
-    );
+    if (mode === 'register') {
+      fireEvent.click(screen.getByRole('button', { name: /注册账号/ }));
+    } else {
+      fireEvent.click(
+        screen.getByRole('button', { name: 'player_one 的账号操作' }),
+      );
+      fireEvent.click(
+        await screen.findByRole('menuitem', { name: /重置密码/ }),
+      );
+    }
     const modal = within(screen.getByRole('dialog'));
     if (mode === 'register') {
       fireEvent.change(modal.getByLabelText('用户名'), {
