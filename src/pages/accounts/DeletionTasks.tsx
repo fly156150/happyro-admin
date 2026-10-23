@@ -11,6 +11,7 @@ import {
   listAccountDeletions,
   retryAccountDeletion,
 } from '@/api/accounts';
+import { formatDateTime } from '@/utils/dateTime';
 
 const labels: Record<AccountDeletion['status'], string> = {
   queued: '等待处理',
@@ -91,9 +92,9 @@ export default function DeletionTasks({
             : '—',
     },
     {
-      title: t('players.deletion.created', '提交时间（UTC）'),
+      title: t('players.deletion.created', '提交时间'),
       dataIndex: 'created_at',
-      renderText: (value: string) => value.replace(/\.\d+$/, ''),
+      renderText: formatDateTime,
     },
     {
       title: t('common.actions', '操作'),

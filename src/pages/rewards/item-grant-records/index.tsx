@@ -2,6 +2,7 @@ import { PageContainer, ProTable } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
 import { Tag } from 'antd';
 import { listItemGrants } from '@/api/rewards/item-grants';
+import { formatDateTime } from '@/utils/dateTime';
 
 export default function ItemGrantRecords() {
   const intl = useIntl();
@@ -57,15 +58,26 @@ export default function ItemGrantRecords() {
             title: t('common.status', '状态'),
             dataIndex: 'status',
             render: (_, record) => (
-              <Tag color={record.status === 'sent' ? 'success' : record.status === 'failed' ? 'error' : 'processing'}>
-                {t(`operations.itemGrantRecords.status.${String(record.status)}`, String(record.status))}
+              <Tag
+                color={
+                  record.status === 'sent'
+                    ? 'success'
+                    : record.status === 'failed'
+                      ? 'error'
+                      : 'processing'
+                }
+              >
+                {t(
+                  `operations.itemGrantRecords.status.${String(record.status)}`,
+                  String(record.status),
+                )}
               </Tag>
             ),
           },
           {
             title: t('common.createdAt', '创建时间'),
             dataIndex: 'created_at',
-            valueType: 'dateTime',
+            renderText: formatDateTime,
           },
         ]}
       />

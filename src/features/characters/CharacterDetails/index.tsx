@@ -1,6 +1,7 @@
 import { useIntl } from '@umijs/max';
 import { Tag, theme } from 'antd';
 import { jobMappings } from '@/data/game/jobs';
+import { formatDateTime } from '@/utils/dateTime';
 import styles from './index.less';
 
 const sections = [
@@ -54,6 +55,7 @@ export default function CharacterDetails({
   const value = (field: string) => {
     const raw = character[field];
     if (raw === null || raw === undefined || raw === '') return '—';
+    if (field === 'last_login') return formatDateTime(raw);
     if (field === 'class')
       return jobMappings[Number(raw)]
         ? t(jobMappings[Number(raw)], `职业 ${raw}`)

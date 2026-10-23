@@ -12,6 +12,10 @@ const mockHistory = {
 };
 
 const mockQueryCurrentUser = vi.fn();
+const mockPublicConfiguration = vi.fn();
+vi.mock('@/api/publicConfig', () => ({
+  publicConfiguration: mockPublicConfiguration,
+}));
 
 vi.mock('@umijs/max', () => ({
   history: mockHistory,
@@ -60,6 +64,7 @@ vi.mock('../config/defaultSettings', () => ({
 describe('app getInitialState', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPublicConfiguration.mockResolvedValue({ timeZone: 'Asia/Shanghai' });
     mockHistory.location = {
       pathname: '/welcome',
       search: '',
@@ -152,4 +157,16 @@ describe('app getInitialState', () => {
     const user = await state.fetchUserInfo?.();
     expect(user).toEqual({ name: 'Fetched User', access: 'user' });
   });
+});
+
+it('loads runtime timezone before rendering even on the login page', async () => {
+  const { getInitialState } = await import('./app');
+  const { formatDateTime, configureTimeZone } = await import(
+    './utils/dateTime'
+  );
+  mockHistory.location.pathname = '/user/login';
+  mockPublicConfiguration.mockResolvedValue({ timeZone: 'America/New_York' });
+  await getInitialState();
+  expect(formatDateTime('2026-03-08T07:00:00Z')).toBe('2026-03-08 03:00:00');
+  configureTimeZone('Asia/Shanghai');
 });

@@ -75,10 +75,17 @@ it('shows the full map name and code, fourth-job traits and zero AP', () => {
     '当前 AP',
     '最大 AP',
   ]) {
-    expect(
-      screen.getByRole('rowheader', { name: label }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('rowheader', { name: label })).toBeInTheDocument();
   }
   expect(screen.getAllByText('0')).toHaveLength(2);
   expect(screen.getByText('200')).toBeInTheDocument();
+});
+
+it('displays UTC last login in the configured timezone', () => {
+  render(
+    <CharacterDetails
+      character={{ last_login: '2026-10-22T07:17:36.000000Z' }}
+    />,
+  );
+  expect(screen.getByText('2026-10-22 15:17:36')).toBeInTheDocument();
 });
