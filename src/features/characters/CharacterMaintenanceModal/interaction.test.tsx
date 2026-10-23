@@ -7,11 +7,11 @@ import {
 } from '@testing-library/react';
 import { App } from 'antd';
 import { afterEach, expect, it, vi } from 'vitest';
-import messages from '@/locales/zh-CN';
 import {
   executeGameControlCommand,
   getCharacterSnapshot,
 } from '@/api/characters/game-control';
+import messages from '@/locales/zh-CN';
 import CharacterMaintenanceModal from './index';
 
 vi.mock('@umijs/max', () => ({

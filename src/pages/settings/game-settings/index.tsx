@@ -1,3 +1,4 @@
+import { HistoryOutlined } from '@ant-design/icons';
 import {
   PageContainer,
   ProForm,
@@ -6,7 +7,7 @@ import {
   ProFormRadio,
 } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
-import { App, Card, Form, Spin, Tabs } from 'antd';
+import { App, Button, Card, Form, Spin, Tabs } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import {
   type GameSettingDefinition,
@@ -15,7 +16,6 @@ import {
   updateGameSettings,
 } from '@/api/settings/game-settings';
 import { createRetryableMutation } from '@/utils/retryableMutation';
-import RevisionHistory from './RevisionHistory';
 
 type Translate = (
   id: string,
@@ -99,7 +99,6 @@ export default function GameSettingsPage() {
   );
   const intl = useIntl();
   const { message } = App.useApp();
-  const [historyRevision, setHistoryRevision] = useState(0);
   const [settings, setSettings] = useState<GameSettings>();
   const [activeTab, setActiveTab] = useState('experience');
   const formRef = useRef<ProFormInstance>(undefined);
@@ -119,7 +118,17 @@ export default function GameSettingsPage() {
   const initialValues = settings ? displayValues(settings) : undefined;
 
   return (
-    <PageContainer title={t('settings.gameSettings.title', '游戏设置')}>
+    <PageContainer
+      title={t('settings.gameSettings.title', '游戏设置')}
+      extra={
+        <Button
+          icon={<HistoryOutlined />}
+          href="/settings/game-setting-history"
+        >
+          {t('settings.gameSettings.viewHistory', '查看修改记录')}
+        </Button>
+      }
+    >
       <Card variant="borderless">
         {!settings || !initialValues ? (
           <Spin />
@@ -143,16 +152,17 @@ export default function GameSettingsPage() {
                     ),
                   ]),
               );
-              try {
-                await submitSettings({ changes });
-              } finally {
-                setHistoryRevision((value) => value + 1);
-              }
+              await submitSettings({ changes });
               const { data } = await getGameSettings();
               setSettings(data);
               formRef.current?.setFieldsValue(displayValues(data));
               message.success(
-                t('settings.gameSettings.saved', '游戏设置已保存'),
+                <span>
+                  {t('settings.gameSettings.saved', '游戏设置已保存')} ·{' '}
+                  <a href="/settings/game-setting-history">
+                    {t('settings.gameSettings.viewHistory', '查看修改记录')}
+                  </a>
+                </span>,
               );
               return true;
             }}
@@ -198,14 +208,6 @@ export default function GameSettingsPage() {
           </ProForm>
         )}
       </Card>
-      <RevisionHistory
-        revision={historyRevision}
-        onApplied={async () => {
-          const { data } = await getGameSettings();
-          setSettings(data);
-          formRef.current?.setFieldsValue(displayValues(data));
-        }}
-      />
     </PageContainer>
   );
 }

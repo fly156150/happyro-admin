@@ -7,14 +7,16 @@ import {
 } from '@testing-library/react';
 import { App } from 'antd';
 import { afterEach, expect, it, vi } from 'vitest';
-import messages from '@/locales/zh-CN';
 import {
   getGameSettings,
   updateGameSettings,
 } from '@/api/settings/game-settings';
+import messages from '@/locales/zh-CN';
 import GameSettingsPage from './index';
 
-vi.mock('./RevisionHistory', () => ({ default: () => null }));
+vi.mock('./RevisionHistory', () => ({
+  default: () => <div>嵌入的修改记录</div>,
+}));
 
 vi.mock('@umijs/max', () => ({
   useIntl: () => ({
@@ -31,7 +33,12 @@ vi.mock('@ant-design/pro-components', async () => {
   const { Form, InputNumber, Radio, Button } = await import('antd');
   const { useImperativeHandle } = await import('react');
   return {
-    PageContainer: ({ children }: any) => <div>{children}</div>,
+    PageContainer: ({ children, extra }: any) => (
+      <div>
+        {extra}
+        {children}
+      </div>
+    ),
     ProForm: ({ formRef, submitter: _submitter, children, ...props }: any) => {
       const [form] = Form.useForm();
       useImperativeHandle(formRef, () => form);
@@ -97,6 +104,11 @@ it('loads shared refinement settings, disables the multiplier and saves retained
     <App>
       <GameSettingsPage />
     </App>,
+  );
+  expect(screen.queryByText('嵌入的修改记录')).toBeNull();
+  expect(screen.getByRole('link', { name: /查看修改记录/ })).toHaveAttribute(
+    'href',
+    '/settings/game-setting-history',
   );
   fireEvent.click(await screen.findByRole('tab', { name: '装备精炼' }));
   const rate = await screen.findByRole('spinbutton', {

@@ -26,7 +26,6 @@ export default function CharacterMaintenanceModal({
   return (
     <>
       <Button
-        type="link"
         size="small"
         icon={<EditOutlined />}
         onClick={() => {

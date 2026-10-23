@@ -2,7 +2,7 @@
 
 ## 页面与权限
 
-“系统设置 → 游戏设置”提供受控参数的读取、修改、实际值回读和修改记录。前端入口为 `src/pages/settings/game-settings/`，接口类型位于 `src/api/settings/game-settings.ts`。访问使用 `settings.manage` 权限。
+“系统设置 → 游戏设置”提供受控参数的读取、修改与实际值回读。表单下方不嵌入历史列表；页头「查看修改记录」、保存成功提示和「系统设置 → 修改记录」均进入独立页面 `/settings/game-setting-history`。前端入口为 `src/pages/settings/game-settings/`，接口类型位于 `src/api/settings/game-settings.ts`。访问使用 `settings.manage` 权限。
 
 开放参数以 Go API 的 `internal/settings/registry.go` 和地图服白名单为准，包括 Base / Job 经验、普通 / Mini / MVP 的分类掉落、精炼、导航、召怪和工具权限。后台不是任意 battle 文件编辑器；MVP 奖励物品倍率、宝箱倍率不在当前开放表中。
 
