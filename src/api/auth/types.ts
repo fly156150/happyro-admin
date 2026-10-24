@@ -1,4 +1,5 @@
 export type CurrentUser = {
+  passwordChangeEnabled: boolean;
   id?: number;
   userid?: string;
   username?: string;
