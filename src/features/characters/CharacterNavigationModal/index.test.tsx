@@ -78,7 +78,7 @@ it('uses the audited map name and sends the selected online character and fixed 
   fireEvent.click(screen.getByRole('button', { name: '位置操作' }));
   expect(
     screen.getByText(
-      '目标位置：卢恩·米德加兹王国 首都普隆德拉 (150, 180) 的 NPC 附近。',
+      '目标位置：普隆德拉 (150, 180) 的 NPC 附近。',
     ),
   ).toBeInTheDocument();
   expect(screen.queryByRole('combobox', { name: '操作' })).toBeNull();
