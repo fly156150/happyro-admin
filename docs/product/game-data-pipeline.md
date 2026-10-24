@@ -60,3 +60,9 @@
 ## NPC 资料
 
 NPC 目录由根仓库 `tools/resources/world/generate-npc-catalog.mjs` 生成，随后运行 完整 `catalog import` 导入管理库。冒险工具 NPC 列表使用数据库分页，地图标记按单张地图查询。
+
+## 名称更新后的交叉检查
+
+魔物改名按 ID／AegisName 核对客户端、服务端、任务及图鉴来源；来源不明时保留现值，不能从网站名称推导服务器数值。根仓库 `python3 -m tools.resources.monsters.verify_application verify --no-color` 检查当前名称、默认封包短名、魔物型佣兵、普通刷怪及已审任务字段。
+
+更新 JSON 后仍需完整 `catalog import`，后台 HTTP 查询读取已发布代次，不会因磁盘文件变化自动刷新。NPC 脚本即使只改对白，也需重新生成 NPC 目录以同步来源哈希，再同步客户端图集清单及数据库。
