@@ -13,6 +13,7 @@ import {
   type GameSettingDefinition,
   type GameSettings,
   getGameSettings,
+  isAutoRestoredSettingError,
   updateGameSettings,
 } from '@/api/settings/game-settings';
 import { createRetryableMutation } from '@/utils/retryableMutation';
@@ -95,7 +96,7 @@ export default function GameSettingsPage() {
     createRetryableMutation<
       { changes: Record<string, number> },
       Awaited<ReturnType<typeof updateGameSettings>>
-    >(updateGameSettings),
+    >(updateGameSettings, isAutoRestoredSettingError),
   );
   const intl = useIntl();
   const { message } = App.useApp();

@@ -24,7 +24,8 @@ vi.mock('@umijs/max', () => ({
       (messages as Record<string, string>)[id] || defaultMessage,
   }),
 }));
-vi.mock('@/api/settings/game-settings', () => ({
+vi.mock('@/api/settings/game-settings', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/api/settings/game-settings')>()),
   getGameSettings: vi.fn(),
   updateGameSettings: vi.fn(),
 }));
