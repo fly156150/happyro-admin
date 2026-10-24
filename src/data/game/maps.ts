@@ -1,4 +1,4 @@
-// Source: repos/happyro-client/src/DB/Map/WorldMap.js and src/DB/Map/MapNameTranslations.js.
+// Source: repos/happyro-client/src/DB/Map/MapTable.js (audited map-name-scans decisions).
 export const mapMappings: Record<string, string> = {
   airplane: 'players.map.airplane',
   int_land03: 'players.map.intLand03',

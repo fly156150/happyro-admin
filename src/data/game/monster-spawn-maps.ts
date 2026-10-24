@@ -1,4 +1,4 @@
-// Source: happyro-client b6b9787b, src/DB/Map/MapTable.js (including MapNameTranslations.js)
+// Source: happyro-client/src/DB/Map/MapTable.js (audited map-name-scans decisions)
 // and src/DB/Map/WorldMap.js. Codes: ./monster-spawns.json. Names: locales/zh-CN/monster-spawn-maps.json.
 export const monsterSpawnMapMappings: Record<string, string> = {
   abbey01: 'gameData.monster.spawnMap.abbey01',
