@@ -5,6 +5,7 @@ describe('access', () => {
   it('should return canAdmin true when user has admin access', () => {
     const initialState = {
       currentUser: {
+        passwordChangeEnabled: true,
         userid: '1',
         name: 'Admin User',
         avatar: 'https://example.com/avatar.png',
@@ -22,6 +23,7 @@ describe('access', () => {
   it('should return canAdmin false when user has non-admin access', () => {
     const initialState = {
       currentUser: {
+        passwordChangeEnabled: true,
         userid: '2',
         name: 'Regular User',
         avatar: 'https://example.com/avatar.png',
@@ -37,6 +39,7 @@ describe('access', () => {
   it('should return canAdmin false when user access is undefined', () => {
     const initialState = {
       currentUser: {
+        passwordChangeEnabled: true,
         userid: '3',
         name: 'Guest User',
         avatar: 'https://example.com/avatar.png',
@@ -67,6 +70,7 @@ describe('access', () => {
   it('allows item grants through the explicit permission', () => {
     const result = access({
       currentUser: {
+        passwordChangeEnabled: true,
         userid: '4',
         access: 'user',
         permissions: ['operations.item-grant'],

@@ -35,3 +35,7 @@ npm run build
 ## 文档
 
 [文档索引](docs/README.md) · [前端开发](docs/frontend.md) · [部署](docs/deployment.md) · [游戏设置](docs/product/system-settings.md) · [Go API](https://github.com/happyro/happyro-api)
+
+## 后台修改密码
+
+头像菜单的「修改密码」用于修改自己的后台登录密码，成功后需重新登录。API 环境变量 `ADMIN_PASSWORD_CHANGE_ENABLED` 是唯一开关，默认 `true`。演示环境设置 `false` 并重启 API 后隐藏入口、拒绝改密请求，后台用户无法重新开启；服务器 CLI 改密不受影响。

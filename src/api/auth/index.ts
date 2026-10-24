@@ -1,5 +1,5 @@
-import type { CurrentUser } from '@/api/auth/types';
 import { request } from '@umijs/max';
+import type { CurrentUser } from '@/api/auth/types';
 
 export type LoginCredentials = {
   username: string;
@@ -12,10 +12,13 @@ export type LoginResult = {
 };
 
 export async function loginConfiguration() {
-  return request<{ showDefaultCredentials: boolean }>('/api/auth/configuration', {
-    method: 'GET',
-    skipErrorHandler: true,
-  });
+  return request<{ showDefaultCredentials: boolean }>(
+    '/api/auth/configuration',
+    {
+      method: 'GET',
+      skipErrorHandler: true,
+    },
+  );
 }
 
 export async function login(credentials: LoginCredentials) {
@@ -36,6 +39,18 @@ export async function currentUser(options?: { skipErrorHandler?: boolean }) {
 export async function logout() {
   return request<void>('/api/auth/logout', {
     method: 'POST',
+    skipErrorHandler: true,
+  });
+}
+
+export async function changePassword(data: {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}) {
+  return request<void>('/api/auth/password', {
+    method: 'POST',
+    data,
     skipErrorHandler: true,
   });
 }
