@@ -52,7 +52,7 @@ it('translates the Airship catalog name using the client map translation', () =>
   expect(screen.queryByText(/Airship|传送至/)).toBeNull();
 });
 
-it('selects an online character and sends the NPC identity with fixed coordinates', async () => {
+it('uses the audited map name and sends the selected online character and fixed NPC coordinates', async () => {
   vi.mocked(listCharacters).mockResolvedValue({
     data: [
       { char_id: 42, name: '测试在线角色', username: 'tester', online: 1 },
@@ -77,7 +77,9 @@ it('selects an online character and sends the NPC identity with fixed coordinate
   );
   fireEvent.click(screen.getByRole('button', { name: '位置操作' }));
   expect(
-    screen.getByText('目标位置：普隆德拉 (150, 180) 的 NPC 附近。'),
+    screen.getByText(
+      '目标位置：卢恩·米德加兹王国 首都普隆德拉 (150, 180) 的 NPC 附近。',
+    ),
   ).toBeInTheDocument();
   expect(screen.queryByRole('combobox', { name: '操作' })).toBeNull();
   fireEvent.change(screen.getByRole('combobox', { name: '在线目标角色' }), {
