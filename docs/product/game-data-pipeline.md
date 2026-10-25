@@ -33,7 +33,7 @@
 
 ## 部署资源
 
-当前 Docker Go 进程同时提供前端静态文件和 API；图片通过现有受权限／游戏会话保护的接口读取挂载的生成目录。不能将尚未配置的 `/game-assets/` 静态 URL 或一年 immutable 缓存视为现有部署事实。
+Docker 中独立 Admin Nginx 提供前端静态文件，并将同源 `/api` 请求代理到 Go API；图片仍由 Go API 通过受权限／游戏会话保护的接口读取挂载的生成目录。不能将尚未配置的 `/game-assets/` 静态 URL 或一年 immutable 缓存视为现有部署事实。
 
 原始 GRF 只读，HTTP 请求不解压或转换 BMP／SPR。部署时核对图片根目录、挂载与缓存策略；若以后改为 Nginx 直接提供图片，需要同时设计访问控制、URL 和失效策略，并验证后台与冒险工具，不能只加一条 alias。
 
@@ -63,6 +63,6 @@ NPC 目录由根仓库 `tools/resources/world/generate-npc-catalog.mjs` 生成�
 
 ## 名称更新后的交叉检查
 
-魔物改名按 ID／AegisName 核对客户端、服务端、任务及图鉴来源；来源不明时保留现值，不能从网站名称推导服务器数值。根仓库 `python3 -m tools.resources.monsters.verify_application verify --no-color` 检查当前名称、默认封包短名、魔物型佣兵、普通刷怪及已审任务字段。
+魔物改名按 ID／AegisName 核对客户端、服务端、任务及图鉴来源；来源不明时保留现值，不能从网站名称推导服务器数值。根仓库 `python3 -m tools.localization.monsters.verify_application verify --no-color` 检查当前名称、默认封包短名、魔物型佣兵、普通刷怪及已审任务字段。
 
 更新 JSON 后仍需完整 `catalog import`，后台 HTTP 查询读取已发布代次，不会因磁盘文件变化自动刷新。NPC 脚本即使只改对白，也需重新生成 NPC 目录以同步来源哈希，再同步客户端图集清单及数据库。
