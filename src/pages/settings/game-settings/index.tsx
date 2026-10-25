@@ -101,6 +101,7 @@ export default function GameSettingsPage() {
   const intl = useIntl();
   const { message } = App.useApp();
   const [settings, setSettings] = useState<GameSettings>();
+  const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('experience');
   const formRef = useRef<ProFormInstance>(undefined);
   const t: Translate = (id, fallback, values) =>
@@ -136,6 +137,7 @@ export default function GameSettingsPage() {
         ) : (
           <ProForm
             formRef={formRef}
+            disabled={saving}
             initialValues={initialValues}
             submitter={{
               resetButtonProps: false,
@@ -145,27 +147,42 @@ export default function GameSettingsPage() {
               const changes = Object.fromEntries(
                 Object.keys(settings.definitions)
                   .filter((key) => values[key] !== undefined)
-                  .map((key) => [
-                    key,
-                    toStoredValue(
-                      Number(values[key]),
-                      settings.definitions[key],
-                    ),
-                  ]),
+                  .map(
+                    (key) =>
+                      [
+                        key,
+                        toStoredValue(
+                          Number(values[key]),
+                          settings.definitions[key],
+                        ),
+                      ] as const,
+                  )
+                  .filter(([key, value]) => value !== settings.values[key]),
               );
-              await submitSettings({ changes });
-              const { data } = await getGameSettings();
-              setSettings(data);
-              formRef.current?.setFieldsValue(displayValues(data));
-              message.success(
-                <span>
-                  {t('settings.gameSettings.saved', '游戏设置已保存')} ·{' '}
-                  <a href="/settings/game-setting-history">
-                    {t('settings.gameSettings.viewHistory', '查看修改记录')}
-                  </a>
-                </span>,
-              );
-              return true;
+              if (!Object.keys(changes).length) {
+                message.info(
+                  t('settings.gameSettings.unchanged', '没有需要保存的修改'),
+                );
+                return true;
+              }
+              setSaving(true);
+              try {
+                await submitSettings({ changes });
+                const { data } = await getGameSettings();
+                setSettings(data);
+                formRef.current?.setFieldsValue(displayValues(data));
+                message.success(
+                  <span>
+                    {t('settings.gameSettings.saved', '游戏设置已保存')} ·{' '}
+                    <a href="/settings/game-setting-history">
+                      {t('settings.gameSettings.viewHistory', '查看修改记录')}
+                    </a>
+                  </span>,
+                );
+                return true;
+              } finally {
+                setSaving(false);
+              }
             }}
           >
             <Tabs
@@ -342,7 +359,7 @@ function RateField({
   return (
     <ProFormDigit
       name={name}
-      disabled={disabled}
+      disabled={disabled || undefined}
       label={compact ? undefined : ruleLabel(name, t)}
       formItemProps={compact ? { style: { marginBottom: 0 } } : undefined}
       fieldProps={{

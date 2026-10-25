@@ -10,6 +10,7 @@ import settingDrawer from './zh-CN/settingDrawer';
 import settings from './zh-CN/settings';
 
 export default {
+  'settings.gameSettings.unchanged': '没有需要保存的修改',
   'settings.gameSettings.tab.refinement': '装备精炼',
   'settings.gameSettings.key.refine_chance_rate': '精炼成功率倍率',
   'settings.gameSettings.key.refine_always_success': '精炼必定成功',

@@ -138,10 +138,129 @@ it('loads shared refinement settings, disables the multiplier and saves retained
   await waitFor(() =>
     expect(updateGameSettings).toHaveBeenLastCalledWith({
       idempotency_key: expect.any(String),
-      changes: expect.objectContaining({
-        refine_chance_rate: 325,
-        refine_always_success: 0,
-      }),
+      changes: { refine_always_success: 0 },
     }),
   );
+});
+
+it('preserves another administrator change to an untouched setting', async () => {
+  const initial = { base_exp_rate: 100, job_exp_rate: 100 };
+  const live = { ...initial };
+  const definitions = Object.fromEntries(
+    Object.keys(initial).map((key) => [
+      key,
+      {
+        key,
+        minimum: 0,
+        maximum: 1000000,
+        source: 'conf/battle/exp.conf',
+        unit: 'percent',
+      },
+    ]),
+  );
+  vi.mocked(getGameSettings).mockImplementation(async () => ({
+    data: { values: { ...live }, definitions },
+  }));
+  vi.mocked(updateGameSettings).mockImplementation(async ({ changes }) => {
+    Object.assign(live, changes);
+    return { data: {} };
+  });
+  render(
+    <App>
+      <GameSettingsPage />
+    </App>,
+  );
+  const rate = await screen.findByRole('spinbutton', { name: '基础倍率' });
+  live.job_exp_rate = 300;
+  fireEvent.change(rate, { target: { value: '2' } });
+  fireEvent.blur(rate);
+  fireEvent.click(screen.getByRole('button', { name: /保\s*存/ }));
+  await waitFor(() => expect(updateGameSettings).toHaveBeenCalledOnce());
+  expect(live).toEqual({ base_exp_rate: 200, job_exp_rate: 300 });
+  expect(updateGameSettings).toHaveBeenCalledWith({
+    idempotency_key: expect.any(String),
+    changes: { base_exp_rate: 200 },
+  });
+});
+
+it('does not publish a revision when the form has no changes', async () => {
+  const values = { base_exp_rate: 100, job_exp_rate: 100 };
+  const definitions = Object.fromEntries(
+    Object.keys(values).map((key) => [
+      key,
+      {
+        key,
+        minimum: 0,
+        maximum: 1000000,
+        source: 'conf/battle/exp.conf',
+        unit: 'percent',
+      },
+    ]),
+  );
+  vi.mocked(getGameSettings).mockResolvedValue({
+    data: { values, definitions },
+  });
+  render(
+    <App>
+      <GameSettingsPage />
+    </App>,
+  );
+  await screen.findByRole('spinbutton', { name: '基础倍率' });
+  fireEvent.click(screen.getByRole('button', { name: /保\s*存/ }));
+  await screen.findByText('没有需要保存的修改');
+  expect(updateGameSettings).not.toHaveBeenCalled();
+});
+
+it('locks editing until both publication and readback finish', async () => {
+  const definitions = Object.fromEntries(
+    ['base_exp_rate', 'job_exp_rate'].map((key) => [
+      key,
+      {
+        key,
+        minimum: 0,
+        maximum: 1000000,
+        source: 'conf/battle/exp.conf',
+        unit: 'percent',
+      },
+    ]),
+  );
+  let finishPublication!: (result: { data: unknown }) => void;
+  let finishReadback!: (
+    result: Awaited<ReturnType<typeof getGameSettings>>,
+  ) => void;
+  vi.mocked(getGameSettings)
+    .mockResolvedValueOnce({
+      data: { values: { base_exp_rate: 100, job_exp_rate: 100 }, definitions },
+    })
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishReadback = resolve;
+        }),
+    );
+  vi.mocked(updateGameSettings).mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finishPublication = resolve;
+      }),
+  );
+  render(
+    <App>
+      <GameSettingsPage />
+    </App>,
+  );
+  const rate = await screen.findByRole('spinbutton', { name: '基础倍率' });
+  fireEvent.change(rate, { target: { value: '2' } });
+  fireEvent.blur(rate);
+  fireEvent.click(screen.getByRole('button', { name: /保\s*存/ }));
+  await waitFor(() => expect(updateGameSettings).toHaveBeenCalledOnce());
+  expect(rate).toBeDisabled();
+  finishPublication({ data: {} });
+  await waitFor(() => expect(getGameSettings).toHaveBeenCalledTimes(2));
+  expect(rate).toBeDisabled();
+  finishReadback({
+    data: { values: { base_exp_rate: 200, job_exp_rate: 100 }, definitions },
+  });
+  await waitFor(() => expect(rate).not.toBeDisabled());
+  expect(rate).toHaveValue('2');
 });
