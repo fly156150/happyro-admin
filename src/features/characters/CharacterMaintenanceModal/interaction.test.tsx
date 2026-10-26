@@ -43,6 +43,34 @@ const offline = {
   job_id: 7,
 };
 
+it.each([
+  false,
+  true,
+])('shows expanded current and selectable job names (online=%s)', async (online) => {
+  vi.mocked(getCharacterSnapshot).mockResolvedValue({
+    data: {
+      ...offline,
+      online,
+      job_id: 4211,
+      jobs: [{ id: 4240, max_base_level: 200, max_job_level: 70 }],
+    },
+  });
+  render(
+    <App>
+      <CharacterMaintenanceModal charId={42} characterName="职业验收角色" />
+    </App>,
+  );
+  fireEvent.click(screen.getByRole('button', { name: /角色属性/ }));
+  fireEvent.click(await screen.findByRole('tab', { name: '职业' }));
+  expect((await screen.findAllByText('影狼')).length).toBeGreaterThan(0);
+  const select = screen.getByRole('combobox', { name: '目标职业' });
+  fireEvent.mouseDown(select);
+  fireEvent.change(select, { target: { value: '猎灵士' } });
+  expect(await screen.findByText('猎灵士')).toBeInTheDocument();
+  expect(screen.queryByText('其他职业')).not.toBeInTheDocument();
+  expect(executeGameControlCommand).not.toHaveBeenCalled();
+});
+
 it('opens saved offline values silently and reports offline only when a change is submitted', async () => {
   vi.mocked(getCharacterSnapshot).mockResolvedValue({ data: offline });
   render(

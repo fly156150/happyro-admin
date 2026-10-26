@@ -16,6 +16,7 @@ import {
   isAutoRestoredSettingError,
   updateGameSettings,
 } from '@/api/settings/game-settings';
+import RegistrationSettings from '@/features/settings/RegistrationSettings';
 import { createRetryableMutation } from '@/utils/retryableMutation';
 
 type Translate = (
@@ -102,20 +103,33 @@ export default function GameSettingsPage() {
   const { message } = App.useApp();
   const [settings, setSettings] = useState<GameSettings>();
   const [saving, setSaving] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [activeTab, setActiveTab] = useState('experience');
   const formRef = useRef<ProFormInstance>(undefined);
   const t: Translate = (id, fallback, values) =>
     intl.formatMessage({ id, defaultMessage: fallback }, values);
 
+  const loadSettings = async () => {
+    setLoadFailed(false);
+    try {
+      const { data } = await getGameSettings();
+      setSettings(data);
+      formRef.current?.setFieldsValue(displayValues(data));
+    } catch {
+      setLoadFailed(true);
+    }
+  };
   useEffect(() => {
-    getGameSettings()
-      .then(({ data }) => setSettings(data))
-      .catch(() =>
-        message.error(
-          t('settings.gameSettings.loadFailed', '游戏设置加载失败'),
-        ),
-      );
+    void loadSettings();
   }, []);
+  const loadingContent = loadFailed ? (
+    <div role="alert">
+      <p>{t('settings.gameSettings.loadFailed', '游戏设置加载失败')}</p>
+      <Button onClick={() => void loadSettings()}>重试</Button>
+    </div>
+  ) : (
+    <Spin />
+  );
 
   const initialValues = settings ? displayValues(settings) : undefined;
 
@@ -132,99 +146,127 @@ export default function GameSettingsPage() {
       }
     >
       <Card variant="borderless">
-        {!settings || !initialValues ? (
-          <Spin />
-        ) : (
-          <ProForm
-            formRef={formRef}
-            disabled={saving}
-            initialValues={initialValues}
-            submitter={{
-              resetButtonProps: false,
-              searchConfig: { submitText: t('common.save', '保存') },
-            }}
-            onFinish={async (values) => {
-              const changes = Object.fromEntries(
-                Object.keys(settings.definitions)
-                  .filter((key) => values[key] !== undefined)
-                  .map(
-                    (key) =>
-                      [
-                        key,
-                        toStoredValue(
-                          Number(values[key]),
-                          settings.definitions[key],
-                        ),
-                      ] as const,
-                  )
-                  .filter(([key, value]) => value !== settings.values[key]),
+        <ProForm
+          formRef={formRef}
+          disabled={saving}
+          initialValues={initialValues}
+          submitter={
+            activeTab === 'general' || !settings
+              ? false
+              : {
+                  resetButtonProps: false,
+                  searchConfig: { submitText: t('common.save', '保存') },
+                }
+          }
+          onFinish={async (values) => {
+            if (!settings) return false;
+            const changes = Object.fromEntries(
+              Object.keys(settings.definitions)
+                .filter((key) => values[key] !== undefined)
+                .map(
+                  (key) =>
+                    [
+                      key,
+                      toStoredValue(
+                        Number(values[key]),
+                        settings.definitions[key],
+                      ),
+                    ] as const,
+                )
+                .filter(([key, value]) => value !== settings.values[key]),
+            );
+            if (!Object.keys(changes).length) {
+              message.info(
+                t('settings.gameSettings.unchanged', '没有需要保存的修改'),
               );
-              if (!Object.keys(changes).length) {
-                message.info(
-                  t('settings.gameSettings.unchanged', '没有需要保存的修改'),
-                );
-                return true;
-              }
-              setSaving(true);
-              try {
-                await submitSettings({ changes });
-                const { data } = await getGameSettings();
-                setSettings(data);
-                formRef.current?.setFieldsValue(displayValues(data));
-                message.success(
-                  <span>
-                    {t('settings.gameSettings.saved', '游戏设置已保存')} ·{' '}
-                    <a href="/settings/game-setting-history">
-                      {t('settings.gameSettings.viewHistory', '查看修改记录')}
-                    </a>
-                  </span>,
-                );
-                return true;
-              } finally {
-                setSaving(false);
-              }
-            }}
-          >
-            <Tabs
-              activeKey={activeTab}
-              onChange={setActiveTab}
-              items={[
-                {
-                  key: 'experience',
-                  label: t('settings.gameSettings.tab.experience', '经验倍率'),
-                  children: (
-                    <ExperienceRateSettings settings={settings} t={t} />
-                  ),
-                },
-                {
-                  key: 'drops',
-                  label: t('settings.gameSettings.tab.drops', '掉落倍率'),
-                  children: <DropRateSettings settings={settings} t={t} />,
-                },
-                {
-                  key: 'refinement',
-                  label: t('settings.gameSettings.tab.refinement', '装备精炼'),
-                  children: <RefinementSettings settings={settings} t={t} />,
-                },
-                {
-                  key: 'navigation',
-                  label: t('settings.gameSettings.tab.navigation', '地图传送'),
-                  children: <NavigationSettings settings={settings} t={t} />,
-                },
-                {
-                  key: 'monster',
-                  label: t('settings.gameSettings.tab.monster', '魔物召唤'),
-                  children: <MonsterSpawnSettings settings={settings} t={t} />,
-                },
-                {
-                  key: 'adventure',
-                  label: t('settings.gameSettings.tab.adventure', '冒险工具'),
-                  children: <AdventureToolSettings t={t} />,
-                },
-              ]}
-            />
-          </ProForm>
-        )}
+              return true;
+            }
+            setSaving(true);
+            try {
+              await submitSettings({ changes });
+              const { data } = await getGameSettings();
+              setSettings(data);
+              formRef.current?.setFieldsValue(displayValues(data));
+              message.success(
+                <span>
+                  {t('settings.gameSettings.saved', '游戏设置已保存')} ·{' '}
+                  <a href="/settings/game-setting-history">
+                    {t('settings.gameSettings.viewHistory', '查看修改记录')}
+                  </a>
+                </span>,
+              );
+              return true;
+            } finally {
+              setSaving(false);
+            }
+          }}
+        >
+          <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            items={[
+              {
+                key: 'experience',
+                label: t('settings.gameSettings.tab.experience', '经验倍率'),
+                children: settings ? (
+                  <ExperienceRateSettings settings={settings} t={t} />
+                ) : (
+                  loadingContent
+                ),
+              },
+              {
+                key: 'drops',
+                label: t('settings.gameSettings.tab.drops', '掉落倍率'),
+                children: settings ? (
+                  <DropRateSettings settings={settings} t={t} />
+                ) : (
+                  loadingContent
+                ),
+              },
+              {
+                key: 'refinement',
+                label: t('settings.gameSettings.tab.refinement', '装备精炼'),
+                children: settings ? (
+                  <RefinementSettings settings={settings} t={t} />
+                ) : (
+                  loadingContent
+                ),
+              },
+              {
+                key: 'navigation',
+                label: t('settings.gameSettings.tab.navigation', '地图传送'),
+                children: settings ? (
+                  <NavigationSettings settings={settings} t={t} />
+                ) : (
+                  loadingContent
+                ),
+              },
+              {
+                key: 'monster',
+                label: t('settings.gameSettings.tab.monster', '魔物召唤'),
+                children: settings ? (
+                  <MonsterSpawnSettings settings={settings} t={t} />
+                ) : (
+                  loadingContent
+                ),
+              },
+              {
+                key: 'adventure',
+                label: t('settings.gameSettings.tab.adventure', '冒险工具'),
+                children: settings ? (
+                  <AdventureToolSettings t={t} />
+                ) : (
+                  loadingContent
+                ),
+              },
+              {
+                key: 'general',
+                label: '通用设置',
+                children: <RegistrationSettings />,
+              },
+            ]}
+          />
+        </ProForm>
       </Card>
     </PageContainer>
   );

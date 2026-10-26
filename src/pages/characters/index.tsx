@@ -5,12 +5,11 @@ import {
 } from '@ant-design/pro-components';
 import { useAccess, useIntl } from '@umijs/max';
 import { Drawer, Tag } from 'antd';
-import { useState } from 'react';
-import CharacterMaintenanceModal from '@/features/characters/CharacterMaintenanceModal';
-import CharacterDetails from '@/features/characters/CharacterDetails';
-import { jobMappings } from '@/data/game/jobs';
-import { mapMappings } from '@/data/game/maps';
 import { getCharacter, listCharacters } from '@/api/characters/queries';
+import { jobMappings } from '@/data/game/jobs';
+import CharacterDetails from '@/features/characters/CharacterDetails';
+import CharacterMaintenanceModal from '@/features/characters/CharacterMaintenanceModal';
+import { useLatestDetail } from '@/utils/useLatestDetail';
 
 type Character = Record<string, unknown>;
 export default function Characters() {
@@ -18,7 +17,7 @@ export default function Characters() {
   const t = (id: string, fallback: string) =>
     intl.formatMessage({ id, defaultMessage: fallback });
   const access = useAccess();
-  const [detail, setDetail] = useState<Record<string, unknown> | null>(null);
+  const { detail, loadDetail, closeDetail } = useLatestDetail<Character>();
   const columns: ProColumns<Character>[] = [
     {
       title: t('players.character.id', '角色 ID'),
@@ -32,7 +31,7 @@ export default function Characters() {
       render: (_, row) => (
         <a
           onClick={async () =>
-            setDetail((await getCharacter(Number(row.char_id))).data)
+            loadDetail(() => getCharacter(Number(row.char_id)))
           }
         >
           {String(row.name)}
@@ -71,11 +70,7 @@ export default function Characters() {
       title: t('players.character.map', '地图'),
       dataIndex: 'last_map',
       search: false,
-      render: (_, row) =>
-        t(
-          mapMappings[String(row.last_map)] ?? 'players.map.unknown',
-          '未知地图',
-        ),
+      render: (_, row) => String(row.last_map_name || row.last_map || '—'),
     },
     ...(access.canGameControl && access.canViewPlayers
       ? [
@@ -111,7 +106,7 @@ export default function Characters() {
           </span>
         }
         open={Boolean(detail)}
-        onClose={() => setDetail(null)}
+        onClose={closeDetail}
         size={760}
         styles={{ wrapper: { maxWidth: '100vw' } }}
       >

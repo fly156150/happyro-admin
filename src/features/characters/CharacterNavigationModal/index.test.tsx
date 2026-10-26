@@ -7,9 +7,9 @@ import {
 } from '@testing-library/react';
 import { App } from 'antd';
 import { afterEach, expect, it, vi } from 'vitest';
-import messages from '@/locales/zh-CN';
 import { executeGameControlCommand } from '@/api/characters/game-control';
 import { listCharacters } from '@/api/characters/queries';
+import messages from '@/locales/zh-CN';
 import CharacterNavigationModal from './index';
 
 vi.mock('@/api/characters/queries', () => ({ listCharacters: vi.fn() }));
@@ -32,12 +32,12 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-it('translates the Airship catalog name using the client map translation', () => {
+it('uses the supplied catalog name without overriding it with a local map table', () => {
   render(
     <App>
       <CharacterNavigationModal
         map="airplane"
-        mapName="Airship"
+        mapName="飞空艇（目录名称）"
         name="测试 NPC"
         x={31}
         y={77}
@@ -47,7 +47,7 @@ it('translates the Airship catalog name using the client map translation', () =>
   );
   fireEvent.click(screen.getByRole('button', { name: '位置操作' }));
   expect(
-    screen.getByText('目标位置：飞空艇 (31, 77) 的 NPC 附近。'),
+    screen.getByText('目标位置：飞空艇（目录名称） (31, 77) 的 NPC 附近。'),
   ).toBeInTheDocument();
   expect(screen.queryByText(/Airship|传送至/)).toBeNull();
 });
@@ -77,9 +77,7 @@ it('uses the audited map name and sends the selected online character and fixed 
   );
   fireEvent.click(screen.getByRole('button', { name: '位置操作' }));
   expect(
-    screen.getByText(
-      '目标位置：普隆德拉 (150, 180) 的 NPC 附近。',
-    ),
+    screen.getByText('目标位置：普隆德拉 (150, 180) 的 NPC 附近。'),
   ).toBeInTheDocument();
   expect(screen.queryByRole('combobox', { name: '操作' })).toBeNull();
   fireEvent.change(screen.getByRole('combobox', { name: '在线目标角色' }), {

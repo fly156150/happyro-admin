@@ -37,7 +37,6 @@ import {
   type PlayerAccount,
   registerAccount,
   resetPassword,
-  updateAccount,
 } from '@/api/accounts';
 import { sexMappings } from '@/data/game/sex';
 import AccountEmailDialog from '@/features/accounts/AccountEmailDialog';
@@ -58,7 +57,7 @@ type AccountColumnsOptions = {
   onDelete: (accountId: number) => void;
   onPasswordReset: (accountId: number) => void;
   onEditEmail: (account: PlayerAccount) => void;
-  onToggleState: (account: PlayerAccount, reload?: () => void) => Promise<void>;
+  onToggleState: (account: PlayerAccount) => void;
   t: Translate;
 };
 
@@ -120,7 +119,7 @@ function accountColumns({
       valueType: 'option',
       hideInTable: !canEdit && !canManageGM,
       width: 110,
-      render: (_, row, __, action) => (
+      render: (_, row) => (
         <Dropdown
           trigger={['click']}
           placement="bottomRight"
@@ -167,7 +166,7 @@ function accountColumns({
                       ),
                       danger: !row.state,
                       onClick: () => {
-                        void onToggleState(row, action?.reload);
+                        onToggleState(row);
                       },
                     },
                     {
@@ -433,14 +432,8 @@ export default function Accounts() {
     onDelete: (accountId) => confirmAction('delete', [accountId]),
     onPasswordReset: setPasswordId,
     onEditEmail: setEmailAccount,
-    onToggleState: async (account, reloadTable) => {
-      await updateAccount(account.account_id, { state: account.state ? 0 : 1 });
-      message.success(
-        account.state
-          ? t('players.account.unbanned', '已解禁')
-          : t('players.account.bannedSuccess', '已封禁'),
-      );
-      reloadTable?.();
+    onToggleState: (account) => {
+      confirmAction(account.state ? 'unban' : 'ban', [account.account_id]);
     },
   });
 

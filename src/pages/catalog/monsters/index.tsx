@@ -6,15 +6,7 @@ import {
 } from '@ant-design/pro-components';
 import { useAccess, useIntl } from '@umijs/max';
 import { Button, Descriptions, Drawer, Empty, Space, Tag } from 'antd';
-import { useMemo, useState } from 'react';
-import MonsterSpawnModal from '@/features/catalog/MonsterSpawnModal';
-import MonsterLocations from '@/features/catalog/MonsterLocations';
-import {
-  MONSTER_ELEMENTS,
-  MONSTER_KINDS,
-  MONSTER_RACES,
-  MONSTER_SIZES,
-} from '@/data/game/monster-types';
+import { useMemo } from 'react';
 import {
   type GameDataMonster,
   type GameDataMonsterDrop,
@@ -23,6 +15,15 @@ import {
   monsterDropName,
   monsterName,
 } from '@/api/catalog/monsters';
+import {
+  MONSTER_ELEMENTS,
+  MONSTER_KINDS,
+  MONSTER_RACES,
+  MONSTER_SIZES,
+} from '@/data/game/monster-types';
+import MonsterLocations from '@/features/catalog/MonsterLocations';
+import MonsterSpawnModal from '@/features/catalog/MonsterSpawnModal';
+import { useLatestDetail } from '@/utils/useLatestDetail';
 
 type Translate = (id: string, fallback: string) => string;
 const typeLabel = (group: string, value: string, t: Translate) =>
@@ -31,7 +32,8 @@ const typeLabel = (group: string, value: string, t: Translate) =>
 export default function Monsters() {
   const intl = useIntl();
   const access = useAccess();
-  const [detail, setDetail] = useState<GameDataMonster>();
+  const { detail, loadDetail, closeDetail } =
+    useLatestDetail<GameDataMonster>();
   const t = (id: string, fallback: string) =>
     intl.formatMessage({ id, defaultMessage: fallback });
   const locale = intl.locale;
@@ -47,7 +49,7 @@ export default function Monsters() {
             type="text"
             aria-label={`查看${monsterName(row, locale)}详情`}
             style={{ height: 'auto', padding: 0 }}
-            onClick={async () => setDetail((await getMonster(row.Id)).data)}
+            onClick={async () => loadDetail(() => getMonster(row.Id))}
           >
             <MonsterImage monster={row} locale={locale} />
           </Button>
@@ -129,7 +131,7 @@ export default function Monsters() {
             <Button
               type="link"
               icon={<EyeOutlined />}
-              onClick={async () => setDetail((await getMonster(row.Id)).data)}
+              onClick={async () => loadDetail(() => getMonster(row.Id))}
             >
               {t('common.detail', '详情')}
             </Button>
@@ -157,7 +159,7 @@ export default function Monsters() {
             : t('gameData.monster.detail', '魔物详情')
         }
         open={Boolean(detail)}
-        onClose={() => setDetail(undefined)}
+        onClose={closeDetail}
         size={560}
       >
         {detail && <MonsterDetails monster={detail} locale={locale} t={t} />}

@@ -16,7 +16,7 @@
 
 1. 前端提交变更及幂等键。
 2. API 校验权限、键和范围，并读取地图服环境覆盖状态。含环境受控项时，整批请求在写文件前拒绝，错误提示具体变量名。
-3. `internal/settings.Service` 通过持久化修订和锁协调文件、命令与运行状态。配置文件位于 `GAME_SERVER_BATTLE_CONFIG_PATH`，只替换受管理区块。
+3. `internal/settings.Service` 通过持久化修订和锁协调文件、命令与运行状态。配置文件位于 `HAPPYRO_API_BATTLE_CONFIG_PATH`，只替换受管理区块。
 4. API 经 web-server 将 `battle_config.apply` 交给 map-server 主线程；地图服再次检查白名单及环境覆盖，并在任何赋值前拒绝冲突批次。
 5. 回读实际值确认后才标记 applied。超时或未知结果保留待确认状态，不自动重发写请求。
 

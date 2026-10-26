@@ -17,6 +17,12 @@ vi.mock('@umijs/max', () => ({
 }));
 afterEach(cleanup);
 
+it('shows the translated expanded job name in character details', () => {
+  render(<CharacterDetails character={{ class: 4212 }} />);
+  expect(screen.getByText('胧')).toBeInTheDocument();
+  expect(screen.queryByText('职业 4212')).not.toBeInTheDocument();
+});
+
 it('renders one grouped table with localized labels, zero values and readable numbers', () => {
   render(
     <CharacterDetails

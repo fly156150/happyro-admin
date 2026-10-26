@@ -1,9 +1,9 @@
 import { useIntl } from '@umijs/max';
 import { Button, Form, InputNumber, Select, Space, theme } from 'antd';
 import type { ReactNode } from 'react';
-import { groupedJobOptions } from '@/data/game/job-groups';
-import { jobMappings } from '@/data/game/jobs';
 import type { CharacterSnapshot } from '@/api/characters/game-control';
+import { groupedJobOptions } from '@/data/game/job-groups';
+import { jobMappings, offlineJobIds } from '@/data/game/jobs';
 import {
   actionFields,
   characterFormValues,
@@ -57,7 +57,7 @@ export default function MaintenancePanel({
   );
   const jobs =
     character.online === false
-      ? Object.keys(jobMappings).map((id) => ({ id: Number(id) }))
+      ? offlineJobIds.map((id) => ({ id }))
       : (character.jobs ?? []);
   return (
     <Form
