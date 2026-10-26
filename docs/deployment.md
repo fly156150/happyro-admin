@@ -2,7 +2,9 @@
 
 在仓库根目录执行 `npm ci` 和 `npm run build`，产物位于 `dist/`。
 
-当前整体部署将前端产物与独立 happyro-api 一起交付，由 API 提供同源静态文件和 HTTP 接口。前端仓库不包含 Go 服务或数据库迁移。
+Docker 部署由独立 `happyro-admin` Nginx 镜像提供前端静态文件，并将同源 `/api` 请求代理到 Compose 服务 `api:8080`。前端与 API 镜像随同一版本离线包交付；Go 服务和数据库迁移由 API 镜像负责。
+
+前端 Dockerfile 位于 `deploy/docker/Dockerfile`，在 Node 构建阶段生成 `dist/`，运行阶段以非 root Nginx 监听 8080。根仓库 Compose 将后台宿主机端口映射到此容器，提供只读根文件系统与 `/tmp` 临时挂载；前端健康检查为 `/healthz`，API 健康检查为 `/api/health`。完整代理行为见 [独立容器部署](../README.md#独立容器部署)。
 
 开发模式使用 `npm start`，代理配置见 `config/proxy.ts`。Linux 开发服务模板见 `deploy/systemd/happyro-admin-frontend.service`，安装前核对路径、用户和端口。
 
