@@ -68,23 +68,41 @@ export default function RevisionHistory({
           renderText: formatDateTime,
         },
         {
+          title: '分类',
+          render: (_, row) =>
+            row.category === 'registration' ? '账号注册' : '游戏规则',
+        },
+        {
           title: t('settings.revision.actor', '操作账号'),
           render: (_, row) =>
-            row.requested_by !== null
-              ? `${t('settings.revision.admin', '后台账号')} #${row.requested_by}`
-              : `${t('settings.revision.player', '游戏账号')} #${row.requested_game_account_id}`,
+            row.actor_name === 'environment' && row.requested_by === null
+              ? '环境配置'
+              : row.actor_name ||
+                (row.requested_by !== null
+                  ? `${t('settings.revision.admin', '后台账号')} #${row.requested_by}`
+                  : `${t('settings.revision.player', '游戏账号')} #${row.requested_game_account_id}`),
         },
         {
           title: t('settings.revision.changes', '修改内容'),
           render: (_, row) =>
-            Object.entries(row.changes).map(([key, value]) => (
-              <div key={key}>
-                {t(`settings.gameSettings.key.${key}`, key)}：
-                {definitions?.[key]?.unit === 'percent'
-                  ? `${value / 100} 倍`
-                  : value}
-              </div>
-            )),
+            row.category === 'registration' ? (
+              <span>
+                注册默认权限组：
+                {row.previous_changes?.default_group_id === 99
+                  ? 'GM'
+                  : '普通玩家'}{' '}
+                → {row.changes.default_group_id === 99 ? 'GM' : '普通玩家'}
+              </span>
+            ) : (
+              Object.entries(row.changes).map(([key, value]) => (
+                <div key={key}>
+                  {t(`settings.gameSettings.key.${key}`, key)}：
+                  {definitions?.[key]?.unit === 'percent'
+                    ? `${value / 100} 倍`
+                    : value}
+                </div>
+              ))
+            ),
         },
         {
           title: t('settings.revision.status', '状态'),
@@ -106,6 +124,7 @@ export default function RevisionHistory({
           title: t('common.actions', '操作'),
           valueType: 'option',
           render: (_, row) =>
+            row.category === 'battle' &&
             ['prepared', 'published', 'uncertain'].includes(row.status) ? (
               <Button
                 key="resume"

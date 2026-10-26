@@ -11,13 +11,13 @@ export type ItemGrant = {
   delivery?: 'mail' | 'inventory';
 };
 
-export async function listItemGrants(page = 1, pageSize = 20) {
+export async function listItemGrants(page = 1, pageSize = 20, kind = '') {
   return request<{
     data: Array<Record<string, unknown>>;
     meta: { current_page: number; last_page: number; total: number };
     success: boolean;
   }>('/api/operations/item-grants', {
-    params: { page, per_page: pageSize },
+    params: { page, per_page: pageSize, kind },
   });
 }
 
