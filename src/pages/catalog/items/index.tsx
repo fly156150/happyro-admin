@@ -7,10 +7,7 @@ import {
 } from '@ant-design/pro-components';
 import { useAccess, useIntl } from '@umijs/max';
 import { Button, Descriptions, Drawer, Tag } from 'antd';
-import type { RefObject } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import ItemGrantModal from '@/features/rewards/ItemGrantModal';
-import { ITEM_TYPE_CODES } from '@/data/game/item-types';
 import {
   type GameDataItem,
   getItem,
@@ -18,18 +15,20 @@ import {
   itemName,
   listItems,
 } from '@/api/catalog/items';
+import { ITEM_TYPE_CODES } from '@/data/game/item-types';
+import ItemGrantModal from '@/features/rewards/ItemGrantModal';
 import { toPlainRagnarokText } from '@/utils/format';
+import { useLatestDetail } from '@/utils/useLatestDetail';
 import ItemDropSources from './ItemDropSources';
 
 type Translate = (id: string, fallback: string) => string;
 
 type ItemColumnsOptions = {
   canGrantItems: boolean;
-  formRef: RefObject<ProFormInstance | undefined>;
   locale: string;
   selectedItemType?: string;
   availableSubtypes: string[];
-  setDetail: (item: GameDataItem) => void;
+  showDetail: (id: number) => Promise<void>;
   t: Translate;
 };
 
@@ -69,11 +68,10 @@ function sourceLabel(source: GameDataItem['source'], t: Translate): string {
 
 function useItemColumns({
   canGrantItems,
-  formRef,
   locale,
   selectedItemType,
   availableSubtypes,
-  setDetail,
+  showDetail,
   t,
 }: ItemColumnsOptions) {
   return useMemo<ProColumns<GameDataItem>[]>(
@@ -87,10 +85,7 @@ function useItemColumns({
           <Button
             type="text"
             aria-label={`查看${itemName(row, locale)}详情`}
-            onClick={async () => {
-              const query = formRef.current?.getFieldsValue() as ItemQuery;
-              setDetail((await getItem(row.Id, query)).data);
-            }}
+            onClick={() => showDetail(row.Id)}
             style={{
               padding: 0,
               display: 'inline-flex',
@@ -208,10 +203,7 @@ function useItemColumns({
             <Button
               type="link"
               icon={<EyeOutlined />}
-              onClick={async () => {
-                const query = formRef.current?.getFieldsValue() as ItemQuery;
-                setDetail((await getItem(row.Id, query)).data);
-              }}
+              onClick={() => showDetail(row.Id)}
             >
               {t('common.detail', '详情')}
             </Button>
@@ -227,7 +219,11 @@ export default function Items() {
   const intl = useIntl();
   const access = useAccess();
   const formRef = useRef<ProFormInstance | undefined>(undefined);
-  const [detail, setDetail] = useState<GameDataItem>();
+  const { detail, loadDetail, closeDetail } = useLatestDetail<GameDataItem>();
+  const showDetail = (id: number) =>
+    loadDetail(() =>
+      getItem(id, formRef.current?.getFieldsValue() as ItemQuery),
+    );
   const [selectedItemType, setSelectedItemType] = useState<string>();
   const [selectedRange, setSelectedRange] = useState('client');
   const [availableSubtypes, setAvailableSubtypes] = useState<string[]>([]);
@@ -258,11 +254,10 @@ export default function Items() {
 
   const columns = useItemColumns({
     canGrantItems: access.canGrantItems,
-    formRef,
     locale,
     selectedItemType,
     availableSubtypes,
-    setDetail,
+    showDetail,
     t,
   });
 
@@ -301,7 +296,7 @@ export default function Items() {
             : t('gameData.item.detail', '物品详情')
         }
         open={Boolean(detail)}
-        onClose={() => setDetail(undefined)}
+        onClose={closeDetail}
         size={520}
       >
         {detail && <ItemDetails item={detail} locale={locale} t={t} />}
