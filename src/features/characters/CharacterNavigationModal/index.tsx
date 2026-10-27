@@ -1,4 +1,3 @@
-import { useIntl } from '@umijs/max';
 import {
   Alert,
   App,
@@ -10,7 +9,6 @@ import {
   Space,
 } from 'antd';
 import { useEffect, useRef, useState } from 'react';
-import { mapMappings } from '@/data/game/maps';
 import { executeGameControlCommand } from '@/api/characters/game-control';
 import { listCharacters } from '@/api/characters/queries';
 import { createIdempotencyKey } from '@/utils/idempotency';
@@ -33,13 +31,7 @@ export default function CharacterNavigationModal({
   npcClass,
 }: Props) {
   const { message } = App.useApp();
-  const intl = useIntl();
-  const destinationName = mapMappings[map]
-    ? intl.formatMessage({
-        id: mapMappings[map],
-        defaultMessage: mapName || map,
-      })
-    : mapName || map;
+  const destinationName = mapName || map;
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);

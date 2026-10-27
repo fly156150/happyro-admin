@@ -6,11 +6,10 @@ import {
 import { useAccess, useIntl } from '@umijs/max';
 import { Drawer, Tag } from 'antd';
 import { useState } from 'react';
-import CharacterMaintenanceModal from '@/features/characters/CharacterMaintenanceModal';
-import CharacterDetails from '@/features/characters/CharacterDetails';
-import { jobMappings } from '@/data/game/jobs';
-import { mapMappings } from '@/data/game/maps';
 import { getCharacter, listCharacters } from '@/api/characters/queries';
+import { jobMappings } from '@/data/game/jobs';
+import CharacterDetails from '@/features/characters/CharacterDetails';
+import CharacterMaintenanceModal from '@/features/characters/CharacterMaintenanceModal';
 
 type Character = Record<string, unknown>;
 export default function Characters() {
@@ -71,11 +70,7 @@ export default function Characters() {
       title: t('players.character.map', '地图'),
       dataIndex: 'last_map',
       search: false,
-      render: (_, row) =>
-        t(
-          mapMappings[String(row.last_map)] ?? 'players.map.unknown',
-          '未知地图',
-        ),
+      render: (_, row) => String(row.last_map_name || row.last_map || '—'),
     },
     ...(access.canGameControl && access.canViewPlayers
       ? [
