@@ -1,9 +1,11 @@
 import { request } from '@umijs/max';
 
 export function isAutoRestoredSettingError(error: unknown): boolean {
-  const response = (error as {
-    response?: { data?: { error?: { code?: string } } };
-  } | null)?.response;
+  const response = (
+    error as {
+      response?: { data?: { error?: { code?: string } } };
+    } | null
+  )?.response;
   return response?.data?.error?.code === 'settings_auto_restored';
 }
 
@@ -34,6 +36,9 @@ export async function updateGameSettings(data: {
   });
 }
 export type SettingRevision = {
+  category: 'battle' | 'registration';
+  actor_name?: string;
+  previous_changes?: Record<string, number>;
   id: string;
   changes: Record<string, number>;
   status: 'prepared' | 'published' | 'applied' | 'failed' | 'uncertain';
@@ -41,11 +46,21 @@ export type SettingRevision = {
   requested_game_account_id: number | null;
   created_at: string;
 };
-export async function listSettingRevisions(params: { current?: number; pageSize?: number }) {
-  return request<{ data: SettingRevision[]; definitions: Record<string, GameSettingDefinition>; meta: { total: number } }>('/api/settings/game-settings/history', {
+export async function listSettingRevisions(params: {
+  current?: number;
+  pageSize?: number;
+}) {
+  return request<{
+    data: SettingRevision[];
+    definitions: Record<string, GameSettingDefinition>;
+    meta: { total: number };
+  }>('/api/settings/game-settings/history', {
     params: { page: params.current, per_page: params.pageSize },
   });
 }
 export async function resumeSettingRevision(id: string) {
-  return request<{ data: SettingRevision }>(`/api/settings/game-settings/revisions/${encodeURIComponent(id)}/resume`, { method: 'POST' });
+  return request<{ data: SettingRevision }>(
+    `/api/settings/game-settings/revisions/${encodeURIComponent(id)}/resume`,
+    { method: 'POST' },
+  );
 }

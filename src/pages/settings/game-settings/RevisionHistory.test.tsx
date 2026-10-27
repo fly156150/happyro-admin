@@ -7,12 +7,12 @@ import {
 } from '@testing-library/react';
 import { App } from 'antd';
 import { afterEach, expect, it, vi } from 'vitest';
-import messages from '@/locales/zh-CN';
 import {
   listSettingRevisions,
   resumeSettingRevision,
   type SettingRevision,
 } from '@/api/settings/game-settings';
+import messages from '@/locales/zh-CN';
 import GameSettingHistory from '../game-setting-history';
 import RevisionHistory from './RevisionHistory';
 
@@ -78,6 +78,7 @@ const definitions = {
 };
 const pending: SettingRevision = {
   id: 'revision-one',
+  category: 'battle',
   changes: { refine_chance_rate: 325 },
   status: 'published',
   requested_by: null,
@@ -152,4 +153,34 @@ it('standalone history renders units and supports recovery without loading live 
     expect(resumeSettingRevision).toHaveBeenCalledWith('revision-one'),
   );
   await waitFor(() => expect(listSettingRevisions).toHaveBeenCalledTimes(2));
+});
+
+it('shows registration before and after values without offering revision recovery', async () => {
+  vi.mocked(listSettingRevisions).mockResolvedValue({
+    data: [
+      {
+        ...pending,
+        category: 'registration',
+        actor_name: 'operator',
+        requested_by: 1,
+        requested_game_account_id: null,
+        changes: { default_group_id: 99 },
+        previous_changes: { default_group_id: 0 },
+        status: 'uncertain',
+      },
+    ],
+    definitions,
+    meta: { total: 1 },
+  });
+  render(
+    <App>
+      <RevisionHistory revision={0} />
+    </App>,
+  );
+  expect(
+    await screen.findByText('注册默认权限组：普通玩家 → GM'),
+  ).toBeVisible();
+  expect(screen.getByText('operator')).toBeVisible();
+  expect(screen.getByText('账号注册')).toBeVisible();
+  expect(screen.queryByRole('button', { name: '继续确认' })).toBeNull();
 });

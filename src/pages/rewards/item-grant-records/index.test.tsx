@@ -5,7 +5,10 @@ import ItemGrantRecords from './index';
 
 vi.mock('@umijs/max', () => ({
   request: vi.fn().mockResolvedValue({ data: [], meta: { total: 200 } }),
-  useIntl: () => ({ formatMessage: ({ defaultMessage }: { defaultMessage: string }) => defaultMessage }),
+  useIntl: () => ({
+    formatMessage: ({ defaultMessage }: { defaultMessage: string }) =>
+      defaultMessage,
+  }),
 }));
 vi.mock('@ant-design/pro-components', () => ({
   PageContainer: ({ children }: any) => children,
@@ -19,8 +22,9 @@ vi.mock('@ant-design/pro-components', () => ({
 it('sends the selected page and page size through to the grant history API', async () => {
   render(<ItemGrantRecords />);
   fireEvent.click(screen.getByText('Load second page of 50'));
-  await waitFor(() => expect(request).toHaveBeenCalledWith(
-    '/api/operations/item-grants',
-    { params: { page: 2, per_page: 50 } },
-  ));
+  await waitFor(() =>
+    expect(request).toHaveBeenCalledWith('/api/operations/item-grants', {
+      params: { page: 2, per_page: 50, kind: '' },
+    }),
+  );
 });
