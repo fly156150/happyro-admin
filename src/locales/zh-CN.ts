@@ -242,7 +242,7 @@ export default {
   'operations.itemGrants.zenySuccess': 'Zeny 已发放',
   'operations.itemGrants.zenyOnlineOnly':
     'Zeny 将直接发放给角色，仅支持当前在线角色。',
-  'operations.itemGrantRecords.title': '物品发放记录',
+  'operations.itemGrantRecords.title': '发放记录',
   'operations.itemGrantRecords.itemId': '物品 ID',
   'operations.itemGrantRecords.characterId': '角色 ID',
   'operations.itemGrantRecords.amount': '数量',

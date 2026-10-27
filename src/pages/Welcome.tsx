@@ -51,7 +51,7 @@ export default function Welcome() {
               客户端资源 <Typography.Text code>kro-20211105</Typography.Text>
             </Typography.Text>
             <Typography.Text type="secondary">
-              服务端版本 <Typography.Text code>2fe6ab3dc4</Typography.Text>
+              rAthena 基线 <Typography.Text code>2fe6ab3dc4</Typography.Text>
             </Typography.Text>
           </div>
         </Card>
