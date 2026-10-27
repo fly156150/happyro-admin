@@ -29,20 +29,28 @@ afterEach(() => {
   vi.resetAllMocks();
 });
 
-it('disables both group selection and save when the environment locks edits', async () => {
+it.each([
+  false,
+  true,
+])('keeps save clickable and reports unchanged values (editable=%s)', async (editable) => {
   vi.mocked(getRegistrationSettings).mockResolvedValue({
-    data: { default_group_id: 99, editable: false },
+    data: { default_group_id: 99, editable },
   });
   render(
     <App>
       <RegistrationSettings />
     </App>,
   );
-  expect(
-    await screen.findByRole('combobox', { name: '新注册账号默认权限组' }),
-  ).toBeDisabled();
+  const select = await screen.findByRole('combobox', {
+    name: '注册默认权限组',
+  });
+  if (editable) expect(select).toBeEnabled();
+  else expect(select).toBeDisabled();
   expect(screen.getByText('GM')).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: '保 存' })).toBeDisabled();
+  const save = screen.getByRole('button', { name: '保 存' });
+  expect(save).toBeEnabled();
+  fireEvent.click(save);
+  expect(await screen.findByText('没有需要保存的修改')).toBeInTheDocument();
   expect(updateRegistrationSettings).not.toHaveBeenCalled();
 });
 
@@ -59,7 +67,7 @@ it('saves a chosen group with the previous value and reloads the persisted setti
     </App>,
   );
   const select = await screen.findByRole('combobox', {
-    name: '新注册账号默认权限组',
+    name: '注册默认权限组',
   });
   fireEvent.mouseDown(select);
   fireEvent.click(await screen.findByText('GM'));

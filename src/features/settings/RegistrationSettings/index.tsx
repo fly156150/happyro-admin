@@ -1,5 +1,5 @@
 import { useIntl } from '@umijs/max';
-import { App, Button, Select, Space, Spin } from 'antd';
+import { App, Button, Form, Select, Spin } from 'antd';
 import { useEffect, useState } from 'react';
 import {
   getRegistrationSettings,
@@ -32,28 +32,32 @@ export default function RegistrationSettings() {
     return <Button onClick={() => void load()}>重新加载注册设置</Button>;
   if (!settings || group === undefined) return <Spin />;
   return (
-    <Space orientation="vertical" size="middle" style={{ paddingBottom: 24 }}>
-      <label htmlFor="registration-default-group">新注册账号默认权限组</label>
-      <Select
-        id="registration-default-group"
-        aria-label="新注册账号默认权限组"
-        style={{ width: 240 }}
-        disabled={!settings.editable || saving}
-        value={group}
-        onChange={setGroup}
-        options={accountGMGroups.map((entry) => ({
-          value: entry.value,
-          label: intl.formatMessage({
-            id: entry.labelKey,
-            defaultMessage: entry.code,
-          }),
-        }))}
-      />
+    <div>
+      <Form.Item label="注册默认权限组" htmlFor="registration-default-group">
+        <Select
+          id="registration-default-group"
+          aria-label="注册默认权限组"
+          style={{ width: 240 }}
+          disabled={!settings.editable || saving}
+          value={group}
+          onChange={setGroup}
+          options={accountGMGroups.map((entry) => ({
+            value: entry.value,
+            label: intl.formatMessage({
+              id: entry.labelKey,
+              defaultMessage: entry.code,
+            }),
+          }))}
+        />
+      </Form.Item>
       <Button
         type="primary"
-        disabled={!settings.editable || group === settings.default_group_id}
         loading={saving}
         onClick={async () => {
+          if (group === settings.default_group_id) {
+            message.info('没有需要保存的修改');
+            return;
+          }
           setSaving(true);
           try {
             await updateRegistrationSettings(group, settings.default_group_id);
@@ -69,6 +73,6 @@ export default function RegistrationSettings() {
       >
         保存
       </Button>
-    </Space>
+    </div>
   );
 }

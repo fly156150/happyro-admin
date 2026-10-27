@@ -14,6 +14,10 @@ import {
 import messages from '@/locales/zh-CN';
 import GameSettingsPage from './index';
 
+vi.mock('@/features/settings/RegistrationSettings', () => ({
+  default: () => <div>独立注册设置</div>,
+}));
+
 vi.mock('./RevisionHistory', () => ({
   default: () => <div>嵌入的修改记录</div>,
 }));
@@ -263,4 +267,33 @@ it('locks editing until both publication and readback finish', async () => {
   });
   await waitFor(() => expect(rate).not.toBeDisabled());
   expect(rate).toHaveValue('2');
+});
+
+it('keeps general settings accessible after a battle settings failure and supports retry', async () => {
+  vi.mocked(getGameSettings).mockRejectedValue(new Error('unavailable'));
+  render(
+    <App>
+      <GameSettingsPage />
+    </App>,
+  );
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    '游戏设置加载失败',
+  );
+  fireEvent.click(screen.getByRole('tab', { name: '通用设置' }));
+  expect(await screen.findByText('独立注册设置')).toBeVisible();
+  fireEvent.click(screen.getByRole('tab', { name: '经验倍率' }));
+  const values = { base_exp_rate: 100, job_exp_rate: 100 };
+  const definitions = Object.fromEntries(
+    Object.keys(values).map((key) => [
+      key,
+      { key, minimum: 0, maximum: 1000000, source: '', unit: 'percent' },
+    ]),
+  );
+  vi.mocked(getGameSettings).mockResolvedValue({
+    data: { values, definitions },
+  });
+  fireEvent.click(screen.getByRole('button', { name: /重\s*试/ }));
+  expect(
+    await screen.findByRole('spinbutton', { name: '基础倍率' }),
+  ).toHaveValue('1');
 });
