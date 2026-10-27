@@ -16,6 +16,7 @@ import {
   isAutoRestoredSettingError,
   updateGameSettings,
 } from '@/api/settings/game-settings';
+import RegistrationSettings from '@/features/settings/RegistrationSettings';
 import { createRetryableMutation } from '@/utils/retryableMutation';
 
 type Translate = (
@@ -139,10 +140,14 @@ export default function GameSettingsPage() {
             formRef={formRef}
             disabled={saving}
             initialValues={initialValues}
-            submitter={{
-              resetButtonProps: false,
-              searchConfig: { submitText: t('common.save', '保存') },
-            }}
+            submitter={
+              activeTab === 'registration'
+                ? false
+                : {
+                    resetButtonProps: false,
+                    searchConfig: { submitText: t('common.save', '保存') },
+                  }
+            }
             onFinish={async (values) => {
               const changes = Object.fromEntries(
                 Object.keys(settings.definitions)
@@ -189,6 +194,11 @@ export default function GameSettingsPage() {
               activeKey={activeTab}
               onChange={setActiveTab}
               items={[
+                {
+                  key: 'registration',
+                  label: '账号注册',
+                  children: <RegistrationSettings />,
+                },
                 {
                   key: 'experience',
                   label: t('settings.gameSettings.tab.experience', '经验倍率'),

@@ -427,6 +427,8 @@ export default {
   'players.account.username': '用户名',
   'players.account.email': '邮箱',
   'players.account.group': '权限组',
+  'players.account.group.player': '普通玩家',
+  'players.account.group.gm': 'GM',
   'players.account.status': '状态',
   'players.account.active': '正常',
   'players.account.banned': '封禁',
