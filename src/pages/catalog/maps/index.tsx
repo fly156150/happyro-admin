@@ -105,6 +105,12 @@ export default function Maps() {
   }, [detail]);
   const columns: ProColumns<MapRow>[] = [
     {
+      title: '地图搜索',
+      dataIndex: 'query',
+      hideInTable: true,
+      fieldProps: { placeholder: '搜索地图名称或地图代码' },
+    },
+    {
       title: '地图范围',
       dataIndex: 'scope',
       valueType: 'select',
@@ -147,6 +153,7 @@ export default function Maps() {
         defaultMessage: '中文名称',
       }),
       dataIndex: 'name_zh_cn',
+      search: false,
       render: (_, row) =>
         row.name_zh_cn ||
         intl.formatMessage({
@@ -160,6 +167,7 @@ export default function Maps() {
         defaultMessage: '地图代码',
       }),
       dataIndex: 'map',
+      search: false,
     },
     {
       title: '游戏支持',
@@ -191,13 +199,16 @@ export default function Maps() {
               defaultMessage: '详情',
             })}
           </Button>
-          {access.canGameControl && access.canViewPlayers && row.supported && (
-            <CharacterNavigationModal
-              map={row.map}
-              mapName={row.name_zh_cn}
-              name={row.name_zh_cn || row.map}
-            />
-          )}
+          {access.canGameControl &&
+            access.canViewPlayers &&
+            row.supported &&
+            !row.player_hidden && (
+              <CharacterNavigationModal
+                map={row.map}
+                mapName={row.name_zh_cn}
+                name={row.name_zh_cn || row.map}
+              />
+            )}
         </Space>
       ),
     },
@@ -216,8 +227,7 @@ export default function Maps() {
         request={async (params) => {
           const { data, total } = await listMaps({
             scope: params.scope === 'all' ? 'all' : 'game',
-            map: params.map,
-            name_zh_cn: params.name_zh_cn,
+            query: params.query,
             page: params.current,
             perPage: params.pageSize,
           });
@@ -338,6 +348,7 @@ function MapDetails({
                 </div>
                 {access.canGameControl &&
                   access.canViewPlayers &&
+                  !map.player_hidden &&
                   npc.game_visible &&
                   npc.navigation && (
                     <div className={styles.npcActions}>

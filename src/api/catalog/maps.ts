@@ -6,14 +6,14 @@ export type MapRow = {
   name_zh_cn?: string;
   image?: string;
   supported: boolean;
+  player_hidden: boolean;
   channel?: number | null;
   image_kind?: 'image' | 'terrain' | null;
 };
 
 export type ListMapsParams = {
   scope?: 'game' | 'all';
-  map?: string;
-  name_zh_cn?: string;
+  query?: string;
   page?: number;
   perPage?: number;
 };
