@@ -11,7 +11,9 @@ import settings from './zh-CN/settings';
 
 export default {
   'settings.gameSettings.unchanged': '没有需要保存的修改',
-  'settings.gameSettings.tab.refinement': '装备精炼',
+  'settings.gameSettings.tab.refinement': '精炼/升阶',
+  'settings.gameSettings.key.grade_chance_rate': '升阶成功率倍率',
+  'settings.gameSettings.key.grade_always_success': '升阶必定成功',
   'settings.gameSettings.key.refine_chance_rate': '精炼成功率倍率',
   'settings.gameSettings.key.refine_always_success': '精炼必定成功',
   ...monsterSpawnMaps,

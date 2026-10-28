@@ -225,9 +225,12 @@ export default function GameSettingsPage() {
               },
               {
                 key: 'refinement',
-                label: t('settings.gameSettings.tab.refinement', '装备精炼'),
+                label: t('settings.gameSettings.tab.refinement', '精炼/升阶'),
                 children: settings ? (
-                  <RefinementSettings settings={settings} t={t} />
+                  <>
+                    <RefinementSettings settings={settings} t={t} kind="refine" />
+                    <RefinementSettings settings={settings} t={t} kind="grade" />
+                  </>
                 ) : (
                   loadingContent
                 ),
@@ -359,22 +362,24 @@ function DropRateSettings({
 function RefinementSettings({
   settings,
   t,
+  kind,
 }: {
   settings: GameSettings;
+  kind: 'refine' | 'grade';
   t: Translate;
 }) {
-  const guaranteed = Form.useWatch('refine_always_success');
+  const guaranteed = Form.useWatch(`${kind}_always_success`);
   return (
     <>
       <RateField
-        name="refine_chance_rate"
-        definition={settings.definitions.refine_chance_rate}
+        name={`${kind}_chance_rate`}
+        definition={settings.definitions[`${kind}_chance_rate`]}
         t={t}
         disabled={Number(guaranteed) === 1}
       />
       <ProFormRadio.Group
-        name="refine_always_success"
-        label={ruleLabel('refine_always_success', t)}
+        name={`${kind}_always_success`}
+        label={ruleLabel(`${kind}_always_success`, t)}
         radioType="button"
         options={BinaryOptions({ t })}
         rules={[{ required: true }]}
