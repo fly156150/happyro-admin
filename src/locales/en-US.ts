@@ -9,7 +9,9 @@ import settings from './en-US/settings';
 
 export default {
   'settings.gameSettings.unchanged': 'No changes to save',
-  'settings.gameSettings.tab.refinement': 'Equipment refinement',
+  'settings.gameSettings.tab.refinement': 'Refinement / grading',
+  'settings.gameSettings.key.grade_chance_rate': 'Grading success multiplier',
+  'settings.gameSettings.key.grade_always_success': 'Guaranteed grading success',
   'settings.gameSettings.key.refine_chance_rate':
     'Refinement success multiplier',
   'settings.gameSettings.key.refine_always_success':
